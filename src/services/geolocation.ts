@@ -1,9 +1,5 @@
-export interface UserLocation {
-  latitude: number
-  longitude: number
-  accuracy: number
-  timestamp: number
-}
+import type { UserLocation } from '../types/geolocation'
+
 
 function getErrorMessage(code: number): string {
   switch (code) {

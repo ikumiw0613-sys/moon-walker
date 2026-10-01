@@ -1,14 +1,8 @@
 import { useRef, useState } from 'react'
 import { getCurrentLocation } from '../services/geolocation'
-import type { UserLocation } from '../services/geolocation'
+import type { LocationState } from '../types/geolocation'
 
-type LocationState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'success'; location: UserLocation }
-  | { status: 'error'; message: string }
-
-export function useLocation() {
+export function useGeolocation() {
   const [state, setState] = useState<LocationState>({ status: 'idle' })
   const pending = useRef(false)
 

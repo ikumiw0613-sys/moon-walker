@@ -1,8 +1,7 @@
-﻿import { HomeScreen } from './components/HomeScreen'
-import './App.css'
+import { HomePage } from './pages/HomePage'
 
 function App() {
-  return <HomeScreen />
+  return <HomePage />
 }
 
 export default App
