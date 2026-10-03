@@ -1,9 +1,20 @@
+import { useEffect } from 'react'
 import { GeolocationControls } from '../components/GeolocationControls'
 import { useGeolocation } from '../hooks/useGeolocation'
+import { getMoonPosition } from '../lib/astronomy'
 import './HomePage.css'
 
 export function HomePage() {
   const { state, requestLocation } = useGeolocation()
+
+  useEffect(() => {
+    if (state.status !== 'success') return
+
+    const { latitude, longitude } = state.location
+    const moonPosition = getMoonPosition(latitude, longitude, new Date())
+
+    console.log(moonPosition)
+  }, [state])
 
   return (
     <main className="home-screen">
