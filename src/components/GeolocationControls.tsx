@@ -10,7 +10,7 @@ export function GeolocationControls({ state, onRequestLocation }: GeolocationCon
   const statusMessage = state.status === 'error'
     ? state.message
     : state.status === 'success'
-      ? '現在地を取得しました。月の位置を案内する機能は準備中です。'
+      ? '現在地を取得しました。'
       : isLoading
         ? '現在地を取得しています。許可を求められたら、位置情報の利用を許可してください。'
         : '位置情報の利用を許可すると、現在地を取得します。'
@@ -24,13 +24,13 @@ export function GeolocationControls({ state, onRequestLocation }: GeolocationCon
         onClick={() => void onRequestLocation()}
         aria-describedby="search-status"
       >
-        {isLoading ? '現在地を取得中…' : state.status === 'idle' ? '月を探す' : '現在地を再取得'}
+        {isLoading ? '現在地を取得中…' : state.status === 'idle' ? '現在地を取得' : '現在地を再取得'}
       </button>
       <p className="search-status" id="search-status" role="status" aria-live="polite">
         {statusMessage}
       </p>
       {state.status === 'success' && (
-        <details className="location-details">
+        <details className="location-details" open>
           <summary>取得した位置情報</summary>
           <p>
             緯度 {state.location.latitude.toFixed(4)} / 経度 {state.location.longitude.toFixed(4)}

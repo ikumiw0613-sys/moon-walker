@@ -25,8 +25,8 @@ function rotationZ(angle: number): Matrix3 {
 
   return [
     [c, -s, 0],
-    [s,  c, 0],
-    [0,  0, 1],
+    [s, c, 0],
+    [0, 0, 1],
   ]
 }
 
@@ -35,9 +35,9 @@ function rotationX(angle: number): Matrix3 {
   const s = Math.sin(angle)
 
   return [
-    [1, 0,  0],
+    [1, 0, 0],
     [0, c, -s],
-    [0, s,  c],
+    [0, s, c],
   ]
 }
 
@@ -46,8 +46,8 @@ function rotationY(angle: number): Matrix3 {
   const s = Math.sin(angle)
 
   return [
-    [ c, 0, s],
-    [ 0, 1, 0],
+    [c, 0, s],
+    [0, 1, 0],
     [-s, 0, c],
   ]
 }
@@ -91,3 +91,36 @@ export function deviceOrientationToMatrix(
     ry
   )
 }
+
+
+export function multiplyMatrixVector(
+  matrix: Matrix3,
+  vector: Vector3
+): Vector3 {
+  return {
+    x:
+      matrix[0][0] * vector.x +
+      matrix[0][1] * vector.y +
+      matrix[0][2] * vector.z,
+
+    y:
+      matrix[1][0] * vector.x +
+      matrix[1][1] * vector.y +
+      matrix[1][2] * vector.z,
+    z:
+      matrix[2][0] * vector.x +
+      matrix[2][1] * vector.y +
+      matrix[2][2] * vector.z,
+  }
+}
+
+export function transposeMatrix3(
+  matrix: Matrix3
+): Matrix3 {
+  return [
+    [matrix[0][0], matrix[1][0], matrix[2][0]],
+    [matrix[0][1], matrix[1][1], matrix[2][1]],
+    [matrix[0][2], matrix[1][2], matrix[2][2]],
+  ]
+}
+

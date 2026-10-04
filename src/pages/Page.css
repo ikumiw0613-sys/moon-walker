@@ -1,3 +1,7 @@
+.home-screen.location-screen {
+  cursor: default;
+}
+
 .home-screen {
   display: grid;
   place-items: center;
@@ -64,6 +68,22 @@
   margin: 16px 0 0;
   font-variant-numeric: tabular-nums;
   line-height: 1.8;
+}
+
+.orientation-test-controls {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.orientation-test-controls label {
+  display: grid;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.orientation-test-controls input {
+  width: 100%;
 }
 
 .moon-navigation {
