@@ -7,15 +7,17 @@ type OrientationState = {
   alpha: number | null
   beta: number | null
   gamma: number | null
+  absolute: boolean
+  compassHeading: number | null
   message: string
 }
 
 type OrientationEventConstructor = typeof DeviceOrientationEvent & {
-  requestPermission?: () => Promise<'granted' | 'denied'>
+  requestPermission?: (absolute?: boolean) => Promise<'granted' | 'denied'>
 }
 
 const NO_DATA_TIMEOUT_MS = 5000
-const EMPTY_VALUES = { alpha: null, beta: null, gamma: null }
+const EMPTY_VALUES = { alpha: null, beta: null, gamma: null, absolute: false, compassHeading: null }
 
 function getInitialState(): OrientationState {
   if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) {
@@ -40,6 +42,7 @@ export function useDeviceOrientation() {
 
   useEffect(() => {
     if (!enabled) return
+    let receivedAbsolute = false
 
     const timeout = window.setTimeout(() => {
       setState((previous) => previous.status === 'waiting'
@@ -49,21 +52,28 @@ export function useDeviceOrientation() {
 
     function handleOrientation(event: DeviceOrientationEvent): void {
       if (event.alpha === null && event.beta === null && event.gamma === null) return
+      if (receivedAbsolute && !event.absolute) return
+      if (event.absolute) receivedAbsolute = true
 
       window.clearTimeout(timeout)
+      const compass = (event as DeviceOrientationEvent & { webkitCompassHeading?: number }).webkitCompassHeading
       setState({
         status: 'active',
         alpha: event.alpha,
         beta: event.beta,
         gamma: event.gamma,
+        absolute: event.absolute,
+        compassHeading: typeof compass === 'number' && Number.isFinite(compass) && compass >= 0 ? compass : null,
         message: '取得中です。スマートフォンを傾けてみてください。',
       })
     }
 
     window.addEventListener('deviceorientation', handleOrientation)
+    window.addEventListener('deviceorientationabsolute', handleOrientation)
     return () => {
       window.clearTimeout(timeout)
       window.removeEventListener('deviceorientation', handleOrientation)
+      window.removeEventListener('deviceorientationabsolute', handleOrientation)
     }
   }, [enabled])
 
@@ -81,7 +91,7 @@ export function useDeviceOrientation() {
       const orientationEvent = window.DeviceOrientationEvent as OrientationEventConstructor
       // iPhoneの許可要求は、ボタン操作から直接呼び出す。
       if (typeof orientationEvent.requestPermission === 'function') {
-        const permission = await orientationEvent.requestPermission()
+        const permission = await orientationEvent.requestPermission(true)
         if (!mounted.current) return
         if (permission !== 'granted') {
           setState({ ...EMPTY_VALUES, status: 'denied', message: '向きセンサーの利用が許可されませんでした。' })

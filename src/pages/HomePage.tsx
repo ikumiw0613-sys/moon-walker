@@ -8,6 +8,7 @@ import { convertMoonToScreen } from '../lib/coordinates'
 import type { ScreenPosition } from '../lib/coordinates'
 import type { MoonPosition } from '../types/moon'
 import { getMoonNavigation } from '../lib/moonNavigation'
+import { getDeviceView, normalizeAzimuth } from '../lib/deviceView'
 import './HomePage.css'
 
 const DEGREES_PER_PIXEL = 0.2
@@ -17,6 +18,8 @@ export function HomePage() {
   const { state: orientation, requestPermission: requestOrientationPermission } = useDeviceOrientation()
   const [viewAzimuth, setViewAzimuth] = useState(0)
   const [viewAltitude, setViewAltitude] = useState(0)
+  const [sensorMode, setSensorMode] = useState(false)
+  const [northOffset, setNorthOffset] = useState<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const dragPosition = useRef<{ pointerId: number; x: number; y: number } | null>(null)
   const [observationDate, setObservationDate] = useState<Date | null>(null)
@@ -35,16 +38,23 @@ export function HomePage() {
     setViewAltitude(moonPosition.altitude)
   }
 
-  const screenPosition: ScreenPosition | null = moonPosition
-    ? convertMoonToScreen(moonPosition.azimuth, moonPosition.altitude, viewAzimuth, viewAltitude)
+  const deviceView = orientation.status === 'active' ? getDeviceView(orientation) : null
+  const hasCompass = orientation.absolute || orientation.compassHeading !== null
+  const sensorView = deviceView && (hasCompass || northOffset !== null)
+    ? { ...deviceView, azimuth: normalizeAzimuth(deviceView.azimuth + (hasCompass ? 0 : northOffset ?? 0)) }
     : null
-  const navigation = moonPosition
-    ? getMoonNavigation(moonPosition, { azimuth: viewAzimuth, altitude: viewAltitude })
+  const currentView = sensorMode ? sensorView : { azimuth: viewAzimuth, altitude: viewAltitude }
+  const screenPosition: ScreenPosition | null = moonPosition && currentView
+    ? convertMoonToScreen(moonPosition.azimuth, moonPosition.altitude, currentView.azimuth, currentView.altitude)
+    : null
+  const navigation = moonPosition && currentView
+    ? getMoonNavigation(moonPosition, currentView)
     : null
 
   function faceMoon(): void {
     if (!moonPosition) return
 
+    setSensorMode(false)
     setViewAzimuth(moonPosition.azimuth)
     setViewAltitude(moonPosition.altitude)
   }
@@ -55,6 +65,7 @@ export function HomePage() {
   }
 
   function handlePointerDown(event: PointerEvent<HTMLElement>): void {
+    if (sensorMode) return
     if (event.pointerType !== 'mouse' || event.button !== 0 || dragPosition.current) return
     if (event.target instanceof Element && event.target.closest('button, summary, a, input, select, textarea')) return
 
@@ -119,16 +130,47 @@ export function HomePage() {
           </div>
         )}
         <section className="orientation-check" aria-labelledby="orientation-title">
-          <h2 id="orientation-title">向きセンサーの確認</h2>
+          <h2 id="orientation-title">スマホの向きで月を探す</h2>
           <button
             className="find-moon-button"
             type="button"
-            onClick={() => void requestOrientationPermission()}
+            onClick={() => {
+              setSensorMode(true)
+              void requestOrientationPermission()
+            }}
             disabled={['unsupported', 'requesting', 'waiting', 'active', 'unavailable'].includes(orientation.status)}
           >
             センサーを有効にする
           </button>
           <p className="search-status" role="status">{orientation.message}</p>
+          {sensorMode && orientation.status !== 'active' && (
+            <button className="find-moon-button" type="button" onClick={() => setSensorMode(false)}>
+              マウス操作に戻す
+            </button>
+          )}
+          {orientation.status === 'active' && (
+            <>
+              <button className="find-moon-button" type="button" onClick={() => setSensorMode(!sensorMode)}>
+                {sensorMode ? 'マウス操作に戻す' : 'スマホの向きで操作する'}
+              </button>
+              <p className="search-status">
+                画面を自分に向け、端末の裏側を探したい空へ向けてください。
+              </p>
+              {!hasCompass && (
+                <>
+                  <p className="search-status">北基準の方位を取得できません。端末の裏側を北へ向け、基準を合わせてください。</p>
+                  <button className="find-moon-button" type="button" disabled={!deviceView} onClick={() => {
+                    if (deviceView) setNorthOffset(-deviceView.azimuth)
+                  }}>
+                    この方向を北にする
+                  </button>
+                </>
+              )}
+              {sensorMode && !sensorView && (
+                <p className="search-status">向きを確定できません。北の基準を合わせ、端末を立ててください。</p>
+              )}
+            </>
+          )}
           <p className="orientation-values">
             alpha: {orientation.alpha?.toFixed(1) ?? '—'}°
             <br />
