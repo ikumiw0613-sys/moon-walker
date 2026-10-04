@@ -11,6 +11,7 @@ import type { Matrix3, Vector3 } from '../types/vector3'
 import { getMoonNavigation } from '../lib/moonNavigation'
 import { getDeviceView, normalizeAzimuth } from '../lib/deviceView'
 import { deviceOrientationToMatrix, moonDirectionToVector, multiplyMatrixVector, transposeMatrix3 } from '../lib/vector3'
+import { getOrientationDiagnostics } from './deviceOrientationDiagnostics'
 import './Page.css'
 import './DebugPage.css'
 
@@ -19,12 +20,23 @@ const DEGREES_PER_PIXEL = 0.2
 const TEST_DATE_START = new Date('2026-10-04T00:00:00+09:00')
 const TEST_TIME_STEP_MS = 30 * 60 * 1000
 
+function diagnosticValue(value: number | boolean | null | undefined): string {
+  if (value === undefined) return 'unavailable'
+  if (value === null) return 'null'
+  if (typeof value === 'boolean') return String(value)
+  return Number.isFinite(value) ? value.toFixed(4) : 'unavailable (non-finite)'
+}
+
+function eventTime(value: number | undefined): string {
+  return value === undefined ? 'null (未受信)' : new Date(value).toLocaleTimeString('ja-JP', { hour12: false }) + `.${String(value % 1000).padStart(3, '0')} (端末時刻)`
+}
+
 function VectorReadout({ label, vector }: { label: string; vector: Vector3 | null }) {
   return (
     <div className="debug-vector">
       <h3>{label}</h3>
       <dl>{(['x', 'y', 'z'] as const).map((axis) => (
-        <div key={axis}><dt>{axis}</dt><dd>{vector?.[axis].toFixed(6) ?? '—'}</dd></div>
+        <div key={axis}><dt>{axis}</dt><dd>{diagnosticValue(vector ? vector[axis] : null)}</dd></div>
       ))}</dl>
     </div>
   )
@@ -36,13 +48,25 @@ function MatrixReadout({ label, matrix }: { label: string; matrix: Matrix3 | nul
       <h3>{label}</h3>
       {matrix ? <table aria-label={label}><tbody>{matrix.map((row, index) => (
         <tr key={index}>{row.map((value, column) => <td key={column}>{value.toFixed(4)}</td>)}</tr>
-      ))}</tbody></table> : <p className="search-status">向きの入力待ち</p>}
+      ))}</tbody></table> : <p className="search-status">null (向きの入力待ち)</p>}
     </div>
   )
 }
 
 export function DebugPage({ state, requestLocation }: { state: LocationState; requestLocation: () => Promise<void> }) {
-  const { state: sensorOrientation, requestPermission: requestOrientationPermission } = useDeviceOrientation()
+  const { state: sensorOrientation, requestPermission: requestOrientationPermission, diagnostics } = useDeviceOrientation()
+  const [screenAngle, setScreenAngle] = useState<number | undefined>(() => window.screen.orientation?.angle)
+
+  useEffect(() => {
+    const screenOrientation = window.screen.orientation
+    const updateScreenAngle = () => setScreenAngle(window.screen.orientation?.angle)
+    screenOrientation?.addEventListener('change', updateScreenAngle)
+    window.addEventListener('orientationchange', updateScreenAngle)
+    return () => {
+      screenOrientation?.removeEventListener('change', updateScreenAngle)
+      window.removeEventListener('orientationchange', updateScreenAngle)
+    }
+  }, [])
   const [manualOrientationEnabled, setManualOrientationEnabled] = useState(false)
   const [manualOrientation, setManualOrientation] = useState({ alpha: 0, beta: 90, gamma: 0 })
   const orientation = manualOrientationEnabled
@@ -119,6 +143,8 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
   const navigation = moonPosition && currentView
     ? getMoonNavigation(moonPosition, currentView)
     : null
+  const cameraDiagnostics = getOrientationDiagnostics(orientation, northOffset)
+  const rawEvent = diagnostics.lastAccepted
 
   function faceMoon(): void {
     if (!moonPosition) return
@@ -174,6 +200,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
         <div><p className="debug-eyebrow">MOON-WALKER / DEBUG</p>
           <h1>座標変換デバッグ</h1>
           <p className="search-status">位置情報 → 月の世界座標 → 端末座標の変換を確認します。</p>
+          <p className="search-status">実機チェック: 手動テストをOFF → センサーを有効化 → 再読み込みせず北 → 東 → 南 → 西 → 北。各方向で数秒静止してください。</p>
         </div>
         <span className={`debug-status${transform.moonInDevice ? ' is-ready' : ''}`}>
           {transform.moonInDevice ? '計算中' : '入力待ち'}
@@ -278,20 +305,78 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
             </>
           )}
           <p className="orientation-values">
-            alpha: {orientation.alpha?.toFixed(1) ?? '—'}°
+            使用中 alpha: {diagnosticValue(orientation.alpha)}
             <br />
-            beta: {orientation.beta?.toFixed(1) ?? '—'}°
+            使用中 beta: {diagnosticValue(orientation.beta)}
             <br />
-            gamma: {orientation.gamma?.toFixed(1) ?? '—'}°
+            使用中 gamma: {diagnosticValue(orientation.gamma)}
           </p>
         </section>
+        <section className="debug-panel" aria-labelledby="raw-title">
+          <h2 id="raw-title">raw sensor</h2>
+          <p className="search-status">既存フックが採用したイベントの生データ。手動入力で上書きしません。</p>
+          <dl className="debug-data">
+            <div><dt>raw alpha (°)</dt><dd>{diagnosticValue(rawEvent?.alpha ?? null)}</dd></div>
+            <div><dt>raw beta (°)</dt><dd>{diagnosticValue(rawEvent?.beta ?? null)}</dd></div>
+            <div><dt>raw gamma (°)</dt><dd>{diagnosticValue(rawEvent?.gamma ?? null)}</dd></div>
+            <div><dt>absolute</dt><dd>{diagnosticValue(rawEvent?.absolute ?? null)}</dd></div>
+            <div><dt>使用中のイベント種別</dt><dd>{rawEvent?.eventType ?? 'null (未受信)'}</dd></div>
+            <div><dt>最終採用イベント受信時刻</dt><dd>{eventTime(rawEvent?.receivedAt)}</dd></div>
+            <div><dt>最終イベント受信時刻</dt><dd>{eventTime(diagnostics.lastReceived?.receivedAt)}</dd></div>
+            <div><dt>最終受信イベント種別</dt><dd>{diagnostics.lastReceived?.eventType ?? 'null (未受信)'}</dd></div>
+            <div><dt>最終受信イベントの採用</dt><dd>{diagnostics.lastReceived ? diagnostics.lastReceived === rawEvent ? '採用' : '既存条件により無視' : 'null (未受信)'}</dd></div>
+            <div><dt>screen.orientation.angle (°)</dt><dd>{diagnosticValue(screenAngle)}</dd></div>
+          </dl>
+          {manualOrientationEnabled && <p className="debug-diagnostic-note">手動テストON: 以下のcameraForwardとmoon transformは手動入力から計算しています。</p>}
+        </section>
+        <section className="debug-panel" aria-labelledby="compass-title">
+          <h2 id="compass-title">compass</h2>
+          <dl className="debug-data">
+            <div><dt>webkitCompassHeading (°)</dt><dd>{rawEvent ? diagnosticValue(rawEvent.webkitCompassHeading) : 'null (未受信)'}</dd></div>
+            <div><dt>webkitCompassAccuracy (°)</dt><dd>{rawEvent ? diagnosticValue(rawEvent.webkitCompassAccuracy) : 'null (未受信)'}</dd></div>
+            <div><dt>採用されたheading (°)</dt><dd>{diagnosticValue(sensorOrientation.compassHeading)}</dd></div>
+            <div><dt>適用した北補正角 (°、方位角への加算)</dt><dd>{diagnosticValue(cameraDiagnostics.correctionAngle)}</dd></div>
+            <div><dt>北補正の入力元</dt><dd>{cameraDiagnostics.correctionSource}</dd></div>
+            <div><dt>手動北補正値 (°)</dt><dd>{diagnosticValue(northOffset)}</dd></div>
+            <div><dt>topHeading (°)</dt><dd>{diagnosticValue(cameraDiagnostics.topHeading)}</dd></div>
+            <div><dt>|cos(beta)|</dt><dd>{diagnosticValue(cameraDiagnostics.topHorizontalLength)}</dd></div>
+            <div><dt>既存の90°用分岐</dt><dd>{diagnosticValue(cameraDiagnostics.usesFallback)}</dd></div>
+          </dl>
+          <p className="debug-diagnostic-note">補正角は既存処理の値です。absoluteは追加補正0°。この補正はmoonInDeviceには適用されません。</p>
+          {cameraDiagnostics.topHorizontalLength !== null && cameraDiagnostics.topHorizontalLength < 0.01 && (
+            <p className="debug-diagnostic-note">上端の水平投影が小さいため、topHeadingが不安定になり得る姿勢です（表示用の目安: 0.01未満）。</p>
+          )}
+          {rawEvent?.webkitCompassAccuracy !== undefined && rawEvent.webkitCompassAccuracy < 0 && (
+            <p className="debug-diagnostic-note">コンパス精度が負の値です。既存の採用条件は変更せず、そのまま表示しています。</p>
+          )}
+        </section>
+        <section className="debug-panel" aria-labelledby="before-title">
+          <h2 id="before-title">cameraForward before correction</h2>
+          <p className="search-status">deviceRotation × (0, 0, −1)。absolute=falseの場合は任意の基準座標で、ENUへの北合わせは未適用です。</p>
+          <VectorReadout label="cameraForward / ENU軸表記・補正前" vector={cameraDiagnostics.before} />
+          <dl className="debug-data">
+            <div><dt>azimuth (°)</dt><dd>{diagnosticValue(cameraDiagnostics.beforeDirection?.azimuth ?? null)}</dd></div>
+            <div><dt>altitude (°)</dt><dd>{diagnosticValue(cameraDiagnostics.before ? Math.asin(Math.max(-1, Math.min(1, cameraDiagnostics.before.z))) * 180 / Math.PI : null)}</dd></div>
+          </dl>
+        </section>
+        <section className="debug-panel" aria-labelledby="after-title">
+          <h2 id="after-title">cameraForward after correction</h2>
+          <p className="search-status">既存の補正済み方位角・高度からベクトルを再構成した診断値。回転行列自体を補正した値ではありません。</p>
+          <VectorReadout label="cameraForward / ENU・補正後" vector={cameraDiagnostics.after} />
+          <dl className="debug-data">
+            <div><dt>azimuth (°)</dt><dd>{diagnosticValue(cameraDiagnostics.afterDirection?.azimuth ?? null)}</dd></div>
+            <div><dt>altitude (°)</dt><dd>{diagnosticValue(cameraDiagnostics.afterDirection?.altitude ?? null)}</dd></div>
+          </dl>
+          {!cameraDiagnostics.after && <p className="search-status">null: 向きの未取得、方位の未確定、または北基準なし。</p>}
+        </section>
         <section className="debug-panel debug-results" aria-labelledby="results-title">
-          <h2 id="results-title"><span>03</span> 3D変換結果</h2>
+          <h2 id="results-title">moon transform</h2>
           <p className="search-status">world → transpose(rotation) → device</p>
           <VectorReadout label="moonWorld / ENU" vector={transform.moonWorld} />
           <VectorReadout label="moonInDevice" vector={transform.moonInDevice} />
           <p className="search-status">端末: +x 右 / +y 上 / −z 背面カメラ正面。真正面の目安は (0, 0, −1)。</p>
-          <p className="search-status">{!moonPosition ? '現在地を取得してください。' : !transform.moonInDevice ? '手動テストをONにするか、センサーを有効にしてください。' : `ベクトル長: ${Math.hypot(transform.moonInDevice.x, transform.moonInDevice.y, transform.moonInDevice.z).toFixed(6)}`}</p>
+          <dl className="debug-data"><div><dt>moonInDeviceのベクトル長</dt><dd>{diagnosticValue(transform.moonInDevice ? Math.hypot(transform.moonInDevice.x, transform.moonInDevice.y, transform.moonInDevice.z) : null)}</dd></div></dl>
+          <p className="search-status">北補正なしの既存3D変換。{!moonPosition ? '現在地を取得してください。' : !transform.moonInDevice ? '手動テストをONにするか、センサーを有効にしてください。' : 'センサー値の更新に合わせて計算しています。'}</p>
           <MatrixReadout label="deviceRotation" matrix={transform.deviceRotation} />
           <MatrixReadout label="inverseRotation" matrix={transform.inverseRotation} />
         </section>

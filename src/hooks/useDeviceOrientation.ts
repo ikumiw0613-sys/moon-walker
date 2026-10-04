@@ -19,6 +19,17 @@ type OrientationEventConstructor = typeof DeviceOrientationEvent & {
 const NO_DATA_TIMEOUT_MS = 5000
 const EMPTY_VALUES = { alpha: null, beta: null, gamma: null, absolute: false, compassHeading: null }
 
+export type RawOrientationEvent = {
+  alpha: number | null
+  beta: number | null
+  gamma: number | null
+  absolute: boolean
+  eventType: string
+  receivedAt: number
+  webkitCompassHeading: number | undefined
+  webkitCompassAccuracy: number | undefined
+}
+
 function getInitialState(): OrientationState {
   if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) {
     return { ...EMPTY_VALUES, status: 'unsupported', message: 'このブラウザは向きセンサーに対応していません。' }
@@ -32,6 +43,10 @@ function getInitialState(): OrientationState {
 export function useDeviceOrientation() {
   const [state, setState] = useState<OrientationState>(getInitialState)
   const [enabled, setEnabled] = useState(false)
+  const [diagnostics, setDiagnostics] = useState<{
+    lastReceived: RawOrientationEvent | null
+    lastAccepted: RawOrientationEvent | null
+  }>({ lastReceived: null, lastAccepted: null })
   const pending = useRef(false)
   const mounted = useRef(false)
 
@@ -51,6 +66,20 @@ export function useDeviceOrientation() {
     }, NO_DATA_TIMEOUT_MS)
 
     function handleOrientation(event: DeviceOrientationEvent): void {
+      // 観察用メタデータ。既存のイベント採用条件やセンサー値は変更しない。
+      const webkitEvent = event as DeviceOrientationEvent & { webkitCompassHeading?: number; webkitCompassAccuracy?: number }
+      const rawEvent: RawOrientationEvent = {
+        alpha: event.alpha, beta: event.beta, gamma: event.gamma,
+        absolute: event.absolute, eventType: event.type, receivedAt: Date.now(),
+        webkitCompassHeading: webkitEvent.webkitCompassHeading,
+        webkitCompassAccuracy: webkitEvent.webkitCompassAccuracy,
+      }
+      const accepted = !(event.alpha === null && event.beta === null && event.gamma === null)
+        && !(receivedAbsolute && !event.absolute)
+      setDiagnostics((previous) => ({
+        lastReceived: rawEvent,
+        lastAccepted: accepted ? rawEvent : previous.lastAccepted,
+      }))
       if (event.alpha === null && event.beta === null && event.gamma === null) return
       if (receivedAbsolute && !event.absolute) return
       if (event.absolute) receivedAbsolute = true
@@ -110,5 +139,5 @@ export function useDeviceOrientation() {
     }
   }
 
-  return { state, requestPermission }
+  return { state, requestPermission, diagnostics }
 }
