@@ -6,7 +6,8 @@ import { useGeolocation } from './hooks/useGeolocation'
 function App() {
   const location = useGeolocation()
   const [pathname, setPathname] = useState(() => window.location.pathname)
-  const isDebugPage = pathname === '/debug' || pathname === '/debug/'
+  const debugEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEBUG === 'true'
+  const isDebugPage = debugEnabled && (pathname === '/debug' || pathname === '/debug/')
 
   useEffect(() => {
     const handlePopState = () => setPathname(window.location.pathname)
