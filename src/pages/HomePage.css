@@ -47,6 +47,25 @@
   margin-top: 24px;
 }
 
+.orientation-check {
+  margin-top: 32px;
+  padding: 24px 16px;
+  border: 1px solid #a4b0c3;
+  border-radius: 16px;
+  margin-bottom: 72px;
+}
+
+.orientation-check h2 {
+  margin: 0 0 16px;
+  font-size: 1rem;
+}
+
+.orientation-values {
+  margin: 16px 0 0;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.8;
+}
+
 .moon-navigation {
   position: fixed;
   bottom: 24px;

@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import type { PointerEvent } from 'react'
 import { GeolocationControls } from '../components/GeolocationControls'
 import { useGeolocation } from '../hooks/useGeolocation'
+import { useDeviceOrientation } from '../hooks/useDeviceOrientation'
 import { getMoonPosition } from '../lib/astronomy'
 import { convertMoonToScreen } from '../lib/coordinates'
 import type { ScreenPosition } from '../lib/coordinates'
@@ -13,6 +14,7 @@ const DEGREES_PER_PIXEL = 0.2
 
 export function HomePage() {
   const { state, requestLocation } = useGeolocation()
+  const { state: orientation, requestPermission: requestOrientationPermission } = useDeviceOrientation()
   const [viewAzimuth, setViewAzimuth] = useState(0)
   const [viewAltitude, setViewAltitude] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -116,6 +118,25 @@ export function HomePage() {
             </button>
           </div>
         )}
+        <section className="orientation-check" aria-labelledby="orientation-title">
+          <h2 id="orientation-title">向きセンサーの確認</h2>
+          <button
+            className="find-moon-button"
+            type="button"
+            onClick={() => void requestOrientationPermission()}
+            disabled={['unsupported', 'requesting', 'waiting', 'active', 'unavailable'].includes(orientation.status)}
+          >
+            センサーを有効にする
+          </button>
+          <p className="search-status" role="status">{orientation.message}</p>
+          <p className="orientation-values">
+            alpha: {orientation.alpha?.toFixed(1) ?? '—'}°
+            <br />
+            beta: {orientation.beta?.toFixed(1) ?? '—'}°
+            <br />
+            gamma: {orientation.gamma?.toFixed(1) ?? '—'}°
+          </p>
+        </section>
       </section>
       {moonPosition?.isAboveHorizon && screenPosition?.isVisible && (
         <div
