@@ -43,6 +43,34 @@
   margin-top: 36px;
 }
 
+.moon-assist {
+  margin-top: 24px;
+}
+
+.moon-navigation {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 48px);
+  margin: 0;
+  padding: 12px 24px;
+  border: 1px solid #a4b0c3;
+  border-radius: 16px;
+  background: #0c1424;
+  color: #fff8df;
+  text-align: center;
+  font-size: 1.125rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.moon-navigation--centered {
+  border-color: #fff8df;
+  font-weight: 600;
+}
+
 .find-moon-button {
   min-height: 52px;
   width: 220px;
@@ -93,3 +121,28 @@
 .location-details p {
   margin: 8px 0 0;
 }
+
+
+.home-screen {
+  position: relative;
+  min-height: 100vh;
+}
+
+.moon-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-screen {
+    cursor: grab;
+  }
+}
+
+.home-screen.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
