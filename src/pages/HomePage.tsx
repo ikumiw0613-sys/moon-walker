@@ -9,9 +9,23 @@ export function HomePage() {
 
   useEffect(() => {
     if (state.status !== 'success') return
+    const now = new Date()
 
-    const { latitude, longitude } = state.location
-    const moonPosition = getMoonPosition(latitude, longitude, new Date())
+    const { latitude, longitude} = state.location
+    console.log("latitude:", latitude)
+    console.log("longitude:", longitude)
+    console.log("local time:", now.toString())
+    console.log("UTC time:", now.toISOString())
+
+    const moonPosition = getMoonPosition(latitude, longitude, now)
+
+    if(moonPosition.isAboveHorizon) {
+      console.log("月は地平線より上にあります")
+    } else {
+      console.log("月は地平線より下にあります")
+    }
+
+
 
     console.log(moonPosition)
   }, [state])

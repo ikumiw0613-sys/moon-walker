@@ -1,9 +1,6 @@
 import { Horizon, Observer, Body, Equator } from "astronomy-engine";
+import type { MoonPosition } from "../types/moon"
 
-type MoonPosition = {
-  azimuth: number
-  altitude: number
-}
 export function getMoonPosition(
   latitude: number,
   longitude: number,
@@ -31,5 +28,6 @@ export function getMoonPosition(
   return {
     azimuth: moon.azimuth,
     altitude: moon.altitude,
+    isAboveHorizon: moon.altitude > 0,
   }
 }
