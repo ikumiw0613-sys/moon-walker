@@ -6,7 +6,6 @@ import { useDeviceOrientation } from '../hooks/useDeviceOrientation'
 import { getMoonPosition } from '../lib/astronomy'
 import { convertMoonToScreen } from '../lib/coordinates'
 import type { ScreenPosition } from '../lib/coordinates'
-import type { MoonPosition } from '../types/moon'
 import type { Matrix3, Vector3 } from '../types/vector3'
 import { getMoonNavigation } from '../lib/moonNavigation'
 import { getDeviceView, normalizeAzimuth } from '../lib/deviceView'
@@ -85,7 +84,24 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
   const [northOffset, setNorthOffset] = useState<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const dragPosition = useRef<{ pointerId: number; x: number; y: number } | null>(null)
-  const observationDate = useMemo(() => {
+  const [timeMode, setTimeMode] = useState<'fixed' | 'current'>('fixed')
+  const [currentDate, setCurrentDate] = useState(() => new Date())
+
+  useEffect(() => {
+    if (timeMode !== 'current') return
+    const updateTime = () => setCurrentDate(new Date())
+    const timer = window.setInterval(updateTime, 1000)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') updateTime()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [timeMode])
+
+  const fixedObservationDate = useMemo(() => {
     if (state.status !== 'success') return null
 
     const { latitude, longitude } = state.location
@@ -101,7 +117,8 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
     }
     return bestDate
   }, [state])
-  const [assistedMoonPosition, setAssistedMoonPosition] = useState<MoonPosition | null>(null)
+  const observationDate = timeMode === 'current' ? currentDate : fixedObservationDate
+  const [assistedInput, setAssistedInput] = useState<{ state: LocationState; timeMode: typeof timeMode } | null>(null)
   const moonPosition = useMemo(() => {
     if (state.status !== 'success' || !observationDate) return null
 
@@ -124,9 +141,9 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
     if (transform.moonInDevice) console.log('moonInDevice', transform.moonInDevice)
   }, [transform])
 
-  // 新しい月位置を取得したときだけ視点を合わせ、その後のドラッグは維持する。
-  if (moonPosition && moonPosition !== assistedMoonPosition) {
-    setAssistedMoonPosition(moonPosition)
+  // 位置取得・時刻モード変更時だけ視点を合わせ、自動更新中のドラッグは維持する。
+  if (moonPosition && (state !== assistedInput?.state || timeMode !== assistedInput?.timeMode)) {
+    setAssistedInput({ state, timeMode })
     setViewAzimuth(moonPosition.azimuth)
     setViewAltitude(moonPosition.altitude)
   }
@@ -210,9 +227,20 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
         <section className="debug-panel" aria-labelledby="location-title">
           <h2 id="location-title"><span>01</span> 現在地と月</h2>
         <GeolocationControls state={state} onRequestLocation={handleRequestLocation} />
+          <label className="debug-time-mode">
+            月の位置を計算する時刻
+            <select value={timeMode} onChange={(event) => {
+              const mode = event.target.value === 'current' ? 'current' : 'fixed'
+              if (mode === 'current') setCurrentDate(new Date())
+              setTimeMode(mode)
+            }}>
+              <option value="fixed">固定テスト日時</option>
+              <option value="current">現在時刻（1秒ごとに更新）</option>
+            </select>
+          </label>
         {observationDate && (
           <p className="search-status">
-            テスト日時（固定）: {observationDate.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}（日本時間）
+            {timeMode === 'current' ? '現在時刻' : 'テスト日時（固定）'}: {observationDate.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}（日本時間）
           </p>
         )}
           <dl className="debug-data">

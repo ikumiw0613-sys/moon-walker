@@ -10,6 +10,8 @@
 .debug-panel h2 span { margin-right: 8px; color: #7dd3fc; font: 0.75rem ui-monospace, monospace; }
 .debug-panel h3 { margin: 0 0 12px; color: #a4b0c3; font: 0.8125rem ui-monospace, monospace; }
 .debug-screen .home-action { margin-top: 0; }
+.debug-time-mode { display: grid; gap: 8px; margin-top: 20px; color: #c4cddd; font-size: 0.8125rem; }
+.debug-time-mode select { min-width: 0; width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid #475569; border-radius: 6px; background: #0b1322; color: #f5f3eb; font: inherit; }
 .debug-screen .find-moon-button { width: auto; min-height: 40px; padding: 9px 16px; border-radius: 6px; font-size: 0.8125rem; }
 .debug-panel > .find-moon-button { margin-top: 16px; }
 .debug-data { margin: 20px 0 0; font-size: 0.8125rem; }
