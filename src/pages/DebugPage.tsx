@@ -13,7 +13,7 @@ import { deviceOrientationToMatrix, moonDirectionToVector, multiplyMatrixVector,
 import { getOrientationDiagnostics } from './deviceOrientationDiagnostics'
 import { captureNorthCalibration, getCalibratedCameraDiagnostics, getHorizontalCalibration, HORIZONTAL_CALIBRATION_THRESHOLD } from '../lib/horizontalCalibration'
 import { useNorthCalibration } from '../hooks/useNorthCalibration'
-import { SkytreeDebugCard } from './SkytreeDebugCard'
+import { SunDebugCard } from '../debug/solar/SunDebugCard'
 import './Page.css'
 import './DebugPage.css'
 
@@ -453,7 +453,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
           </dl>
           <p className="debug-diagnostic-note">headingError = correctedHeading − webkitCompassHeading（最短角度差）。未保存・姿勢未取得・手動テスト中はnullです。カメラが真上・真下の場合も方位はnullです。</p>
         </section>
-        <SkytreeDebugCard state={state} correctedHeading={calibratedCamera.correctedHeading} />
+        <SunDebugCard state={state} correctedHeading={calibratedCamera.correctedHeading} />
         <section className="debug-panel debug-results" aria-labelledby="results-title">
           <h2 id="results-title">moon transform</h2>
           <p className="search-status">world → transpose(rotation) → device</p>
