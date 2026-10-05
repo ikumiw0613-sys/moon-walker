@@ -45,7 +45,7 @@ describe('frontend prototype navigation', () => {
     await clickLink('/ar')
     expect(window.location.pathname).toBe('/ar')
     expect(container.textContent).toContain('月まで')
-    expect(container.textContent).toContain('表示はサンプルです')
+    expect(container.textContent).toContain('北基準の準備が必要です')
     expect(container.querySelector('video')).toBeNull()
     expect(requestLocation).not.toHaveBeenCalled()
   })

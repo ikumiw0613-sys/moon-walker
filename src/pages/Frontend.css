@@ -58,6 +58,11 @@
 .mw-ar-guidance p { font-size: 15px; letter-spacing: 2px; margin: 10px 0 14px; }
 .mw-ar-distance { color: #91a0ae; font-size: 12px; }.mw-ar-distance strong { font-weight: 400; color: #e5e8dd; }
 .mw-ar-footnote { margin: 0; text-align: center; color: #6b778c; font-size: 10px; }
+.mw-ar-controls { max-width: 320px; margin: 24px auto 0; }
+.mw-ar-controls button { cursor: pointer; font-family: inherit; }
+.mw-ar-controls button:disabled { opacity: .5; cursor: default; }
+.mw-ar-controls p { font-size: 12px; letter-spacing: 0; line-height: 1.7; }
+.mw-ar-vector { display: block; margin-top: 16px; color: #91a0ae; font-size: 10px; }
 .mw-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 @media (min-width: 700px) { .mw-screen { padding: 32px 48px 24px; }.mw-home-content { padding: 48px 0; }.mw-orbit { width: 240px; height: 240px; }.mw-detail-content { padding-top: 64px; } }
 @media (max-width: 360px) { .mw-screen { padding-left: 20px; padding-right: 20px; }.mw-kicker { font-size: 8px; letter-spacing: 1px; }.mw-orbit { width: 180px; height: 180px; margin-bottom: 28px; }.mw-moon-facts dd { font-size: 21px; } }
