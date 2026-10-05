@@ -12,7 +12,7 @@ import { getDeviceView, normalizeAzimuth } from '../lib/deviceView'
 import { deviceOrientationToMatrix, moonDirectionToVector, multiplyMatrixVector, transposeMatrix3 } from '../lib/vector3'
 import { getOrientationDiagnostics } from './deviceOrientationDiagnostics'
 import { captureNorthCalibration, getCalibratedCameraDiagnostics, getHorizontalCalibration, HORIZONTAL_CALIBRATION_THRESHOLD } from '../lib/horizontalCalibration'
-import type { NorthCalibration } from '../lib/horizontalCalibration'
+import { useNorthCalibration } from '../hooks/useNorthCalibration'
 import './Page.css'
 import './DebugPage.css'
 
@@ -84,7 +84,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
   const [viewAltitude, setViewAltitude] = useState(0)
   const [sensorMode, setSensorMode] = useState(false)
   const [northOffset, setNorthOffset] = useState<number | null>(null)
-  const [northCalibration, setNorthCalibration] = useState<NorthCalibration | null>(null)
+  const { northCorrection, calibrated, calibratedAt, saveNorthCalibration } = useNorthCalibration()
   const [isDragging, setIsDragging] = useState(false)
   const dragPosition = useRef<{ pointerId: number; x: number; y: number } | null>(null)
   const [timeMode, setTimeMode] = useState<'fixed' | 'current'>('fixed')
@@ -169,7 +169,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
 
   const calibratedCamera = getCalibratedCameraDiagnostics(
     manualOrientationEnabled ? null : transform.deviceRotation,
-    northCalibration?.northCorrection ?? null,
+    northCorrection,
     horizontalCalibration.compassHeading,
   )
 
@@ -177,7 +177,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
     // Timestamp is captured only on button click, never during render.
     // oxlint-disable-next-line react/purity
     const captured = captureNorthCalibration(horizontalCalibration, Date.now())
-    if (captured) setNorthCalibration(captured)
+    if (captured) saveNorthCalibration(captured)
   }
 
   function faceMoon(): void {
@@ -394,10 +394,10 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
             <div><dt>rawHeading (°)</dt><dd>{diagnosticValue(horizontalCalibration.rawHeading)}</dd></div>
             <div><dt>webkitCompassHeading (°)</dt><dd>{diagnosticValue(horizontalCalibration.compassHeading)}</dd></div>
             <div><dt>northCorrection 候補 (°)</dt><dd>{diagnosticValue(horizontalCalibration.northCorrection)}</dd></div>
-            <div><dt>northCorrection 保存値 (°)</dt><dd>{diagnosticValue(northCalibration?.northCorrection ?? null)}</dd></div>
-            <div><dt>calibrated</dt><dd>{String(northCalibration !== null)}</dd></div>
-            <div><dt>calibration時刻</dt><dd>{northCalibration
-              ? new Date(northCalibration.calibratedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : 'null'}</dd></div>
+            <div><dt>northCorrection 保存値 (°)</dt><dd>{diagnosticValue(northCorrection)}</dd></div>
+            <div><dt>calibrated</dt><dd>{String(calibrated)}</dd></div>
+            <div><dt>calibration時刻</dt><dd>{calibratedAt !== null
+              ? new Date(calibratedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : 'null'}</dd></div>
           </dl>
           <p className="debug-diagnostic-note">保存値はボタンを押した時点の補正角です。表示やmoonInDeviceにはまだ適用しません。</p>
         </section>

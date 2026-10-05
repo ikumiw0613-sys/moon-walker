@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { HomePage } from './pages/HomePage'
 import { DebugPage } from './pages/DebugPage'
 import { useGeolocation } from './hooks/useGeolocation'
+import { NorthCalibrationProvider } from './contexts/NorthCalibrationContext'
 
 function App() {
   const location = useGeolocation()
@@ -15,7 +16,11 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
-  return isDebugPage ? <DebugPage {...location} /> : <HomePage {...location} />
+  return (
+    <NorthCalibrationProvider>
+      {isDebugPage ? <DebugPage {...location} /> : <HomePage {...location} />}
+    </NorthCalibrationProvider>
+  )
 }
 
 export default App

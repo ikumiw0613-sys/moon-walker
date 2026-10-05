@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { DebugPage } from './DebugPage'
+import { NorthCalibrationProvider } from '../contexts/NorthCalibrationContext'
 
 const mocked = vi.hoisted(() => ({ useDeviceOrientation: vi.fn() }))
 vi.mock('../hooks/useDeviceOrientation', () => ({ useDeviceOrientation: mocked.useDeviceOrientation }))
@@ -14,7 +15,7 @@ describe('debug diagnostic display', () => {
       state: { status: 'idle', alpha: null, beta: null, gamma: null, absolute: false, compassHeading: null, message: '' },
       requestPermission: vi.fn(), diagnostics: { lastReceived: null, lastAccepted: null },
     })
-    const html = renderToStaticMarkup(<DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} />)
+    const html = renderToStaticMarkup(<NorthCalibrationProvider><DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} /></NorthCalibrationProvider>)
     for (const label of ['raw sensor', 'compass', 'cameraForward before correction', 'cameraForward after correction', 'cameraForward after calibration', 'moon transform']) {
       expect(html).toContain(label)
     }
@@ -40,7 +41,7 @@ describe('debug diagnostic display', () => {
       requestPermission: vi.fn(),
       diagnostics: { lastAccepted: accepted, lastReceived: { ...accepted, absolute: false, eventType: 'deviceorientation', receivedAt: 2000 } },
     })
-    const html = renderToStaticMarkup(<DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} />)
+    const html = renderToStaticMarkup(<NorthCalibrationProvider><DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} /></NorthCalibrationProvider>)
     expect(html).toContain('使用中のイベント種別</dt><dd>deviceorientationabsolute')
     expect(html).toContain('最終受信イベント種別</dt><dd>deviceorientation')
     expect(html).toContain('既存条件により無視')
@@ -60,7 +61,7 @@ describe('debug diagnostic display', () => {
       state: { ...accepted, status: 'active', compassHeading: null, message: '' },
       requestPermission: vi.fn(), diagnostics: { lastAccepted: accepted, lastReceived: accepted },
     })
-    const html = renderToStaticMarkup(<DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} />)
+    const html = renderToStaticMarkup(<NorthCalibrationProvider><DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} /></NorthCalibrationProvider>)
     expect(html).toContain('コンパス方位を取得できません')
     expect(html).toMatch(/disabled=""[^>]*>北基準を合わせる/)
   })
