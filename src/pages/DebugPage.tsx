@@ -453,7 +453,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
           </dl>
           <p className="debug-diagnostic-note">headingError = correctedHeading − webkitCompassHeading（最短角度差）。未保存・姿勢未取得・手動テスト中はnullです。カメラが真上・真下の場合も方位はnullです。</p>
         </section>
-        <SunDebugCard state={state} correctedHeading={calibratedCamera.correctedHeading} />
+        <SunDebugCard state={state} correctedHeading={calibratedCamera.correctedHeading} cameraForwardCorrected={calibratedCamera.cameraForwardCorrected} />
         <section className="debug-panel debug-results" aria-labelledby="results-title">
           <h2 id="results-title">moon transform</h2>
           <p className="search-status">world → transpose(rotation) → device</p>

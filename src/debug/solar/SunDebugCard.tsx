@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import type { LocationState } from '../../types/geolocation'
 import { compareHeadingToBearing } from '../../lib/geographicBearing'
 import { getSunPosition } from './sunPosition'
+import { SunPreview } from './SunPreview'
+import type { Vector3 } from '../../types/vector3'
 
 const UPDATE_INTERVAL_MS = 1000
 
 // DebugPageからだけ読み込む。削除時はこのフォルダと親のimport・JSXを外す。
-export function SunDebugCard({ state, correctedHeading }: { state: LocationState; correctedHeading: number | null }) {
+export function SunDebugCard({ state, correctedHeading, cameraForwardCorrected = null }: { state: LocationState; correctedHeading: number | null; cameraForwardCorrected?: Vector3 | null }) {
   const [date, setDate] = useState(() => new Date())
   useEffect(() => {
     const update = () => setDate(new Date())
@@ -50,6 +52,7 @@ export function SunDebugCard({ state, correctedHeading }: { state: LocationState
         誤差は方位だけの比較です。正なら左へ、負なら右へ調整します。
         既存の北補正が磁北基準の場合、真北との差も誤差に含まれます。
       </p>
+      <SunPreview sun={sun} cameraForwardCorrected={cameraForwardCorrected} />
     </section>
   )
 }
