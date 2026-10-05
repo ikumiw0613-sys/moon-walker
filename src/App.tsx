@@ -3,6 +3,11 @@ import { HomePage } from './pages/HomePage'
 import { DebugPage } from './pages/DebugPage'
 import { useGeolocation } from './hooks/useGeolocation'
 import { NorthCalibrationProvider } from './contexts/NorthCalibrationContext'
+import { CalibrationPage } from './pages/CalibrationPage'
+import { ARPage } from './pages/ARPage'
+import { MoonInfoPage } from './pages/MoonInfoPage'
+import { SettingsPage } from './pages/SettingsPage'
+import type { AppPath } from './components/AppNavigation'
 
 function App() {
   const location = useGeolocation()
@@ -16,9 +21,22 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
+  function navigate(path: AppPath) {
+    if (window.location.pathname !== path) window.history.pushState(null, '', path)
+    setPathname(path)
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }
+
+  const route = pathname.replace(/\/$/, '') || '/'
+  const page = route === '/calibration' ? <CalibrationPage navigate={navigate} />
+    : route === '/ar' ? <ARPage navigate={navigate} {...location} />
+      : route === '/moon-info' ? <MoonInfoPage navigate={navigate} />
+        : route === '/settings' ? <SettingsPage navigate={navigate} />
+          : <HomePage navigate={navigate} />
+
   return (
     <NorthCalibrationProvider>
-      {isDebugPage ? <DebugPage {...location} /> : <HomePage {...location} />}
+      {isDebugPage ? <DebugPage {...location} /> : page}
     </NorthCalibrationProvider>
   )
 }
