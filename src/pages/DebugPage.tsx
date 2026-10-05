@@ -11,6 +11,8 @@ import { getMoonNavigation } from '../lib/moonNavigation'
 import { getDeviceView, normalizeAzimuth } from '../lib/deviceView'
 import { deviceOrientationToMatrix, moonDirectionToVector, multiplyMatrixVector, transposeMatrix3 } from '../lib/vector3'
 import { getOrientationDiagnostics } from './deviceOrientationDiagnostics'
+import { captureNorthCalibration, getHorizontalCalibration, HORIZONTAL_CALIBRATION_THRESHOLD } from '../lib/horizontalCalibration'
+import type { NorthCalibration } from '../lib/horizontalCalibration'
 import './Page.css'
 import './DebugPage.css'
 
@@ -82,6 +84,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
   const [viewAltitude, setViewAltitude] = useState(0)
   const [sensorMode, setSensorMode] = useState(false)
   const [northOffset, setNorthOffset] = useState<number | null>(null)
+  const [northCalibration, setNorthCalibration] = useState<NorthCalibration | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const dragPosition = useRef<{ pointerId: number; x: number; y: number } | null>(null)
   const [timeMode, setTimeMode] = useState<'fixed' | 'current'>('fixed')
@@ -162,6 +165,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
     : null
   const cameraDiagnostics = getOrientationDiagnostics(orientation, northOffset)
   const rawEvent = diagnostics.lastAccepted
+  const horizontalCalibration = getHorizontalCalibration(manualOrientationEnabled ? null : rawEvent)
 
   function faceMoon(): void {
     if (!moonPosition) return
@@ -356,6 +360,36 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
             <div><dt>screen.orientation.angle (°)</dt><dd>{diagnosticValue(screenAngle)}</dd></div>
           </dl>
           {manualOrientationEnabled && <p className="debug-diagnostic-note">手動テストON: 以下のcameraForwardとmoon transformは手動入力から計算しています。</p>}
+        </section>
+        <section className="debug-panel" aria-labelledby="calibration-title">
+          <h2 id="calibration-title">水平キャリブレーション</h2>
+          <p className="search-status">スマホを水平に近づけてください。背面カメラを地平線へ向けてください。</p>
+          <p className="search-status" role="status">
+            {manualOrientationEnabled ? '手動テストをOFFにしてください'
+              : !horizontalCalibration.isHorizontal ? 'もう少し水平にしてください'
+                : horizontalCalibration.compassHeading === null ? 'コンパス方位を取得できません'
+                  : 'キャリブレーション可能'}
+          </p>
+          <button className="find-moon-button" type="button" disabled={!horizontalCalibration.canCalibrate}
+            onClick={() => {
+              const captured = captureNorthCalibration(horizontalCalibration, Date.now())
+              if (captured) setNorthCalibration(captured)
+            }}>
+            北基準を合わせる
+          </button>
+          <VectorReadout label="cameraForwardRaw" vector={horizontalCalibration.cameraForwardRaw} />
+          <dl className="debug-data">
+            <div><dt>horizontalLength</dt><dd>{diagnosticValue(horizontalCalibration.horizontalLength)}</dd></div>
+            <div><dt>水平判定の閾値</dt><dd>{HORIZONTAL_CALIBRATION_THRESHOLD}</dd></div>
+            <div><dt>rawHeading (°)</dt><dd>{diagnosticValue(horizontalCalibration.rawHeading)}</dd></div>
+            <div><dt>webkitCompassHeading (°)</dt><dd>{diagnosticValue(horizontalCalibration.compassHeading)}</dd></div>
+            <div><dt>northCorrection 候補 (°)</dt><dd>{diagnosticValue(horizontalCalibration.northCorrection)}</dd></div>
+            <div><dt>northCorrection 保存値 (°)</dt><dd>{diagnosticValue(northCalibration?.northCorrection ?? null)}</dd></div>
+            <div><dt>calibrated</dt><dd>{String(northCalibration !== null)}</dd></div>
+            <div><dt>calibration時刻</dt><dd>{northCalibration
+              ? new Date(northCalibration.calibratedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : 'null'}</dd></div>
+          </dl>
+          <p className="debug-diagnostic-note">保存値はボタンを押した時点の補正角です。表示やmoonInDeviceにはまだ適用しません。</p>
         </section>
         <section className="debug-panel" aria-labelledby="compass-title">
           <h2 id="compass-title">compass</h2>

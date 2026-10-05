@@ -21,6 +21,9 @@ describe('debug diagnostic display', () => {
     expect(html).toContain('null (未受信)')
     expect(html).toContain('screen.orientation.angle (°)</dt><dd>unavailable')
     expect(html).toContain('moonInDeviceのベクトル長</dt><dd>null')
+    expect(html).toContain('もう少し水平にしてください')
+    expect(html).toContain('calibrated</dt><dd>false')
+    expect(html).toMatch(/disabled=""[^>]*>北基準を合わせる/)
   })
 
   it('採用イベントと無視された最終イベントを区別し、無効な精度も隠さない', () => {
@@ -42,5 +45,21 @@ describe('debug diagnostic display', () => {
     expect(html).toContain('webkitCompassAccuracy (°)</dt><dd>-1.0000')
     expect(html).toContain('コンパス精度が負の値')
     expect(html).toContain('azimuth (°)</dt><dd>270.0000')
+    expect(html).toContain('キャリブレーション可能')
+    expect(html).toContain('northCorrection 候補 (°)</dt><dd>-132.0000')
+    expect(html).toContain('northCorrection 保存値 (°)</dt><dd>null')
+    expect(html).toContain('cameraForwardRaw')
+  })
+
+  it('水平でもwebkitCompassHeadingがなければボタンを無効にする', () => {
+    vi.stubGlobal('window', { screen: {} })
+    const accepted = { alpha: 0, beta: 90, gamma: 0, absolute: true, receivedAt: 1000, eventType: 'deviceorientationabsolute' }
+    mocked.useDeviceOrientation.mockReturnValue({
+      state: { ...accepted, status: 'active', compassHeading: null, message: '' },
+      requestPermission: vi.fn(), diagnostics: { lastAccepted: accepted, lastReceived: accepted },
+    })
+    const html = renderToStaticMarkup(<DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} />)
+    expect(html).toContain('コンパス方位を取得できません')
+    expect(html).toMatch(/disabled=""[^>]*>北基準を合わせる/)
   })
 })
