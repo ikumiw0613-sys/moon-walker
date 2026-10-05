@@ -124,3 +124,15 @@ export function transposeMatrix3(
   ]
 }
 
+
+export function applyNorthCorrection(
+  deviceRotation: Matrix3,
+  northCorrection: number
+): Matrix3 {
+  const correction = rotationZ(toRadians(northCorrection))
+
+  return multiplyMatrix3(
+    correction,
+    deviceRotation
+  )
+}

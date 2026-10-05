@@ -11,7 +11,7 @@ import { getMoonNavigation } from '../lib/moonNavigation'
 import { getDeviceView, normalizeAzimuth } from '../lib/deviceView'
 import { deviceOrientationToMatrix, moonDirectionToVector, multiplyMatrixVector, transposeMatrix3 } from '../lib/vector3'
 import { getOrientationDiagnostics } from './deviceOrientationDiagnostics'
-import { captureNorthCalibration, getHorizontalCalibration, HORIZONTAL_CALIBRATION_THRESHOLD } from '../lib/horizontalCalibration'
+import { captureNorthCalibration, getCalibratedCameraDiagnostics, getHorizontalCalibration, HORIZONTAL_CALIBRATION_THRESHOLD } from '../lib/horizontalCalibration'
 import type { NorthCalibration } from '../lib/horizontalCalibration'
 import './Page.css'
 import './DebugPage.css'
@@ -166,6 +166,19 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
   const cameraDiagnostics = getOrientationDiagnostics(orientation, northOffset)
   const rawEvent = diagnostics.lastAccepted
   const horizontalCalibration = getHorizontalCalibration(manualOrientationEnabled ? null : rawEvent)
+
+  const calibratedCamera = getCalibratedCameraDiagnostics(
+    manualOrientationEnabled ? null : transform.deviceRotation,
+    northCalibration?.northCorrection ?? null,
+    horizontalCalibration.compassHeading,
+  )
+
+  function handleNorthCalibration(): void {
+    // Timestamp is captured only on button click, never during render.
+    // oxlint-disable-next-line react/purity
+    const captured = captureNorthCalibration(horizontalCalibration, Date.now())
+    if (captured) setNorthCalibration(captured)
+  }
 
   function faceMoon(): void {
     if (!moonPosition) return
@@ -371,10 +384,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
                   : 'キャリブレーション可能'}
           </p>
           <button className="find-moon-button" type="button" disabled={!horizontalCalibration.canCalibrate}
-            onClick={() => {
-              const captured = captureNorthCalibration(horizontalCalibration, Date.now())
-              if (captured) setNorthCalibration(captured)
-            }}>
+            onClick={handleNorthCalibration}>
             北基準を合わせる
           </button>
           <VectorReadout label="cameraForwardRaw" vector={horizontalCalibration.cameraForwardRaw} />
@@ -430,6 +440,17 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
             <div><dt>altitude (°)</dt><dd>{diagnosticValue(cameraDiagnostics.afterDirection?.altitude ?? null)}</dd></div>
           </dl>
           {!cameraDiagnostics.after && <p className="search-status">null: 向きの未取得、方位の未確定、または北基準なし。</p>}
+        </section>
+        <section className="debug-panel" aria-labelledby="after-calibration-title">
+          <h2 id="after-calibration-title">cameraForward after calibration</h2>
+          <p className="search-status">保存したnorthCorrectionで Rz(northCorrection) × deviceRotation を計算する診断表示です。</p>
+          <VectorReadout label="cameraForwardCorrected / ENU" vector={calibratedCamera.cameraForwardCorrected} />
+          <dl className="debug-data">
+            <div><dt>correctedHeading (°)</dt><dd>{diagnosticValue(calibratedCamera.correctedHeading)}</dd></div>
+            <div><dt>webkitCompassHeading (°)</dt><dd>{diagnosticValue(horizontalCalibration.compassHeading)}</dd></div>
+            <div><dt>headingError (°)</dt><dd>{diagnosticValue(calibratedCamera.headingError)}</dd></div>
+          </dl>
+          <p className="debug-diagnostic-note">headingError = correctedHeading − webkitCompassHeading（最短角度差）。未保存・姿勢未取得・手動テスト中はnullです。カメラが真上・真下の場合も方位はnullです。</p>
         </section>
         <section className="debug-panel debug-results" aria-labelledby="results-title">
           <h2 id="results-title">moon transform</h2>

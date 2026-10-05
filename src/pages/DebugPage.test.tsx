@@ -15,7 +15,7 @@ describe('debug diagnostic display', () => {
       requestPermission: vi.fn(), diagnostics: { lastReceived: null, lastAccepted: null },
     })
     const html = renderToStaticMarkup(<DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} />)
-    for (const label of ['raw sensor', 'compass', 'cameraForward before correction', 'cameraForward after correction', 'moon transform']) {
+    for (const label of ['raw sensor', 'compass', 'cameraForward before correction', 'cameraForward after correction', 'cameraForward after calibration', 'moon transform']) {
       expect(html).toContain(label)
     }
     expect(html).toContain('null (未受信)')
@@ -23,6 +23,8 @@ describe('debug diagnostic display', () => {
     expect(html).toContain('moonInDeviceのベクトル長</dt><dd>null')
     expect(html).toContain('もう少し水平にしてください')
     expect(html).toContain('calibrated</dt><dd>false')
+    expect(html).toContain('correctedHeading (°)</dt><dd>null')
+    expect(html).toContain('headingError (°)</dt><dd>null')
     expect(html).toMatch(/disabled=""[^>]*>北基準を合わせる/)
   })
 
