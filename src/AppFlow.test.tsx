@@ -37,12 +37,16 @@ async function clickLink(path: string) {
 }
 
 describe('frontend prototype navigation', () => {
-  it('ホーム→準備→ARを、現在地取得を要求せずに移動できる', async () => {
+  it('準備中はARへ進めず、ARの直接アクセスでも北基準の準備を案内する', async () => {
     expect(container.textContent).toContain('月を探す')
     await clickLink('/calibration')
     expect(window.location.pathname).toBe('/calibration')
-    expect(container.textContent).toContain('スマホを水平に')
-    await clickLink('/ar')
+    expect(container.textContent).toContain('向きセンサー')
+    expect(container.querySelector('a[href="/ar"]')).toBeNull()
+    await act(async () => {
+      window.history.replaceState(null, '', '/ar')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
     expect(window.location.pathname).toBe('/ar')
     expect(container.textContent).toContain('月まで')
     expect(container.textContent).toContain('北基準の準備が必要です')
