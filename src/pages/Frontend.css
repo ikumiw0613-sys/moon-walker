@@ -68,10 +68,20 @@
 .mw-ar-target { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); width: 108px; height: 108px; border: 1px solid #e7ead180; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 50px #e5ebdb08; }
 .mw-target-dot { width: 4px; height: 4px; border-radius: 50%; background: #edeedf; }
 .mw-target-line { position: absolute; inset: -9px; border: 1px solid #e7ead115; border-radius: 50%; }
-.mw-ar-guidance { margin: auto auto 80px; text-align: center; padding-top: 58svh; }
-.mw-ar-arrow { color: #d2d8c6; font-size: 22px; }
-.mw-ar-guidance p { font-size: 15px; letter-spacing: 2px; margin: 10px 0 14px; }
-.mw-ar-distance { color: #91a0ae; font-size: 12px; }.mw-ar-distance strong { font-weight: 400; color: #e5e8dd; }
+.mw-ar-guide { width: 100%; max-width: 440px; margin: auto auto 32px; text-align: center; padding-top: max(180px, calc(50svh - 24px)); }
+.mw-ar-guide:empty { display: none; }
+.mw-ar-arrow { display: block; color: #d2d8c6; font-size: 28px; line-height: 1.2; }
+.mw-ar-message { font-size: 15px; line-height: 1.8; letter-spacing: 2px; margin: 10px 0 14px; }
+.mw-ar-distance { color: #91a0ae; font-size: 12px; }.mw-ar-distance strong { margin-left: 8px; font-weight: 400; color: #e5e8dd; font-variant-numeric: tabular-nums; }
+.mw-ar-state { width: 100%; max-width: 320px; margin: auto; padding: 24px 0; text-align: center; }
+.mw-ar-state p { margin: 0; color: var(--mw-muted); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+.mw-ar-state .mw-primary { justify-content: center; margin-top: 20px; border: 0; font-family: inherit; cursor: pointer; }
+.mw-ar-state .mw-primary:focus-visible { outline: 2px solid #dcd3ae; outline-offset: 6px; }
+.mw-ar-guide:not(:empty) + .mw-ar-state { margin: 0 auto; padding: 0 0 24px; }
+.mw-ar-below-horizon { max-width: 440px; }
+.mw-ar-below-horizon h1 { font-size: clamp(28px, 8vw, 40px); line-height: 1.6; }
+.mw-ar-below-horizon p { margin-top: 20px; font-size: 14px; }
+.mw-ar-below-horizon .mw-primary { max-width: 320px; margin: 32px auto 0; }
 .mw-ar-footnote { margin: 0; text-align: center; color: #6b778c; font-size: 10px; }
 .mw-ar-controls { max-width: 320px; margin: 24px auto 0; }
 .mw-ar-controls button { cursor: pointer; font-family: inherit; }
@@ -86,11 +96,12 @@
 .mw-ar-ring {
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: 45%;
   width: 120px;
   height: 120px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .mw-ar-ring--near {
@@ -102,9 +113,8 @@
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.35);
 }
 
-.mw-ar-ring--centered {
-  animation: moonFound 1.4s ease-in-out infinite;
-}
+.mw-ar-ring--centered { animation: moonFound 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .mw-ar-ring--centered { animation: none; } }
 
 @keyframes moonFound {
   0%, 100% {
