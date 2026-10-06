@@ -18,6 +18,12 @@ type OrientationEventConstructor = typeof DeviceOrientationEvent & {
 
 const NO_DATA_TIMEOUT_MS = 5000
 const EMPTY_VALUES = { alpha: null, beta: null, gamma: null, absolute: false, compassHeading: null }
+let permissionGranted = false
+
+function canStartWithoutPermission(): boolean {
+  return typeof window !== 'undefined' && getInitialState().status === 'idle'
+    && (permissionGranted || typeof (window.DeviceOrientationEvent as OrientationEventConstructor).requestPermission !== 'function')
+}
 
 export type RawOrientationEvent = {
   alpha: number | null
@@ -40,9 +46,10 @@ function getInitialState(): OrientationState {
   return { ...EMPTY_VALUES, status: 'idle', message: 'ボタンを押すと向きセンサーの確認を開始します。' }
 }
 
-export function useDeviceOrientation() {
-  const [state, setState] = useState<OrientationState>(getInitialState)
-  const [enabled, setEnabled] = useState(false)
+export function useDeviceOrientation({ autoStart = false }: { autoStart?: boolean } = {}) {
+  const [state, setState] = useState<OrientationState>(() => autoStart && canStartWithoutPermission()
+    ? { ...EMPTY_VALUES, status: 'waiting', message: 'センサー値を待っています…' } : getInitialState())
+  const [enabled, setEnabled] = useState(() => autoStart && canStartWithoutPermission())
   const [diagnostics, setDiagnostics] = useState<{
     lastReceived: RawOrientationEvent | null
     lastAccepted: RawOrientationEvent | null
@@ -119,13 +126,14 @@ export function useDeviceOrientation() {
     try {
       const orientationEvent = window.DeviceOrientationEvent as OrientationEventConstructor
       // iPhoneの許可要求は、ボタン操作から直接呼び出す。
-      if (typeof orientationEvent.requestPermission === 'function') {
+      if (!permissionGranted && typeof orientationEvent.requestPermission === 'function') {
         const permission = await orientationEvent.requestPermission(true)
         if (!mounted.current) return
         if (permission !== 'granted') {
           setState({ ...EMPTY_VALUES, status: 'denied', message: '向きセンサーの利用が許可されませんでした。' })
           return
         }
+        permissionGranted = true
       }
       if (!mounted.current) return
       setState({ ...EMPTY_VALUES, status: 'waiting', message: 'センサー値を待っています…' })

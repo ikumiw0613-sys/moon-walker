@@ -11,7 +11,7 @@ import './Frontend.css'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & ReturnType<typeof useGeolocation>) {
   const { northCorrection, calibrated } = useNorthCalibration()
-  const { state: orientation, requestPermission } = useDeviceOrientation()
+  const { state: orientation, requestPermission } = useDeviceOrientation({ autoStart: true })
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 10000)
@@ -20,30 +20,111 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
   const moonPosition = useMemo(() => location.status === 'success'
     ? getMoonPosition(location.location.latitude, location.location.longitude, now) : null, [location, now])
   const ready = calibrated && northCorrection !== null && Number.isFinite(northCorrection)
+  const isBelowHorizon = moonPosition !== null && !moonPosition.isAboveHorizon
   const { alpha, beta, gamma } = orientation
-  const moonInDevice = ready && moonPosition && alpha !== null && beta !== null && gamma !== null
+  const moonInDevice = !isBelowHorizon && ready && moonPosition && alpha !== null && beta !== null && gamma !== null
     && [alpha, beta, gamma].every(Number.isFinite)
     ? getMoonInDevice(moonPosition, deviceOrientationToMatrix(alpha, beta, gamma), northCorrection) : null
   const guidance = moonInDevice ? getMoonDeviceNavigation(moonInDevice) : null
-  const message = !ready ? '北基準の準備が必要です'
-    : location.status !== 'success' ? '現在地を取得してください'
-      : guidance?.message ?? '向きセンサーの準備が必要です'
-  return <main className="mw-screen mw-ar" aria-label="月を探すプレビュー">
-    <header className="mw-top"><AppLink to="/" navigate={navigate} className="mw-ar-close"><span aria-hidden="true">×</span><span className="mw-sr-only">ホームへ戻る</span></AppLink><span className="mw-kicker">AR PREVIEW</span><AppLink to="/moon-info" navigate={navigate} className="mw-ar-info">月の情報</AppLink></header>
-    {guidance?.status === 'centered' && <div className="mw-ar-target" aria-hidden="true"><span className="mw-target-dot" /><span className="mw-target-line" /></div>}
-    <div className="mw-ar-guidance">
-      <span className="mw-ar-arrow" aria-hidden="true">{guidance?.arrow}</span><p role="status">{message}</p>
-      <span className="mw-ar-distance">月まで <strong>{guidance ? `${guidance.angleToMoon.toFixed(1)}°` : '—'}</strong></span>
-      {!ready && <AppLink to="/calibration" navigate={navigate} className="mw-secondary">北基準の準備へ →</AppLink>}
-      {ready && <div className="mw-ar-controls">
-        <button type="button" className="mw-primary" disabled={location.status === 'loading'} onClick={() => void requestLocation()}>{location.status === 'loading' ? '現在地を取得中…' : '現在地を取得'}</button>
-        {location.status === 'error' && <p>{location.message}</p>}
-        <button type="button" className="mw-secondary" disabled={['requesting', 'waiting', 'active'].includes(orientation.status)} onClick={() => void requestPermission()}>向きセンサーを有効にする</button>
-        {!guidance && <p>{orientation.message}</p>}
-      </div>}
-      {guidance && moonPosition && !moonPosition.isAboveHorizon && <p>現在、月は地平線の下にあります</p>}
-      {import.meta.env.DEV && moonInDevice && <small className="mw-ar-vector">moonInDevice: x={moonInDevice.x.toFixed(3)} / y={moonInDevice.y.toFixed(3)} / z={moonInDevice.z.toFixed(3)}</small>}
-    </div>
-    <p className="mw-ar-footnote">端末の背面を月の方向へ向けてください</p>
-  </main>
+  const isNear = guidance && guidance.angleToMoon <= 15
+  const isCentered = guidance?.status === 'centered'
+  return (
+    <main className="mw-screen mw-ar" aria-label="月を探す">
+      <header className="mw-top">
+        <AppLink
+          to="/"
+          navigate={navigate}
+          className="mw-ar-close"
+        >
+          <span aria-hidden="true">×</span>
+          <span className="mw-sr-only">ホームへ戻る</span>
+        </AppLink>
+
+        <AppLink
+          to="/moon-info"
+          navigate={navigate}
+          className="mw-ar-info"
+        >
+          月の情報
+        </AppLink>
+      </header>
+
+      <div className="mw-ar-guide">
+        {guidance && (
+          <>
+            <span className="mw-ar-arrow" aria-hidden="true">
+              {guidance.arrow}
+            </span>
+
+            <p className="mw-ar-message" role="status">
+              {guidance.message}
+            </p>
+
+            {isNear && (
+              <div
+                className={[
+                  'mw-ar-ring',
+                  isCentered ? 'mw-ar-ring--centered' : 'mw-ar-ring--near',
+                ].join(' ')}
+                aria-hidden="true"
+              />
+            )}
+
+            <span className="mw-ar-distance">
+              月まで
+              <strong>
+                {guidance.angleToMoon.toFixed(1)}°
+              </strong>
+            </span>
+          </>
+        )}
+      </div>
+
+      {isBelowHorizon && (
+        <section className="mw-ar-state mw-ar-below-horizon" role="status" aria-labelledby="below-horizon-title">
+          <h1 id="below-horizon-title">月は地平線の<br />下にあります</h1>
+          <p>今は空に月を見ることができません。</p>
+          <AppLink to="/moon-info" navigate={navigate} className="mw-primary">月の情報を見る</AppLink>
+        </section>
+      )}
+
+      {!isBelowHorizon && ready && location.status === 'success' && !guidance && (
+        <div className="mw-ar-state">
+          <p role="status">{orientation.message}</p>
+          {['idle', 'denied', 'error'].includes(orientation.status) && (
+            <button type="button" className="mw-primary" onClick={() => void requestPermission()}>
+              向きセンサーを許可する
+            </button>
+          )}
+        </div>
+      )}
+
+      {!isBelowHorizon && !ready && (
+        <div className="mw-ar-state">
+          <p>月を探す準備ができていません</p>
+          <AppLink
+            to="/calibration"
+            navigate={navigate}
+            className="mw-primary"
+          >
+            準備する
+          </AppLink>
+        </div>
+      )}
+
+      {ready && location.status !== 'success' && (
+        <div className="mw-ar-state">
+          <p>現在地が必要です</p>
+          <button
+            type="button"
+            className="mw-primary"
+            onClick={() => void requestLocation()}
+          >
+            現在地を取得
+          </button>
+        </div>
+      )}
+
+    </main>
+  )
 }
