@@ -82,3 +82,35 @@
 @media (min-width: 700px) { .mw-screen { padding: 32px 48px 24px; }.mw-home-content { padding: 48px 0; }.mw-orbit { width: 240px; height: 240px; }.mw-detail-content { padding-top: 64px; } }
 @media (max-width: 360px) { .mw-screen { padding-left: 20px; padding-right: 20px; }.mw-kicker { font-size: 8px; letter-spacing: 1px; }.mw-orbit { width: 180px; height: 180px; margin-bottom: 28px; }.mw-moon-facts dd { font-size: 21px; } }
 
+
+.mw-ar-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.mw-ar-ring--near {
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.mw-ar-ring--centered {
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.35);
+}
+
+.mw-ar-ring--centered {
+  animation: moonFound 1.4s ease-in-out infinite;
+}
+
+@keyframes moonFound {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
