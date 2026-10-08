@@ -1,6 +1,5 @@
 import { normalizeAzimuth } from './deviceView'
-import { applyNorthCorrection, deviceOrientationToMatrix, multiplyMatrixVector } from './vector3'
-import type { Matrix3 } from '../types/vector3'
+import { deviceOrientationToMatrix, multiplyMatrixVector } from './vector3'
 
 // Camera direction must be within about 26° of the horizon.
 export const HORIZONTAL_CALIBRATION_THRESHOLD = 0.9
@@ -13,23 +12,6 @@ type CalibrationInput = {
 }
 
 export type NorthCalibration = { northCorrection: number; calibratedAt: number }
-
-// Diagnostic only: never feed this rotation into the Moon transform.
-export function getCalibratedCameraDiagnostics(
-  deviceRotation: Matrix3 | null, northCorrection: number | null, compassHeading: number | null,
-) {
-  const correctedRotation = deviceRotation && deviceRotation.flat().every(Number.isFinite)
-    && northCorrection !== null && Number.isFinite(northCorrection)
-    ? applyNorthCorrection(deviceRotation, northCorrection) : null
-  const cameraForwardCorrected = correctedRotation
-    ? multiplyMatrixVector(correctedRotation, { x: 0, y: 0, z: -1 }) : null
-  // Heading is undefined when the camera points straight up or down.
-  const correctedHeading = cameraForwardCorrected && Math.hypot(cameraForwardCorrected.x, cameraForwardCorrected.y) >= 1e-6
-    ? normalizeAzimuth(Math.atan2(cameraForwardCorrected.x, cameraForwardCorrected.y) * 180 / Math.PI) : null
-  const headingError = correctedHeading !== null && compassHeading !== null && Number.isFinite(compassHeading)
-    ? normalizeAzimuth(correctedHeading - compassHeading + 180) - 180 : null
-  return { correctedRotation, cameraForwardCorrected, correctedHeading, headingError }
-}
 
 export function getHorizontalCalibration(input: CalibrationInput | null) {
   const { alpha = null, beta = null, gamma = null } = input ?? {}

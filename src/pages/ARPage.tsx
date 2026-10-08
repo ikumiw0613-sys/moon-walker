@@ -4,8 +4,7 @@ import type { useGeolocation } from '../hooks/useGeolocation'
 import { useDeviceOrientation } from '../hooks/useDeviceOrientation'
 import { useNorthCalibration } from '../hooks/useNorthCalibration'
 import { getMoonPosition } from '../lib/astronomy'
-import { deviceOrientationToMatrix } from '../lib/vector3'
-import { getMoonInDevice, getMoonDeviceNavigation } from '../lib/moonDeviceNavigation'
+import { getMoonDeviceState, getMoonDeviceDiagnosticAttributes } from '../lib/moonDeviceNavigation'
 import type { Navigate } from '../components/AppNavigation'
 import './Frontend.css'
 
@@ -21,15 +20,12 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
     ? getMoonPosition(location.location.latitude, location.location.longitude, now) : null, [location, now])
   const ready = calibrated && northCorrection !== null && Number.isFinite(northCorrection)
   const isBelowHorizon = moonPosition !== null && !moonPosition.isAboveHorizon
-  const { alpha, beta, gamma } = orientation
-  const moonInDevice = !isBelowHorizon && ready && moonPosition && alpha !== null && beta !== null && gamma !== null
-    && [alpha, beta, gamma].every(Number.isFinite)
-    ? getMoonInDevice(moonPosition, deviceOrientationToMatrix(alpha, beta, gamma), northCorrection) : null
-  const guidance = moonInDevice ? getMoonDeviceNavigation(moonInDevice) : null
+  const deviceState = getMoonDeviceState(orientation, ready ? northCorrection : null, moonPosition, orientation.compassHeading)
+  const guidance = !isBelowHorizon ? deviceState.navigation : null
   const isNear = guidance && guidance.angleToMoon <= 15
   const isCentered = guidance?.status === 'centered'
   return (
-    <main className="mw-screen mw-ar" aria-label="月を探す">
+    <main className="mw-screen mw-ar" aria-label="月を探す" {...getMoonDeviceDiagnosticAttributes(deviceState, now)}>
       <header className="mw-top">
         <AppLink
           to="/"

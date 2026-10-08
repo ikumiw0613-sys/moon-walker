@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import type { PointerEvent } from 'react'
 import { convertMoonToScreen } from '../../lib/coordinates'
 import { normalizeAzimuth } from '../../lib/deviceView'
+import { getCameraView } from '../../lib/northReferencedDevice'
 import { getMoonNavigation } from '../../lib/moonNavigation'
 import type { Vector3 } from '../../types/vector3'
 import type { SunPosition } from './sunPosition'
@@ -11,11 +12,7 @@ export function SunPreview({ sun, cameraForwardCorrected }: { sun: SunPosition |
   const [manualView, setManualView] = useState({ azimuth: 0, altitude: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const drag = useRef<{ id: number; x: number; y: number } | null>(null)
-  const sensorView = cameraForwardCorrected && Math.hypot(cameraForwardCorrected.x, cameraForwardCorrected.y) > 1e-6
-    ? {
-      azimuth: normalizeAzimuth(Math.atan2(cameraForwardCorrected.x, cameraForwardCorrected.y) * 180 / Math.PI),
-      altitude: Math.asin(Math.max(-1, Math.min(1, cameraForwardCorrected.z))) * 180 / Math.PI,
-    } : null
+  const sensorView = getCameraView(cameraForwardCorrected)
   const view = useSensor ? sensorView : manualView
   const position = sun && view ? convertMoonToScreen(sun.azimuth, sun.altitude, view.azimuth, view.altitude) : null
   const navigation = sun && view ? getMoonNavigation(sun, view).message.replaceAll('月', '太陽') : null

@@ -8,10 +8,8 @@ import { convertMoonToScreen } from '../lib/coordinates'
 import type { ScreenPosition } from '../lib/coordinates'
 import type { Matrix3, Vector3 } from '../types/vector3'
 import { getMoonNavigation } from '../lib/moonNavigation'
-import { getDeviceView, normalizeAzimuth } from '../lib/deviceView'
-import { deviceOrientationToMatrix, moonDirectionToVector, multiplyMatrixVector, transposeMatrix3 } from '../lib/vector3'
-import { getOrientationDiagnostics } from './deviceOrientationDiagnostics'
-import { captureNorthCalibration, getCalibratedCameraDiagnostics, getHorizontalCalibration, HORIZONTAL_CALIBRATION_THRESHOLD } from '../lib/horizontalCalibration'
+import { getMoonDeviceState, getMoonDeviceDiagnosticAttributes } from '../lib/moonDeviceNavigation'
+import { captureNorthCalibration, getHorizontalCalibration, HORIZONTAL_CALIBRATION_THRESHOLD } from '../lib/horizontalCalibration'
 import { useNorthCalibration } from '../hooks/useNorthCalibration'
 import { SunDebugCard } from '../debug/solar/SunDebugCard'
 import './Page.css'
@@ -84,7 +82,6 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
   const [viewAzimuth, setViewAzimuth] = useState(0)
   const [viewAltitude, setViewAltitude] = useState(0)
   const [sensorMode, setSensorMode] = useState(false)
-  const [northOffset, setNorthOffset] = useState<number | null>(null)
   const { northCorrection, calibrated, calibratedAt, saveNorthCalibration } = useNorthCalibration()
   const [isDragging, setIsDragging] = useState(false)
   const dragPosition = useRef<{ pointerId: number; x: number; y: number } | null>(null)
@@ -130,20 +127,9 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
     return getMoonPosition(latitude, longitude, observationDate)
   }, [state, observationDate])
 
-  const { alpha, beta, gamma } = orientation
-
-  const transform = useMemo(() => {
-    const moonWorld = moonPosition ? moonDirectionToVector(moonPosition.azimuth, moonPosition.altitude) : null
-    const deviceRotation = alpha !== null && beta !== null && gamma !== null
-      ? deviceOrientationToMatrix(alpha, beta, gamma) : null
-    const inverseRotation = deviceRotation ? transposeMatrix3(deviceRotation) : null
-    const moonInDevice = inverseRotation && moonWorld ? multiplyMatrixVector(inverseRotation, moonWorld) : null
-    return { moonWorld, deviceRotation, inverseRotation, moonInDevice }
-  }, [moonPosition, alpha, beta, gamma])
-
-  useEffect(() => {
-    if (transform.moonInDevice) console.log('moonInDevice', transform.moonInDevice)
-  }, [transform])
+  const transform = getMoonDeviceState(
+    orientation, calibrated ? northCorrection : null, moonPosition, orientation.compassHeading,
+  )
 
   // 位置取得・時刻モード変更時だけ視点を合わせ、自動更新中のドラッグは維持する。
   if (moonPosition && (state !== assistedInput?.state || timeMode !== assistedInput?.timeMode)) {
@@ -152,27 +138,25 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
     setViewAltitude(moonPosition.altitude)
   }
 
-  const deviceView = orientation.status === 'active' ? getDeviceView(orientation) : null
-  const hasCompass = orientation.absolute || orientation.compassHeading !== null
-  const sensorView = deviceView && (hasCompass || northOffset !== null)
-    ? { ...deviceView, azimuth: normalizeAzimuth(deviceView.azimuth + (hasCompass ? 0 : northOffset ?? 0)) }
-    : null
+  const hasCompass = !manualOrientationEnabled && (orientation.absolute || orientation.compassHeading !== null)
+  const sensorView = transform.correctedView
   const currentView = sensorMode ? sensorView : { azimuth: viewAzimuth, altitude: viewAltitude }
   const screenPosition: ScreenPosition | null = moonPosition && currentView
     ? convertMoonToScreen(moonPosition.azimuth, moonPosition.altitude, currentView.azimuth, currentView.altitude)
     : null
-  const navigation = moonPosition && currentView
-    ? getMoonNavigation(moonPosition, currentView)
-    : null
-  const cameraDiagnostics = getOrientationDiagnostics(orientation, northOffset)
+  const navigation = sensorMode
+    ? moonPosition && !moonPosition.isAboveHorizon
+      ? { message: '現在、月は地平線の下にあります' } : transform.navigation
+    : moonPosition && currentView ? getMoonNavigation(moonPosition, currentView) : null
   const rawEvent = diagnostics.lastAccepted
   const horizontalCalibration = getHorizontalCalibration(manualOrientationEnabled ? null : rawEvent)
 
-  const calibratedCamera = getCalibratedCameraDiagnostics(
-    manualOrientationEnabled ? null : transform.deviceRotation,
-    northCorrection,
-    horizontalCalibration.compassHeading,
-  )
+  function handleManualNorthCalibration(): void {
+    const sample = getHorizontalCalibration({ ...orientation, webkitCompassHeading: 0 })
+    // oxlint-disable-next-line react/purity
+    const captured = captureNorthCalibration(sample, Date.now())
+    if (captured) saveNorthCalibration(captured)
+  }
 
   function handleNorthCalibration(): void {
     // Timestamp is captured only on button click, never during render.
@@ -230,7 +214,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
   }
 
   return (
-    <main className="debug-screen">
+    <main className="debug-screen" {...getMoonDeviceDiagnosticAttributes(transform, observationDate)}>
       <header className="debug-header">
         <div><p className="debug-eyebrow">MOON-WALKER / DEBUG</p>
           <h1>座標変換デバッグ</h1>
@@ -302,7 +286,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
                   />
                 </label>
               ))}
-              <p className="search-status">現在地を取得すると、向きの変更に合わせてコンソールにmoonInDeviceを出力します。</p>
+              <p className="search-status">北補正を保存すると、向きの変更に合わせて共通計算のmoonInDeviceを表示します。</p>
             </div>
           )}
           <button
@@ -338,9 +322,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
               {!hasCompass && (
                 <>
                   <p className="search-status">北基準の方位を取得できません。端末の裏側を北へ向け、基準を合わせてください。</p>
-                  <button className="find-moon-button" type="button" disabled={!deviceView} onClick={() => {
-                    if (deviceView) setNorthOffset(-deviceView.azimuth)
-                  }}>
+                  <button className="find-moon-button" type="button" disabled={!getHorizontalCalibration({ ...orientation, webkitCompassHeading: 0 }).canCalibrate} onClick={handleManualNorthCalibration}>
                     この方向を北にする
                   </button>
                 </>
@@ -400,7 +382,7 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
             <div><dt>calibration時刻</dt><dd>{calibratedAt !== null
               ? new Date(calibratedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : 'null'}</dd></div>
           </dl>
-          <p className="debug-diagnostic-note">保存値はボタンを押した時点の補正角です。表示やmoonInDeviceにはまだ適用しません。</p>
+          <p className="debug-diagnostic-note">保存値はボタンを押した時点の補正角です。太陽・月の表示とARに共通で適用します。</p>
         </section>
         <section className="debug-panel" aria-labelledby="compass-title">
           <h2 id="compass-title">compass</h2>
@@ -408,17 +390,10 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
             <div><dt>webkitCompassHeading (°)</dt><dd>{rawEvent ? diagnosticValue(rawEvent.webkitCompassHeading) : 'null (未受信)'}</dd></div>
             <div><dt>webkitCompassAccuracy (°)</dt><dd>{rawEvent ? diagnosticValue(rawEvent.webkitCompassAccuracy) : 'null (未受信)'}</dd></div>
             <div><dt>採用されたheading (°)</dt><dd>{diagnosticValue(sensorOrientation.compassHeading)}</dd></div>
-            <div><dt>適用した北補正角 (°、方位角への加算)</dt><dd>{diagnosticValue(cameraDiagnostics.correctionAngle)}</dd></div>
-            <div><dt>北補正の入力元</dt><dd>{cameraDiagnostics.correctionSource}</dd></div>
-            <div><dt>手動北補正値 (°)</dt><dd>{diagnosticValue(northOffset)}</dd></div>
-            <div><dt>topHeading (°)</dt><dd>{diagnosticValue(cameraDiagnostics.topHeading)}</dd></div>
-            <div><dt>|cos(beta)|</dt><dd>{diagnosticValue(cameraDiagnostics.topHorizontalLength)}</dd></div>
-            <div><dt>既存の90°用分岐</dt><dd>{diagnosticValue(cameraDiagnostics.usesFallback)}</dd></div>
+            <div><dt>適用した北補正角 (°、世界Z軸まわりの回転)</dt><dd>{diagnosticValue(transform.correctedRotation ? northCorrection : null)}</dd></div>
+            <div><dt>北補正の入力元</dt><dd>{transform.correctedRotation ? '保存済み northCorrection' : 'なし'}</dd></div>
           </dl>
-          <p className="debug-diagnostic-note">補正角は既存処理の値です。absoluteは追加補正0°。この補正はmoonInDeviceには適用されません。</p>
-          {cameraDiagnostics.topHorizontalLength !== null && cameraDiagnostics.topHorizontalLength < 0.01 && (
-            <p className="debug-diagnostic-note">上端の水平投影が小さいため、topHeadingが不安定になり得る姿勢です（表示用の目安: 0.01未満）。</p>
-          )}
+          <p className="debug-diagnostic-note">コンパスは保存時の基準と誤差確認に使います。表示時は保存済みnorthCorrectionだけを適用します。</p>
           {rawEvent?.webkitCompassAccuracy !== undefined && rawEvent.webkitCompassAccuracy < 0 && (
             <p className="debug-diagnostic-note">コンパス精度が負の値です。既存の採用条件は変更せず、そのまま表示しています。</p>
           )}
@@ -426,43 +401,45 @@ export function DebugPage({ state, requestLocation }: { state: LocationState; re
         <section className="debug-panel" aria-labelledby="before-title">
           <h2 id="before-title">cameraForward before correction</h2>
           <p className="search-status">deviceRotation × (0, 0, −1)。absolute=falseの場合は任意の基準座標で、ENUへの北合わせは未適用です。</p>
-          <VectorReadout label="cameraForward / ENU軸表記・補正前" vector={cameraDiagnostics.before} />
+          <VectorReadout label="cameraForward / ENU軸表記・補正前" vector={transform.cameraForwardRaw} />
           <dl className="debug-data">
-            <div><dt>azimuth (°)</dt><dd>{diagnosticValue(cameraDiagnostics.beforeDirection?.azimuth ?? null)}</dd></div>
-            <div><dt>altitude (°)</dt><dd>{diagnosticValue(cameraDiagnostics.before ? Math.asin(Math.max(-1, Math.min(1, cameraDiagnostics.before.z))) * 180 / Math.PI : null)}</dd></div>
+            <div><dt>azimuth (°)</dt><dd>{diagnosticValue(transform.rawView?.azimuth ?? null)}</dd></div>
+            <div><dt>altitude (°)</dt><dd>{diagnosticValue(transform.rawView?.altitude ?? null)}</dd></div>
           </dl>
         </section>
         <section className="debug-panel" aria-labelledby="after-title">
           <h2 id="after-title">cameraForward after correction</h2>
-          <p className="search-status">既存の補正済み方位角・高度からベクトルを再構成した診断値。回転行列自体を補正した値ではありません。</p>
-          <VectorReadout label="cameraForward / ENU・補正後" vector={cameraDiagnostics.after} />
+          <p className="search-status">共通ロジックのcorrectedRotation × (0, 0, −1)。太陽プレビュー・月の変換・ARで同じ回転行列を使います。</p>
+          <VectorReadout label="cameraForward / ENU・補正後" vector={transform.cameraForwardCorrected} />
           <dl className="debug-data">
-            <div><dt>azimuth (°)</dt><dd>{diagnosticValue(cameraDiagnostics.afterDirection?.azimuth ?? null)}</dd></div>
-            <div><dt>altitude (°)</dt><dd>{diagnosticValue(cameraDiagnostics.afterDirection?.altitude ?? null)}</dd></div>
+            <div><dt>azimuth (°)</dt><dd>{diagnosticValue(transform.correctedView?.azimuth ?? null)}</dd></div>
+            <div><dt>altitude (°)</dt><dd>{diagnosticValue(transform.correctedView?.altitude ?? null)}</dd></div>
           </dl>
-          {!cameraDiagnostics.after && <p className="search-status">null: 向きの未取得、方位の未確定、または北基準なし。</p>}
+          {!transform.cameraForwardCorrected && <p className="search-status">null: 向きの未取得、方位の未確定、または北基準なし。</p>}
         </section>
         <section className="debug-panel" aria-labelledby="after-calibration-title">
           <h2 id="after-calibration-title">cameraForward after calibration</h2>
           <p className="search-status">保存したnorthCorrectionで Rz(northCorrection) × deviceRotation を計算する診断表示です。</p>
-          <VectorReadout label="cameraForwardCorrected / ENU" vector={calibratedCamera.cameraForwardCorrected} />
+          <VectorReadout label="cameraForwardCorrected / ENU" vector={transform.cameraForwardCorrected} />
           <dl className="debug-data">
-            <div><dt>correctedHeading (°)</dt><dd>{diagnosticValue(calibratedCamera.correctedHeading)}</dd></div>
+            <div><dt>correctedHeading (°)</dt><dd>{diagnosticValue(transform.correctedHeading)}</dd></div>
             <div><dt>webkitCompassHeading (°)</dt><dd>{diagnosticValue(horizontalCalibration.compassHeading)}</dd></div>
-            <div><dt>headingError (°)</dt><dd>{diagnosticValue(calibratedCamera.headingError)}</dd></div>
+            <div><dt>headingError (°)</dt><dd>{diagnosticValue(transform.headingError)}</dd></div>
           </dl>
-          <p className="debug-diagnostic-note">headingError = correctedHeading − webkitCompassHeading（最短角度差）。未保存・姿勢未取得・手動テスト中はnullです。カメラが真上・真下の場合も方位はnullです。</p>
+          <p className="debug-diagnostic-note">headingError = correctedHeading − webkitCompassHeading（最短角度差）。未保存・姿勢未取得・コンパス未取得ではnullです。カメラが真上・真下の場合も方位はnullです。</p>
         </section>
-        <SunDebugCard state={state} correctedHeading={calibratedCamera.correctedHeading} cameraForwardCorrected={calibratedCamera.cameraForwardCorrected} />
+        <SunDebugCard state={state} correctedHeading={transform.correctedHeading} cameraForwardCorrected={transform.cameraForwardCorrected} />
         <section className="debug-panel debug-results" aria-labelledby="results-title">
           <h2 id="results-title">moon transform</h2>
-          <p className="search-status">world → transpose(rotation) → device</p>
+          <p className="search-status">world → transpose(correctedRotation) → device</p>
           <VectorReadout label="moonWorld / ENU" vector={transform.moonWorld} />
           <VectorReadout label="moonInDevice" vector={transform.moonInDevice} />
           <p className="search-status">端末: +x 右 / +y 上 / −z 背面カメラ正面。真正面の目安は (0, 0, −1)。</p>
-          <dl className="debug-data"><div><dt>moonInDeviceのベクトル長</dt><dd>{diagnosticValue(transform.moonInDevice ? Math.hypot(transform.moonInDevice.x, transform.moonInDevice.y, transform.moonInDevice.z) : null)}</dd></div></dl>
-          <p className="search-status">北補正なしの既存3D変換。{!moonPosition ? '現在地を取得してください。' : !transform.moonInDevice ? '手動テストをONにするか、センサーを有効にしてください。' : 'センサー値の更新に合わせて計算しています。'}</p>
+          <dl className="debug-data"><div><dt>moonInDeviceのベクトル長</dt><dd>{diagnosticValue(transform.moonVectorLength)}</dd></div></dl>
+          <p className="search-status">太陽で確認した北補正を使う共通3D変換。{!moonPosition ? '現在地を取得してください。' : !transform.moonInDevice ? '北補正を保存し、センサーを有効にしてください。' : 'センサー値の更新に合わせて計算しています。'}</p>
+          <dl className="debug-data"><div><dt>angleToMoon (°)</dt><dd>{diagnosticValue(transform.angleToMoon)}</dd></div></dl>
           <MatrixReadout label="deviceRotation" matrix={transform.deviceRotation} />
+          <MatrixReadout label="correctedRotation" matrix={transform.correctedRotation} />
           <MatrixReadout label="inverseRotation" matrix={transform.inverseRotation} />
         </section>
       </div>

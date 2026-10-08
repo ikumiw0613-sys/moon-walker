@@ -1,5 +1,6 @@
+import { getNorthReferencedDeviceRotation } from './northReferencedDevice'
 import { describe, expect, it } from 'vitest'
-import { captureNorthCalibration, getCalibratedCameraDiagnostics, getHorizontalCalibration, HORIZONTAL_CALIBRATION_THRESHOLD } from './horizontalCalibration'
+import { captureNorthCalibration, getHorizontalCalibration, HORIZONTAL_CALIBRATION_THRESHOLD } from './horizontalCalibration'
 import { applyNorthCorrection, deviceOrientationToMatrix, multiplyMatrixVector } from './vector3'
 import { normalizeAzimuth } from './deviceView'
 
@@ -77,7 +78,7 @@ describe('calibrated rotation diagnostics', () => {
     'raw=%s°, compass=%s°で保存直後のheadingErrorは0°', (raw, compass) => {
       const rotation = deviceOrientationToMatrix(normalizeAzimuth(-raw), 90, 0)
       const saved = captureNorthCalibration(sample(raw, compass), 1000)!
-      const result = getCalibratedCameraDiagnostics(rotation, saved.northCorrection, compass)
+      const result = getNorthReferencedDeviceRotation(rotation, saved.northCorrection, compass)
       expect(result.correctedHeading).toBeCloseTo(compass)
       expect(result.headingError).toBeCloseTo(0)
     },
@@ -94,30 +95,30 @@ describe('calibrated rotation diagnostics', () => {
     }
     expect(rotation).toEqual(original)
     const measurement = getHorizontalCalibration({ alpha: 315, beta: 80, gamma: 20, webkitCompassHeading: 90 })
-    const result = getCalibratedCameraDiagnostics(rotation, measurement.northCorrection, 90)
+    const result = getNorthReferencedDeviceRotation(rotation, measurement.northCorrection, 90)
     expect(result.correctedHeading).toBeCloseTo(90)
     expect(result.headingError).toBeCloseTo(0)
     expect(result.cameraForwardCorrected?.z).toBeCloseTo(measurement.cameraForwardRaw!.z)
   })
 
   it.each([[359, 1, -2], [1, 359, 2]])('headingErrorは境界でも最短差となる', (heading, compass, error) => {
-    const result = getCalibratedCameraDiagnostics(deviceOrientationToMatrix(-heading, 90, 0), 0, compass)
+    const result = getNorthReferencedDeviceRotation(deviceOrientationToMatrix(-heading, 90, 0), 0, compass)
     expect(result.headingError).toBeCloseTo(error)
   })
 
   it('未保存や未取得では補正後を生成しない', () => {
     const rotation = deviceOrientationToMatrix(0, 90, 0)
-    for (const result of [getCalibratedCameraDiagnostics(rotation, null, 0), getCalibratedCameraDiagnostics(null, 0, 0)]) {
+    for (const result of [getNorthReferencedDeviceRotation(rotation, null, 0), getNorthReferencedDeviceRotation(null, 0, 0)]) {
       expect(result.correctedRotation).toBeNull()
       expect(result.cameraForwardCorrected).toBeNull()
       expect(result.correctedHeading).toBeNull()
       expect(result.headingError).toBeNull()
     }
-    expect(getCalibratedCameraDiagnostics(rotation, 0, null).headingError).toBeNull()
+    expect(getNorthReferencedDeviceRotation(rotation, 0, null).headingError).toBeNull()
   })
 
   it('真上・真下では補正行列を保持し、方位と誤差を未確定にする', () => {
-    const result = getCalibratedCameraDiagnostics(deviceOrientationToMatrix(0, 0, 0), -45, 90)
+    const result = getNorthReferencedDeviceRotation(deviceOrientationToMatrix(0, 0, 0), -45, 90)
     expect(result.correctedRotation).not.toBeNull()
     expect(result.correctedHeading).toBeNull()
     expect(result.headingError).toBeNull()
