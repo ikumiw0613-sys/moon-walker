@@ -21,6 +21,12 @@
 .mw-primary > span, .mw-secondary > span { font-size: 21px; }
 .mw-secondary { border: 1px solid #c4ccd32e; margin-top: 32px; }
 .mw-caption { color: #7d899e; font-size: 10px; letter-spacing: .6px; margin: 16px 0 0; }
+.mw-home-moon-status { margin: 0 0 24px; padding: 18px 16px; border: 1px solid var(--mw-line); border-radius: 12px; background: #ffffff04; }
+.mw-home-moon-label { margin: 0 0 10px; color: var(--mw-muted); font-size: 11px; }
+.mw-home-moon-title { margin: 0; font-size: 16px; line-height: 1.7; }
+.mw-home-moon-note { margin: 8px 0 0; color: var(--mw-muted); font-size: 11px; line-height: 1.8; }
+.mw-home-location-button { margin-top: 12px; padding: 10px 16px; border: 1px solid #c4ccd32e; border-radius: 6px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+.mw-home-location-button:focus-visible { outline: 2px solid #dcd3ae; outline-offset: 4px; }
 .mw-navigation { display: flex; justify-content: center; gap: 12px; width: 100%; max-width: 440px; margin: 0 auto; padding-top: 16px; border-top: 1px solid var(--mw-line); }
 .mw-navigation a { min-height: 44px; flex: 1; text-align: center; display: grid; place-items: center; color: #8290a5; font-size: 11px; }
 .mw-navigation a[aria-current=page] { color: #f0ecdf; }

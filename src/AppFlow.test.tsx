@@ -51,7 +51,7 @@ describe('frontend prototype navigation', () => {
     expect(container.textContent).not.toContain('月まで')
     expect(container.textContent).toContain('月を探す準備ができていません')
     expect(container.querySelector('video')).toBeNull()
-    expect(requestLocation).not.toHaveBeenCalled()
+    expect(requestLocation).toHaveBeenCalledTimes(1)
   })
 
   it('月の仮データと設定項目をナビゲーションから開ける', async () => {
@@ -61,7 +61,7 @@ describe('frontend prototype navigation', () => {
     expect(container.querySelector('[aria-current="page"]')?.textContent).toBe('月の情報')
     await clickLink('/settings')
     for (const label of ['北補正', 'センサー設定', 'AR表示設定']) expect(container.textContent).toContain(label)
-    expect(requestLocation).not.toHaveBeenCalled()
+    expect(requestLocation).toHaveBeenCalledTimes(1)
   })
 
   it('popstateによる履歴移動と直接URLの表示に対応する', async () => {

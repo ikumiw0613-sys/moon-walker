@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { getMoonPosition } from './astronomy'
+import { getMoonPosition, getNextMoonrise } from './astronomy'
+
+describe('getNextMoonrise', () => {
+  it('次の月の出の前後で地平線を越える', () => {
+    const start = new Date('2026-10-09T09:00:00Z')
+    const rise = getNextMoonrise(35.6812, 139.7671, start)
+    expect(rise).not.toBeNull()
+    expect(rise!.getTime()).toBeGreaterThan(start.getTime())
+    expect(getMoonPosition(35.6812, 139.7671, new Date(rise!.getTime() - 10 * 60_000)).isAboveHorizon).toBe(false)
+    expect(getMoonPosition(35.6812, 139.7671, new Date(rise!.getTime() + 10 * 60_000)).isAboveHorizon).toBe(true)
+  })
+})
 
 describe('getMoonPosition', () => {
   it('月の方位角と高度を計算できる', () => {

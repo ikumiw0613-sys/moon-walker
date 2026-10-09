@@ -32,7 +32,7 @@ function App() {
     : route === '/ar' ? <ARPage navigate={navigate} {...location} />
       : route === '/moon-info' ? <MoonInfoPage navigate={navigate} />
         : route === '/settings' ? <SettingsPage navigate={navigate} />
-          : <HomePage navigate={navigate} />
+          : <HomePage navigate={navigate} {...location} />
 
   return (
     <NorthCalibrationProvider>

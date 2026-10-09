@@ -1,5 +1,9 @@
-import { Horizon, Observer, Body, Equator } from "astronomy-engine";
+import { Horizon, Observer, Body, Equator, SearchRiseSet } from "astronomy-engine";
 import type { MoonPosition } from "../types/moon"
+
+export function getNextMoonrise(latitude: number, longitude: number, date: Date): Date | null {
+  return SearchRiseSet(Body.Moon, new Observer(latitude, longitude, 0), 1, date, 30)?.date ?? null
+}
 
 export function getMoonPosition(
   latitude: number,
