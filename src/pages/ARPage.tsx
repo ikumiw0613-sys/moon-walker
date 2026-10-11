@@ -10,6 +10,7 @@ import type { Navigate } from '../components/AppNavigation'
 import './Frontend.css'
 
 import { SkyBackground } from '../components/ar/SkyBackground'
+import { useSkyParallax } from '../hooks/useSkyParallax'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & ReturnType<typeof useGeolocation>) {
   const { northCorrection, calibrated } = useNorthCalibration()
@@ -27,8 +28,20 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
   const guidance = !isBelowHorizon ? deviceState.navigation : null
   const isNear = guidance && guidance.angleToMoon <= 15
   const isCentered = guidance?.status === 'centered'
+
+  const { alpha, beta, gamma } = orientation
+
+  const parallax = useSkyParallax({
+    alpha,
+    beta,
+    gamma,
+  })
+
   return (
-    <SkyBackground>
+    <SkyBackground
+      offsetX={parallax.offsetX}
+      offsetY={parallax.offsetY}
+    >
       <main className="mw-screen mw-ar" aria-label="月を探す" {...getMoonDeviceDiagnosticAttributes(deviceState, now)}>
         <header className="mw-top">
           <AppLink
