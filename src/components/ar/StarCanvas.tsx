@@ -9,7 +9,31 @@ type Star = {
   x: number
   y: number
   radius: number
-  depth: number
+}
+
+type StarLayer = {
+  count: number
+  minRadius: number
+  maxRadius: number
+  speed: number
+  opacity: number
+  stars: Star[]
+}
+
+function createStars(
+  count: number,
+  width: number,
+  height: number,
+  minRadius: number,
+  maxRadius: number
+): Star[] {
+  return Array.from({ length: count }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    radius:
+      minRadius +
+      Math.random() * (maxRadius - minRadius),
+  }))
 }
 
 export function StarCanvas({
@@ -17,7 +41,7 @@ export function StarCanvas({
   offsetY = 0,
 }: StarCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const starsRef = useRef<Star[]>([])
+  const layersRef = useRef<StarLayer[]>([])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -36,12 +60,50 @@ export function StarCanvas({
 
       context.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-      starsRef.current = Array.from({ length: 100 }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        radius: 0.5 + Math.random() * 1.3,
-        depth: 0.15 + Math.random() * 0.85,
-      }))
+      layersRef.current = [
+        {
+          count: 70,
+          minRadius: 0.4,
+          maxRadius: 0.8,
+          speed: 0.15,
+          opacity: 0.35,
+          stars: createStars(
+            70,
+            width,
+            height,
+            0.4,
+            0.8
+          ),
+        },
+        {
+          count: 40,
+          minRadius: 0.7,
+          maxRadius: 1.2,
+          speed: 0.35,
+          opacity: 0.55,
+          stars: createStars(
+            40,
+            width,
+            height,
+            0.7,
+            1.2
+          ),
+        },
+        {
+          count: 20,
+          minRadius: 1.0,
+          maxRadius: 1.8,
+          speed: 0.65,
+          opacity: 0.8,
+          stars: createStars(
+            20,
+            width,
+            height,
+            1.0,
+            1.8
+          ),
+        },
+      ]
     }
 
     resize()
@@ -64,22 +126,28 @@ export function StarCanvas({
 
     context.clearRect(0, 0, width, height)
 
-    for (const star of starsRef.current) {
-      const parallaxX = offsetX * star.depth
-      const parallaxY = offsetY * star.depth
+    for (const layer of layersRef.current) {
+      for (const star of layer.stars) {
+        let x = star.x + offsetX * layer.speed
+        let y = star.y + offsetY * layer.speed
 
-      let x = star.x + parallaxX
-      let y = star.y + parallaxY
+        x = ((x % width) + width) % width
+        y = ((y % height) + height) % height
 
-      x = ((x % width) + width) % width
-      y = ((y % height) + height) % height
+        context.beginPath()
+        context.arc(
+          x,
+          y,
+          star.radius,
+          0,
+          Math.PI * 2
+        )
 
-      context.beginPath()
-      context.arc(x, y, star.radius, 0, Math.PI * 2)
-      context.fillStyle = `rgba(255, 255, 255, ${
-        0.35 + star.depth * 0.5
-      })`
-      context.fill()
+        context.fillStyle =
+          `rgba(255, 255, 255, ${layer.opacity})`
+
+        context.fill()
+      }
     }
   }, [offsetX, offsetY])
 

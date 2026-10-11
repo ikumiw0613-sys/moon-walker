@@ -4,9 +4,9 @@ import './SkyBackground.css'
 
 
 type SkyBackgroundProps = {
-  children ?: ReactNode
-  offsetX ?: number
-  offsetY ?: number
+  children?: ReactNode
+  offsetX?: number
+  offsetY?: number
 }
 
 export function SkyBackground({
@@ -15,9 +15,11 @@ export function SkyBackground({
   offsetY = 0,
 }: SkyBackgroundProps) {
   return (
-    <div className= "sky-background">
+    <div className="sky-background">
       <div className="sky-background_glow" />
-      <StarCanvas offsetX={offsetX} offsetY={offsetY}/>
+      <StarCanvas offsetX={offsetX} offsetY={offsetY} />
+
+      <div className="sky-background__haze" />
       <div className="sky-background_content">
         {children}
       </div>
