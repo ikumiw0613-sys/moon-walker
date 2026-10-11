@@ -11,6 +11,10 @@ import './Frontend.css'
 
 import { SkyBackground } from '../components/ar/SkyBackground'
 import { useSkyParallax } from '../hooks/useSkyParallax'
+import {
+  getCameraForward,
+  cameraVectorToViewAngles,
+} from '../lib/skyParallax'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & ReturnType<typeof useGeolocation>) {
   const { northCorrection, calibrated } = useNorthCalibration()
@@ -25,16 +29,27 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
   const ready = calibrated && northCorrection !== null && Number.isFinite(northCorrection)
   const isBelowHorizon = moonPosition !== null && !moonPosition.isAboveHorizon
   const deviceState = getMoonDeviceState(orientation, ready ? northCorrection : null, moonPosition, orientation.compassHeading)
+
+  const cameraForward =
+    deviceState.correctedRotation
+      ? getCameraForward(
+        deviceState.correctedRotation
+      )
+      : null
+
+  const viewAngles =
+    cameraForward
+      ? cameraVectorToViewAngles(cameraForward)
+      : null
   const guidance = !isBelowHorizon ? deviceState.navigation : null
   const isNear = guidance && guidance.angleToMoon <= 15
   const isCentered = guidance?.status === 'centered'
 
-  const { alpha, beta, gamma } = orientation
+  
 
   const parallax = useSkyParallax({
-    alpha,
-    beta,
-    gamma,
+    heading: viewAngles?.heading ?? null,
+    altitude: viewAngles?.altitude ?? null,
   })
 
   return (

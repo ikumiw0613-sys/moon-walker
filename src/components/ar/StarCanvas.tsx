@@ -62,7 +62,7 @@ export function StarCanvas({
 
       layersRef.current = [
         {
-          count: 70,
+          count: 30,
           minRadius: 0.4,
           maxRadius: 0.8,
           speed: 0.15,
@@ -76,7 +76,7 @@ export function StarCanvas({
           ),
         },
         {
-          count: 40,
+          count: 20,
           minRadius: 0.7,
           maxRadius: 1.2,
           speed: 0.35,
@@ -90,7 +90,7 @@ export function StarCanvas({
           ),
         },
         {
-          count: 20,
+          count: 10,
           minRadius: 1.0,
           maxRadius: 1.8,
           speed: 0.65,
