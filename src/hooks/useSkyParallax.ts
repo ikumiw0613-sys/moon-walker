@@ -12,8 +12,8 @@ type SkyParallax = {
 }
 
 
-const HORIZONTAL_STRENGTH = 0.8
-const VERTICAL_STRENGTH = 0.8
+const HORIZONTAL_STRENGTH = 4
+const VERTICAL_STRENGTH = 4
 
 export function useSkyParallax({
   beta,
