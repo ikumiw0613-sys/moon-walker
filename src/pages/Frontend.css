@@ -74,7 +74,7 @@
 .mw-settings-list dd { font-size: 10px; color: #8190a6; margin: 0; white-space: nowrap; }
 .mw-settings-signature { margin: 64px 0 0; color: #6f7c91; font-size: 15px; text-align: center; }
 .mw-settings-signature > span { display: block; font-size: 10px; margin-top: 8px; }
-.mw-ar { background: radial-gradient(ellipse at 70% 12%, #2f405333, transparent 60%), radial-gradient(ellipse at 50% 120%, #35546033, transparent 45%), #080f1b; }
+
 .mw-ar-close { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--mw-line); border-radius: 50%; font-size: 28px; font-weight: 200; }
 .mw-ar-info { font-size: 11px; min-height: 44px; display: flex; align-items: center; }
 .mw-ar-target { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); width: 108px; height: 108px; border: 1px solid #e7ead180; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 50px #e5ebdb08; }
