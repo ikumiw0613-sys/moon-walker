@@ -7,6 +7,7 @@ import { DebugPage } from './DebugPage'
 import { ARPage } from './ARPage'
 import { NorthCalibrationProvider } from '../contexts/NorthCalibrationContext'
 import { getMoonPosition } from '../lib/astronomy'
+import { getObservationTime } from '../lib/observationTime'
 import { getMoonDeviceState } from '../lib/moonDeviceNavigation'
 import type { LocationState } from '../types/geolocation'
 
@@ -21,7 +22,7 @@ vi.mock('../hooks/useDeviceOrientation', () => ({ useDeviceOrientation: () => {
 } }))
 
 const location: LocationState = { status: 'success', location: { latitude: 35.68, longitude: 139.76, accuracy: 10, timestamp: 0 } }
-const now = new Date('2026-10-08T06:00:00+09:00')
+const now = getObservationTime()
 const attributes = ['data-corrected-heading', 'data-corrected-rotation', 'data-moon-in-device',
   'data-angle-to-moon', 'data-observation-time', 'data-device-rotation']
 let container: HTMLDivElement

@@ -13,13 +13,13 @@ const render = () => renderToStaticMarkup(<HomePage navigate={vi.fn()} requestLo
 describe('HomePage moon status', () => {
   it('月が出ている場合は現在の状態を表示する', () => {
     mocks.above = true
-    expect(render()).toContain('今、月が出ています')
-    expect(render()).not.toContain('次の月の出は')
+    expect(render()).toContain('月を探す準備に進みます')
+    expect(render()).not.toContain('次に見えるのは')
   })
   it('月が出ていない場合は次の月の出を表示する', () => {
     mocks.above = false
-    expect(render()).toContain('今、月はまだ出ていません')
-    expect(render()).toContain('次の月の出は')
+    expect(render()).toContain('今は月が見えません')
+    expect(render()).toContain('次に見えるのは')
     expect(render()).toContain('18:30ごろ')
   })
   it('日付をまたぐ月の出を明日と表示する', () => {

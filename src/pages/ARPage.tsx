@@ -4,6 +4,7 @@ import type { useGeolocation } from '../hooks/useGeolocation'
 import { useDeviceOrientation } from '../hooks/useDeviceOrientation'
 import { useNorthCalibration } from '../hooks/useNorthCalibration'
 import { getMoonPosition } from '../lib/astronomy'
+import { getObservationTime } from '../lib/observationTime'
 import { getMoonDeviceState, getMoonDeviceDiagnosticAttributes } from '../lib/moonDeviceNavigation'
 import type { Navigate } from '../components/AppNavigation'
 import './Frontend.css'
@@ -11,9 +12,9 @@ import './Frontend.css'
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & ReturnType<typeof useGeolocation>) {
   const { northCorrection, calibrated } = useNorthCalibration()
   const { state: orientation, requestPermission } = useDeviceOrientation({ autoStart: true })
-  const [now, setNow] = useState(() => new Date())
+  const [now, setNow] = useState(getObservationTime)
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 10000)
+    const timer = window.setInterval(() => setNow(getObservationTime()), 10000)
     return () => window.clearInterval(timer)
   }, [])
   const moonPosition = useMemo(() => location.status === 'success'

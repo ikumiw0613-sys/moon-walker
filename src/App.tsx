@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { HomePage } from './pages/HomePage'
 import { DebugPage } from './pages/DebugPage'
 import { useGeolocation } from './hooks/useGeolocation'
@@ -7,7 +7,7 @@ import { CalibrationPage } from './pages/CalibrationPage'
 import { ARPage } from './pages/ARPage'
 import { MoonInfoPage } from './pages/MoonInfoPage'
 import { SettingsPage } from './pages/SettingsPage'
-import type { AppPath } from './components/AppNavigation'
+import type { Navigate } from './components/AppNavigation'
 
 function App() {
   const location = useGeolocation()
@@ -21,11 +21,14 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
-  function navigate(path: AppPath) {
-    if (window.location.pathname !== path) window.history.pushState(null, '', path)
+  const navigate: Navigate = useCallback((path, options) => {
+    if (window.location.pathname !== path) {
+      if (options?.replace) window.history.replaceState(null, '', path)
+      else window.history.pushState(null, '', path)
+    }
     setPathname(path)
     window.scrollTo({ top: 0, behavior: 'instant' })
-  }
+  }, [])
 
   const route = pathname.replace(/\/$/, '') || '/'
   const page = route === '/calibration' ? <CalibrationPage navigate={navigate} />

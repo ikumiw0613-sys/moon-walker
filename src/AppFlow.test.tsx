@@ -4,9 +4,15 @@ import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import type { LocationState } from './types/geolocation'
 
 const requestLocation = vi.fn()
-vi.mock('./hooks/useGeolocation', () => ({ useGeolocation: () => ({ state: { status: 'idle' }, requestLocation }) }))
+const mocks = vi.hoisted(() => ({ state: { status: 'idle' } as LocationState, above: false }))
+vi.mock('./hooks/useGeolocation', () => ({ useGeolocation: () => ({ state: mocks.state, requestLocation }) }))
+vi.mock('./lib/astronomy', () => ({
+  getMoonPosition: () => ({ isAboveHorizon: mocks.above }),
+  getNextMoonrise: () => new Date(2026, 9, 11, 18, 30),
+}))
 vi.mock('./pages/DebugPage', () => ({ DebugPage: () => <main>DEBUG_PAGE</main> }))
 
 let container: HTMLDivElement
@@ -17,6 +23,8 @@ beforeEach(async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
   requestLocation.mockClear()
+  mocks.state = { status: 'idle' }
+  mocks.above = false
   container = document.createElement('div')
   document.body.appendChild(container)
   root = createRoot(container)
@@ -26,6 +34,7 @@ beforeEach(async () => {
 afterEach(async () => {
   await act(async () => root.unmount())
   container.remove()
+  vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
@@ -36,10 +45,16 @@ async function clickLink(path: string) {
   await act(async () => link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 })))
 }
 
+async function updateMoon(above: boolean) {
+  mocks.above = above
+  mocks.state = { status: 'success', location: { latitude: 35, longitude: 139, accuracy: 10, timestamp: 0 } }
+  await act(async () => root.render(<App />))
+}
+
 describe('frontend prototype navigation', () => {
   it('準備中はARへ進めず、ARの直接アクセスでも北基準の準備を案内する', async () => {
-    expect(container.textContent).toContain('月を探す')
-    await clickLink('/calibration')
+    expect(container.textContent).toContain('現在地の月を確認しています')
+    await updateMoon(true)
     expect(window.location.pathname).toBe('/calibration')
     expect(container.textContent).toContain('向きセンサー')
     expect(container.querySelector('a[href="/ar"]')).toBeNull()
@@ -65,7 +80,10 @@ describe('frontend prototype navigation', () => {
   })
 
   it('popstateによる履歴移動と直接URLの表示に対応する', async () => {
-    await clickLink('/calibration')
+    await act(async () => {
+      window.history.replaceState(null, '', '/calibration')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
     await act(async () => {
       window.history.replaceState(null, '', '/moon-info/')
       window.dispatchEvent(new PopStateEvent('popstate'))
@@ -75,6 +93,41 @@ describe('frontend prototype navigation', () => {
       window.history.replaceState(null, '', '/')
       window.dispatchEvent(new PopStateEvent('popstate'))
     })
-    expect(container.textContent).toContain('今夜、月に')
+    expect(container.textContent).toContain('現在地の月を確認しています')
+  })
+
+  it('月が出ていない間はホームで待機し、10秒ごとの更新で月が出たら自動遷移する', async () => {
+    vi.useFakeTimers()
+    // Remount so the waiting page's interval uses the fake clock.
+    await act(async () => root.unmount())
+    root = createRoot(container)
+    await updateMoon(false)
+    expect(window.location.pathname).toBe('/')
+    expect(container.textContent).toContain('今は月が見えません')
+    expect(container.textContent).toContain('次に見えるのは')
+    expect(container.querySelector('a[href="/calibration"]')).toBeNull()
+    const historyLength = window.history.length
+    mocks.above = true
+    await act(async () => vi.advanceTimersByTime(10000))
+    expect(window.location.pathname).toBe('/calibration')
+    expect(container.textContent).toContain('向きセンサー')
+    expect(window.history.length).toBe(historyLength)
+  })
+
+  it('画面に戻ったときも月の状態を再判定して遷移する', async () => {
+    await updateMoon(false)
+    mocks.above = true
+    await act(async () => window.dispatchEvent(new Event('focus')))
+    expect(window.location.pathname).toBe('/calibration')
+  })
+
+  it('位置情報を取得できない場合は待機ページで再取得を案内する', async () => {
+    mocks.state = { status: 'error', message: '位置情報を許可してください。' }
+    await act(async () => root.render(<App />))
+    expect(window.location.pathname).toBe('/')
+    expect(container.textContent).toContain('位置情報を許可してください。')
+    const retry = container.querySelector<HTMLButtonElement>('button')!
+    await act(async () => retry.click())
+    expect(requestLocation).toHaveBeenCalledTimes(2)
   })
 })

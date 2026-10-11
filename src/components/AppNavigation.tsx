@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 export type AppPath = '/' | '/calibration' | '/ar' | '/moon-info' | '/settings'
-export type Navigate = (path: AppPath) => void
+export type Navigate = (path: AppPath, options?: { replace?: boolean }) => void
 
 export function AppLink({ to, navigate, children, className, current }: {
   to: AppPath; navigate: Navigate; children: ReactNode; className?: string; current?: boolean
