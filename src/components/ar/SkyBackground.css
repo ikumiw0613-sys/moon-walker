@@ -18,7 +18,7 @@
   );
 }
 
-.sky-background_glow {
+.sky-background__glow {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -35,7 +35,7 @@
       transparent 30%
     );
 }
-.sky-background_content {
+.sky-background__content {
   position: relative;
   z-index: 1;
   min-height: 100dvh;
@@ -70,14 +70,17 @@
   z-index: 1;
   min-height: 100dvh;
 }
-
 .sky-cloud {
   position: absolute;
   pointer-events: none;
-  border-radius: 50%;
-  filter: blur(30px);
-  opacity: 0.12;
-  background: rgba(180, 200, 230, 0.25);
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.45);
+  opacity: 1;
+
+  filter: none;
+
+  z-index: 2;
 }
 
 .sky-cloud::before,
@@ -89,12 +92,11 @@
 }
 
 .sky-cloud--far {
-  width: 240px;
+  width: 260px;
   height: 90px;
   top: 22%;
   left: 10%;
 }
-
 .sky-cloud--far::before {
   width: 150px;
   height: 80px;
@@ -110,12 +112,10 @@
 }
 
 .sky-cloud--near {
-  width: 300px;
+  width: 320px;
   height: 110px;
   bottom: 18%;
-  right: -60px;
-  opacity: 0.16;
-  filter: blur(38px);
+  right: -40px;
 }
 
 .sky-cloud--near::before {

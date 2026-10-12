@@ -16,7 +16,7 @@ export function SkyBackground({
 }: SkyBackgroundProps) {
   return (
     <div className="sky-background">
-      <div className="sky-background_glow" />
+      <div className="sky-background__glow" />
       <StarCanvas offsetX={offsetX} offsetY={offsetY} />
 
       <div className="sky-cloud sky-cloud--far"
@@ -33,7 +33,7 @@ export function SkyBackground({
         }}
       />
       <div className="sky-background__haze" />
-      <div className="sky-background_content">
+      <div className="sky-background__content">
         {children}
       </div>
     </div>
