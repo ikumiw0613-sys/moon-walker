@@ -20,7 +20,7 @@ src/
 │  ├─ geolocation/             # 位置情報API・状態・取得操作UI
 │  ├─ device-orientation/      # 向きセンサー・端末回転・北基準の変換
 │  ├─ north-calibration/       # 校正の判定・Context・保存状態
-│  ├─ moon/                    # 天文計算・月の型・月の出の書式
+│  ├─ moon/                    # 天文計算・月齢と月相・月の型・月の出の書式
 │  ├─ moon-guide/              # 月の端末座標・案内・画面投影
 │  ├─ sky/                     # 星空の描画・背景・視差
 │  └─ debug/                   # 診断表示・手動姿勢・仮想視点・太陽検証
@@ -47,6 +47,12 @@ src/
 ## 計算と状態の境界
 
 `shared/math/vector3.ts` は方向ベクトル・回転行列・行列積を扱う。DeviceOrientationのZ-X-Y変換と保存済み北補正の適用は `features/device-orientation/deviceRotation.ts` が担当する。
+
+`features/moon/moonPhase.ts` の `getMoonPhase(date)` は、指定時刻の月齢 `ageDays`・月相角 `cycleAngle`・照明率 `illuminatedFraction` を返す。月齢は直前の新月からの経過日数、月相角は新月0°・満月180°の0〜360°未満、照明率は明るい部分の割合を0〜1で表す。月齢の日数から照明率を近似せず、それぞれを `astronomy-engine` で計算する。React・位置情報・現在時刻の取得を含めず、後続の影描画や画面から同じ観測時刻を渡して利用する。
+
+`features/moon/components/MoonDisc.tsx` は、画像と影を重ねる共通の表示領域。`moonDiscGeometry.ts` で100×100の座標、中心(50, 50)、半径50を定義する。透明な余白を含む `public/moon-image.png` の月の円盤をこの領域に合わせ、円形の `clipPath` で画像と追加のSVG要素を一緒に切り抜く。ARの月本体と画面端のマーカーは同じ部品を使い、表示サイズだけを親要素で指定する。元画像を差し替えた場合は、`SOURCE_MOON_IMAGE` の実寸・中心・直径を再計測する。
+
+`features/moon/moonShadow.ts` の `getMoonShadowPath(phase)` は、月相角と照明率から影の閉じたSVGパスを生成する純粋関数。円盤の外周と、横半径が `半径 × |2 × 照明率 - 1|` の楕円状の明暗境界を組み合わせ、影の面積を円盤の `1 - 照明率` に合わせる。照明率0では全面を覆い、0.5では半円と直線、1では影がないため `null` を返す。向きを固定した模式表示として、満ちていく月は右、欠けていく月は左を明るくする。影の傾き・色・不透明度・ぼかしは描画側で扱う。
 
 `features/moon-guide/moonDeviceNavigation.ts` の `getMoonDeviceState` は、センサー姿勢・観測地点から計算した月・保存済み北補正を受け取り、DebugとAR共通の計算結果を返す。北補正は一度だけ適用する。
 

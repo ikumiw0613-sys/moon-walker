@@ -1,4 +1,4 @@
-import { MoonImage } from './MoonImage'
+import { MoonDisc } from '../../../features/moon/components/MoonDisc'
 import './MoonSprite.css'
 
 type MoonSpriteProps = {
@@ -22,7 +22,7 @@ export function MoonSprite({
       }}
       aria-hidden="true"
     >
-      <MoonImage />
+      <MoonDisc />
     </div>
   )
 }
