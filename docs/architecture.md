@@ -62,7 +62,9 @@ Debug画面の操作は `useDebugObservation`・`useManualOrientation`・`useDeb
 
 AR画面の準備状態・地平線判定・案内・投影・背景の視差は `pages/ar/useARView.ts` が組み合わせる。月が地平線下にある場合も診断値を計算し、方向案内は表示しない。
 
-通常画面の観測時刻は既存どおり `shared/time/observationTime.ts` の固定時刻設定に従う。Debugの現在時刻モードは端末時刻を使用する。
+通常画面は `shared/time/ObservationTimeProvider.tsx` が保持する一つの観測時刻を、`useObservationTime` で共有する。初期状態は端末の現在時刻で、10秒ごとの更新と画面への復帰時に最新の時刻へ更新する。キャリブレーション画面でテスト日時を選ぶと、固定時刻を画面遷移後も保持し、現在時刻に戻す操作では即時更新する。再読み込みで現在時刻に戻る。Providerなしの単独描画ではHookが現在時刻を更新する。
+
+`pages/ar/useARView.ts` は、共有された同じ `now` から月の位置と月相を計算する。位置情報が未取得でも月相は日時だけで計算できるため、`moonPhase` を返す。後続の影描画はこの結果を利用し、独自に現在時刻を取得しない。Debugの固定日時・現在時刻モードは検証用として独立しており、現在時刻モードは端末時刻を使用する。
 
 ## 検証
 

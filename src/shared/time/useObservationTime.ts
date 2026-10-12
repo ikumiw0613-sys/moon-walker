@@ -1,32 +1,18 @@
-import { useContext, useEffect, useState } from 'react'
-import { ObservationTimeContext, TEST_OBSERVATION_TIME } from './ObservationTimeContext'
-import { getObservationTime } from './observationTime'
+import { useContext } from 'react'
+import { ObservationTimeContext } from './ObservationTimeContext'
+import type { ObservationTimeMode } from './ObservationTimeContext'
+import { useCurrentObservationTime } from './useCurrentObservationTime'
+
+const ignoreModeChange = (_mode: ObservationTimeMode) => {}
 
 export function useObservationTime() {
-  const { mode, setMode } = useContext(ObservationTimeContext)
-  const [currentTime, setCurrentTime] = useState(getObservationTime)
-  useEffect(() => {
-    if (mode !== 'current') return
-    const refresh = () => setCurrentTime(getObservationTime())
-    const timer = window.setInterval(refresh, 10000)
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') refresh()
-    }
-    window.addEventListener('focus', refresh)
-    document.addEventListener('visibilitychange', onVisibilityChange)
-    return () => {
-      window.clearInterval(timer)
-      window.removeEventListener('focus', refresh)
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-    }
-  }, [mode])
+  const context = useContext(ObservationTimeContext)
+  // Providerなしの単独描画にも対応する。共有時刻がある場合、この時計は更新しない。
+  const fallback = useCurrentObservationTime(context === null)
 
   return {
-    now: mode === 'fixed' ? TEST_OBSERVATION_TIME : currentTime,
-    mode,
-    changeMode: (nextMode: typeof mode) => {
-      setCurrentTime(getObservationTime())
-      setMode(nextMode)
-    },
+    now: context?.now ?? fallback.now,
+    mode: context?.mode ?? 'current',
+    changeMode: context?.setMode ?? ignoreModeChange,
   }
 }

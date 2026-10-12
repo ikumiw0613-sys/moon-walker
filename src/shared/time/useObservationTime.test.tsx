@@ -32,6 +32,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount())
   vi.useRealTimers()
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -62,4 +63,30 @@ it('復帰時に更新し、再読み込み相当の再マウントでは現在�
   root = createRoot(container)
   await show('ar')
   expect(time()).toBe('2026-10-12T01:00:00.000Z')
+})
+
+it('時間をずらして複数の画面部品を描画しても、一つの時計と観測時刻を共有する', async () => {
+  const setInterval = vi.spyOn(window, 'setInterval')
+  await act(async () => root.render(<ObservationTimeProvider><Clock key="first" /></ObservationTimeProvider>))
+  await act(async () => vi.advanceTimersByTime(5000))
+  await act(async () => root.render(<ObservationTimeProvider>
+    <Clock key="first" /><Clock key="second" />
+  </ObservationTimeProvider>))
+  expect([...container.querySelectorAll('output')].map(output => output.textContent))
+    .toEqual(['2026-10-12T00:00:00.000Z', '2026-10-12T00:00:00.000Z'])
+  expect(setInterval).toHaveBeenCalledTimes(1)
+  await act(async () => vi.advanceTimersByTime(5000))
+  expect([...container.querySelectorAll('output')].map(output => output.textContent))
+    .toEqual(['2026-10-12T00:00:10.000Z', '2026-10-12T00:00:10.000Z'])
+})
+
+it('固定日時から現在時刻への切替を、すべての画面部品に即時反映する', async () => {
+  await act(async () => root.render(<ObservationTimeProvider>
+    <Clock controls /><Clock />
+  </ObservationTimeProvider>))
+  await click('fixed')
+  vi.setSystemTime(new Date('2026-10-12T04:00:00Z'))
+  await click('current')
+  expect([...container.querySelectorAll('output')].map(output => output.textContent))
+    .toEqual(['2026-10-12T04:00:00.000Z', '2026-10-12T04:00:00.000Z'])
 })
