@@ -9,6 +9,8 @@ type Star = {
   x: number
   y: number
   radius: number
+  twinkleSpeed: number
+  twinklePhase: number
 }
 
 type StarLayer = {
@@ -17,6 +19,7 @@ type StarLayer = {
   maxRadius: number
   speed: number
   opacity: number
+  twinkleAmount: number
   stars: Star[]
 }
 
@@ -33,6 +36,9 @@ function createStars(
     radius:
       minRadius +
       Math.random() * (maxRadius - minRadius),
+    // A slow cycle of roughly 6–16 seconds, independent for each star.
+    twinkleSpeed: 0.4 + Math.random() * 0.7,
+    twinklePhase: Math.random() * Math.PI * 2,
   }))
 }
 
@@ -42,6 +48,11 @@ export function StarCanvas({
 }: StarCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const layersRef = useRef<StarLayer[]>([])
+  const offsetsRef = useRef({ offsetX, offsetY })
+
+  useEffect(() => {
+    offsetsRef.current = { offsetX, offsetY }
+  }, [offsetX, offsetY])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -50,10 +61,14 @@ export function StarCanvas({
     const context = canvas.getContext('2d')
     if (!context) return
 
+    let width = 0
+    let height = 0
+    let animationFrameId = 0
+
     const resize = () => {
       const dpr = window.devicePixelRatio || 1
-      const width = canvas.clientWidth
-      const height = canvas.clientHeight
+      width = canvas.clientWidth
+      height = canvas.clientHeight
 
       canvas.width = width * dpr
       canvas.height = height * dpr
@@ -67,6 +82,7 @@ export function StarCanvas({
           maxRadius: 0.8,
           speed: 0.15,
           opacity: 0.35,
+          twinkleAmount: 0.04,
           stars: createStars(
             70,
             width,
@@ -81,6 +97,7 @@ export function StarCanvas({
           maxRadius: 1.2,
           speed: 0.35,
           opacity: 0.55,
+          twinkleAmount: 0.08,
           stars: createStars(
             40,
             width,
@@ -95,6 +112,7 @@ export function StarCanvas({
           maxRadius: 1.8,
           speed: 0.65,
           opacity: 0.8,
+          twinkleAmount: 0.14,
           stars: createStars(
             20,
             width,
@@ -106,50 +124,52 @@ export function StarCanvas({
       ]
     }
 
+    const draw = (timestamp: number) => {
+      animationFrameId = window.requestAnimationFrame(draw)
+      if (width <= 0 || height <= 0) return
+
+      const time = timestamp / 1000
+      const { offsetX, offsetY } = offsetsRef.current
+      context.clearRect(0, 0, width, height)
+
+      for (const layer of layersRef.current) {
+        for (const star of layer.stars) {
+          let x = star.x + offsetX * layer.speed
+          let y = star.y + offsetY * layer.speed
+
+          x = ((x % width) + width) % width
+          y = ((y % height) + height) % height
+
+          const twinkle = layer.opacity +
+            Math.sin(time * star.twinkleSpeed + star.twinklePhase) * layer.twinkleAmount
+          const opacity = Math.max(0, Math.min(1, twinkle))
+
+          context.beginPath()
+          context.arc(
+            x,
+            y,
+            star.radius,
+            0,
+            Math.PI * 2
+          )
+
+          context.fillStyle =
+            `rgba(255, 255, 255, ${opacity})`
+
+          context.fill()
+        }
+      }
+    }
+
     resize()
     window.addEventListener('resize', resize)
+    animationFrameId = window.requestAnimationFrame(draw)
 
     return () => {
+      window.cancelAnimationFrame(animationFrameId)
       window.removeEventListener('resize', resize)
     }
   }, [])
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const context = canvas.getContext('2d')
-    if (!context) return
-
-    const width = canvas.clientWidth
-    const height = canvas.clientHeight
-
-    context.clearRect(0, 0, width, height)
-
-    for (const layer of layersRef.current) {
-      for (const star of layer.stars) {
-        let x = star.x + offsetX * layer.speed
-        let y = star.y + offsetY * layer.speed
-
-        x = ((x % width) + width) % width
-        y = ((y % height) + height) % height
-
-        context.beginPath()
-        context.arc(
-          x,
-          y,
-          star.radius,
-          0,
-          Math.PI * 2
-        )
-
-        context.fillStyle =
-          `rgba(255, 255, 255, ${layer.opacity})`
-
-        context.fill()
-      }
-    }
-  }, [offsetX, offsetY])
 
   return (
     <canvas

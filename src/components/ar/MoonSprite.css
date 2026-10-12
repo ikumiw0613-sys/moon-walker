@@ -1,0 +1,18 @@
+.moon-sprite {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.moon-sprite__body {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 38%, #b0aa972e 0 12%, transparent 13%),
+    radial-gradient(circle at 60% 65%, #8b8d8438 0 10%, transparent 11%),
+    radial-gradient(circle at 38% 32%, #fff9e5, #d8d5c7 60%, #9b9f9c);
+  box-shadow: 0 0 32px #eee4c322, inset -5px -3px 9px #18213340;
+}

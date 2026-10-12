@@ -65,22 +65,17 @@
   z-index: 0;
 }
 
-.sky-background__content {
-  position: relative;
-  z-index: 1;
-  min-height: 100dvh;
-}
 .sky-cloud {
   position: absolute;
   pointer-events: none;
   border-radius: 999px;
 
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(160, 184, 213, 0.09);
   opacity: 1;
 
-  filter: none;
+  filter: blur(22px);
 
-  z-index: 2;
+  z-index: 0;
 }
 
 .sky-cloud::before,

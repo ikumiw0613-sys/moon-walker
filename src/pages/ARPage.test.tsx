@@ -32,6 +32,7 @@ describe('AR moon guidance integration', () => {
     expect(html).toContain('月は地平線の<br/>下にあります')
     expect(html).not.toContain('月はここ！')
     expect(html).not.toContain('mw-ar-ring')
+    expect(html).not.toContain('moon-sprite')
     expect(html).not.toContain('月まで')
   })
   it('shows the below-horizon notice even without calibration or sensor data', () => {
@@ -47,6 +48,7 @@ describe('AR moon guidance integration', () => {
     expect(html).toContain('月はここ！')
     expect(html).toContain('0.0°')
     expect(html).toContain('mw-ar-ring--centered')
+    expect(html).toContain('moon-sprite')
   })
   it('updates direction and angle from moon position', () => {
     mocks.moon.azimuth = 135
@@ -57,8 +59,10 @@ describe('AR moon guidance integration', () => {
   })
   it('separates the opposite direction', () => {
     mocks.moon.azimuth = 270
-    expect(render()).toContain('反対方向を向いてください')
-    expect(render()).toContain('180.0°')
+    const html = render()
+    expect(html).toContain('反対方向を向いてください')
+    expect(html).toContain('180.0°')
+    expect(html).not.toContain('moon-sprite')
   })
   it('hides guidance when calibration is missing', () => {
     mocks.calibration.calibrated = false

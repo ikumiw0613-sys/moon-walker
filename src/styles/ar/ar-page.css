@@ -1,0 +1,130 @@
+.mw-screen.mw-ar {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(200px, 1fr) auto;
+  gap: 24px;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  background: linear-gradient(to bottom, #03081440, transparent 28%, transparent 60%, #03081455);
+}
+
+.mw-screen.mw-ar::before { content: none; }
+
+.mw-ar .mw-top {
+  max-width: 680px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+}
+
+.mw-ar-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #ffffff24;
+  border-radius: 50%;
+  background: #0a142580;
+  font-size: 26px;
+  font-weight: 200;
+}
+
+.mw-ar-title { text-align: center; }
+.mw-ar-eyebrow { display: block; color: #9daabb; font-size: 8px; letter-spacing: 2px; }
+.mw-ar .mw-ar-title h1 { margin-top: 5px; font-size: 13px; line-height: 1.5; letter-spacing: 2px; }
+
+.mw-ar-info {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #ffffff24;
+  border-radius: 24px;
+  background: #0a142580;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.mw-ar-viewport {
+  position: relative;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.mw-ar-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120px;
+  height: 120px;
+  border: 1px solid #e7ead180;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: border-color .3s, box-shadow .3s;
+}
+
+.mw-ar-ring::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 1px solid #e7ead11a;
+  border-radius: inherit;
+}
+
+.mw-ar-ring--centered {
+  border-color: #e7ead1d9;
+  box-shadow: 0 0 30px #e7ead11c;
+  animation: moonFound 3s ease-in-out infinite;
+}
+
+.mw-ar-guide, .mw-ar-state {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 22px 24px;
+  border: 1px solid #d4deee24;
+  border-radius: 20px;
+  background: #081322ed;
+  box-shadow: 0 12px 40px #00000020;
+}
+
+.mw-ar-guide.is-centered { border-color: #d2d8c64d; }
+.mw-ar-guide-label { margin: 0; color: #a6b4c6; font-size: 11px; line-height: 1.8; letter-spacing: .5px; }
+.mw-ar-guidance-row { display: flex; align-items: center; gap: 14px; margin: 16px 0 20px; }
+.mw-ar-arrow { flex: 0 0 40px; color: #d2d8c6; font-size: 32px; line-height: 1; text-align: center; }
+.mw-ar-message { margin: 0; font-size: clamp(18px, 5vw, 22px); line-height: 1.6; letter-spacing: 1px; overflow-wrap: anywhere; }
+.mw-ar-guide-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; column-gap: 16px; border-top: 1px solid #ffffff12; padding-top: 10px; }
+.mw-ar-distance { color: #a6b4c6; font-size: 11px; }
+.mw-ar-distance strong { margin-left: 10px; color: #e5e8dd; font-size: 16px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.mw-ar .mw-ar-recalibrate { display: inline-flex; align-items: center; min-height: 44px; color: #c3cbd6; font-size: 11px; text-decoration: underline; text-underline-offset: 4px; }
+
+.mw-ar-state { text-align: center; }
+.mw-ar-state h2 { margin: 0 0 12px; font-size: 18px; line-height: 1.7; font-weight: 400; letter-spacing: .5px; }
+.mw-ar-state p { margin: 0; color: #a6b4c6; font-size: 13px; line-height: 1.9; overflow-wrap: anywhere; }
+.mw-ar-state .mw-primary { justify-content: center; margin: 20px auto 0; max-width: 320px; border: 0; border-radius: 12px; font-family: inherit; cursor: pointer; }
+.mw-ar-state .mw-primary:focus-visible { outline: 2px solid #dcd3ae; outline-offset: 6px; }
+.mw-ar .mw-ar-below-horizon h1 { margin-bottom: 16px; font-size: clamp(22px, 6vw, 28px); line-height: 1.6; letter-spacing: .04em; }
+
+@media (max-height: 600px) {
+  .mw-screen.mw-ar { grid-template-rows: auto minmax(100px, 1fr) auto; gap: 16px; }
+  .mw-ar-guide, .mw-ar-state { padding: 16px 20px; }
+  .mw-ar-guidance-row { margin: 10px 0 12px; }
+  .mw-ar-ring { width: 90px; height: 90px; }
+}
+
+@media (max-width: 360px) {
+  .mw-screen.mw-ar { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  .mw-ar-info { padding: 0 10px; }
+  .mw-ar-guide, .mw-ar-state { padding-left: 18px; padding-right: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-ar-ring { animation: none; transition: none; }
+}
+
+@keyframes moonFound {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.03); }
+}
