@@ -69,7 +69,13 @@
   text-shadow: 0 1px 6px #030814;
 }
 
-.mw-ar .mw-ar-moon-thumbnail { width: 32px; height: 32px; opacity: .75; }
+.mw-ar .mw-ar-moon-thumbnail {
+  width: 32px;
+  height: 32px;
+  opacity: .75;
+  background: url('/moon-image.png') 50% 48% / 190% no-repeat;
+  box-shadow: 0 0 16px #eee4c322;
+}
 .mw-ar-moon-marker-arrow { font-size: 20px; line-height: 1; }
 .mw-ar-visibility-note { margin: 6px 0 0; color: #a6b4c6; font-size: 11px; line-height: 1.8; }
 
