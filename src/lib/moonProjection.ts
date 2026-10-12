@@ -9,6 +9,15 @@ type ScreenPoint = {
 const HORIZONTAL_FOV = 90
 const VERTICAL_FOV = 60
 
+/** Place an offscreen direction marker along the edge of the sky viewport. */
+export function getMoonEdgePosition(point: ScreenPoint) {
+  const dx = point.x - 0.5
+  const dy = point.y - 0.5
+  const scale = Math.max(Math.abs(dx), Math.abs(dy))
+  if (!Number.isFinite(scale) || scale === 0) return { x: 0.5, y: 0.8 }
+  return { x: 0.5 + dx / scale * 0.4, y: 0.5 + dy / scale * 0.4 }
+}
+
 export function projectMoonToScreen(
   moon: Vector3
 ): ScreenPoint {

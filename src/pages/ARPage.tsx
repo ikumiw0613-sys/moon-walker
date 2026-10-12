@@ -18,7 +18,7 @@ import {
   cameraVectorToViewAngles,
 } from '../lib/skyParallax'
 
-import { projectMoonToScreen } from '../lib/moonProjection'
+import { getMoonEdgePosition, projectMoonToScreen } from '../lib/moonProjection'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & ReturnType<typeof useGeolocation>) {
   const { northCorrection, calibrated } = useNorthCalibration()
@@ -56,6 +56,8 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
   const moonScreen = deviceState.moonInDevice
     ? projectMoonToScreen(deviceState.moonInDevice)
     : null
+  const moonEdge = moonScreen && !moonScreen.visible ? getMoonEdgePosition(moonScreen) : null
+  const moonBehind = guidance?.status === 'behind'
 
   return (
     <SkyBackground
@@ -91,6 +93,13 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
           {guidance && moonScreen && (
             <MoonSprite x={moonScreen.x} y={moonScreen.y} visible={moonScreen.visible} />
           )}
+          {guidance && moonEdge && (
+            <div className="mw-ar-moon-marker" style={{ left: `${moonEdge.x * 100}%`, top: `${moonEdge.y * 100}%` }}>
+              <span className="mw-moon mw-ar-moon-thumbnail" />
+              <span>{moonBehind ? '反対側に月' : '画面外に月'}</span>
+              <span className="mw-ar-moon-marker-arrow">{guidance.arrow}</span>
+            </div>
+          )}
           {isNear && (
             <div
               className={[
@@ -104,6 +113,7 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
         {guidance && (
           <section className={`mw-ar-guide${isCentered ? ' is-centered' : ''}`} aria-label="月への案内">
             <p className="mw-ar-guide-label">{isCentered ? '月の方向に向いています' : 'スマホをゆっくり動かして'}</p>
+            {moonEdge && <p className="mw-ar-visibility-note">{moonBehind ? '月はスマホの反対側にあります' : '月は画面の外にあります'}。矢印の方向へ向けてください。</p>}
             <div className="mw-ar-guidance-row">
               <span className="mw-ar-arrow" aria-hidden="true">
                 {guidance.arrow}
