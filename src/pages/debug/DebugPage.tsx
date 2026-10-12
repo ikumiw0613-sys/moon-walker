@@ -15,6 +15,7 @@ import { getMoonDeviceState, getMoonDeviceDiagnosticAttributes } from '../../fea
 import { captureNorthCalibration, getHorizontalCalibration } from '../../features/north-calibration/horizontalCalibration'
 import { useNorthCalibration } from '../../features/north-calibration/useNorthCalibration'
 import { SunDebugCard } from '../../features/debug/solar/SunDebugCard'
+import { MoonPhasePreview } from '../../features/debug/moon/MoonPhasePreview'
 import '../../features/debug/debug-base.css'
 import './DebugPage.css'
 
@@ -222,6 +223,7 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
       )}
         </div>
       </section>
+      <MoonPhasePreview />
     </main>
   )
 }

@@ -121,6 +121,18 @@ describe('getMoonShadowPath', () => {
     expect(Math.abs(area - (1 - phase.illuminatedFraction))).toBeLessThan(0.0001)
   })
 
+  it.each([0, 180])('月相角%s°の境界前後でも、影の面積が連続する', boundary => {
+    const areas = [-0.001, 0, 0.001].map(offset => {
+      const cycleAngle = ((boundary + offset) % 360 + 360) % 360
+      const illuminatedFraction = (1 - Math.cos(cycleAngle * Math.PI / 180)) / 2
+      const path = getMoonShadowPath({ cycleAngle, illuminatedFraction })
+      if (path !== null) expect(path).not.toMatch(/NaN|Infinity/)
+      return shadowAreaFraction(samplePath(path))
+    })
+    expect(Math.abs(areas[0]! - areas[1]!)).toBeLessThan(1e-8)
+    expect(Math.abs(areas[2]! - areas[1]!)).toBeLessThan(1e-8)
+  })
+
   it.each([-1, 360, NaN, Infinity])('無効な月相角%sを拒否する', cycleAngle => {
     expect(() => getMoonShadowPath({ cycleAngle, illuminatedFraction: 0.5 })).toThrow(RangeError)
   })

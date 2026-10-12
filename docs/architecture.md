@@ -56,6 +56,8 @@ src/
 
 `MoonDisc` に `phase` を渡すと、`components/MoonShadow.tsx` が影のパスを画像の上に重ねる。画像と影は同じ円形領域で切り抜く。影の標準色は `#030814`、不透明度は0.98で、CSS変数 `--moon-shadow-color`・`--moon-shadow-opacity` で調整できる。月相の形はパスが決め、不透明度は見た目の調整に使う。照明率1では影を描画せず、月相を省略した場合は画像だけを表示する。
 
+`/debug#moon-phase-preview` の月相プレビューは `features/debug/moon/MoonPhasePreview.tsx` が担当する。代表的な8つの月相を96px・AR本体と同じ46px・マーカーと同じ32px（不透明度0.75）で並べる。スライダー、境界前後のボタン、連続再生で形状の切替を確認できる。描画にはARと同じ `MoonDisc` を使い、操作はARの観測時刻や月相データを変更しない。確認用の照明率は月相角から模式的に生成し、実際の月齢・日時は生成しない。描画に必要な2項目は `MoonPhaseShape` 型で扱う。
+
 `features/moon-guide/moonDeviceNavigation.ts` の `getMoonDeviceState` は、センサー姿勢・観測地点から計算した月・保存済み北補正を受け取り、DebugとAR共通の計算結果を返す。北補正は一度だけ適用する。
 
 北補正の状態は `features/north-calibration/NorthCalibrationProvider.tsx` に保持する。アプリ内の画面遷移では保持し、ページ再読み込みでリセットする。

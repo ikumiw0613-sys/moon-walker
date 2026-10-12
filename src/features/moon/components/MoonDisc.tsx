@@ -1,13 +1,13 @@
 import { useId } from 'react'
 import type { ReactNode } from 'react'
 import { MOON_DISC_GEOMETRY, MOON_IMAGE_PLACEMENT } from '../moonDiscGeometry'
-import type { MoonPhaseInfo } from '../types'
+import type { MoonPhaseShape } from '../types'
 import { MoonShadow } from './MoonShadow'
 import './MoonDisc.css'
 
 type MoonDiscProps = {
   /** 指定した月相に合わせて、画像の上に影を重ねる。 */
-  phase?: MoonPhaseInfo
+  phase?: MoonPhaseShape
   /** 画像と影の上に追加するSVG要素。同じ座標・切り抜き領域で描画する。 */
   children?: ReactNode
 }

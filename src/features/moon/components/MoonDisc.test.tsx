@@ -37,7 +37,7 @@ describe('MoonDisc', () => {
   })
 
   it('画像と月相の影を、同じ円形領域で画像の上に重ねる', () => {
-    const container = render(<MoonDisc phase={{ ageDays: 7, cycleAngle: 90, illuminatedFraction: 0.5 }} />)
+    const container = render(<MoonDisc phase={{ cycleAngle: 90, illuminatedFraction: 0.5 }} />)
     const clip = container.querySelector('clipPath')!
     const circle = clip.querySelector('circle')!
     const layer = container.querySelector('g')!
@@ -77,19 +77,19 @@ describe('MoonDisc', () => {
     const container = document.createElement('div')
     const root = createRoot(container)
     try {
-      await act(async () => root.render(<MoonDisc phase={{ ageDays: 7, cycleAngle: 90, illuminatedFraction: 0.5 }} />))
+      await act(async () => root.render(<MoonDisc phase={{ cycleAngle: 90, illuminatedFraction: 0.5 }} />))
       const image = container.querySelector('image')!
       const imageMarkup = image.outerHTML
       const clipId = container.querySelector('clipPath')!.id
       const firstQuarterPath = container.querySelector('.moon-shadow')!.getAttribute('d')
 
-      await act(async () => root.render(<MoonDisc phase={{ ageDays: 22, cycleAngle: 270, illuminatedFraction: 0.5 }} />))
+      await act(async () => root.render(<MoonDisc phase={{ cycleAngle: 270, illuminatedFraction: 0.5 }} />))
       expect(container.querySelector('.moon-shadow')!.getAttribute('d')).not.toBe(firstQuarterPath)
       expect(container.querySelector('image')).toBe(image)
       expect(image.outerHTML).toBe(imageMarkup)
       expect(container.querySelector('clipPath')!.id).toBe(clipId)
 
-      await act(async () => root.render(<MoonDisc phase={{ ageDays: 15, cycleAngle: 180, illuminatedFraction: 1 }} />))
+      await act(async () => root.render(<MoonDisc phase={{ cycleAngle: 180, illuminatedFraction: 1 }} />))
       expect(container.querySelector('.moon-shadow')).toBeNull()
       expect(container.querySelector('image')).toBe(image)
     } finally {

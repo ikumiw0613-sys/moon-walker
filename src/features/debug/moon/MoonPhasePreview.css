@@ -1,0 +1,24 @@
+.moon-phase-preview { margin-top: 20px; }
+.moon-phase-preview__note { margin: 0 0 20px; color: #a4b0c3; font-size: .8125rem; line-height: 1.8; }
+.moon-phase-preview__controls { display: grid; gap: 12px; }
+.moon-phase-preview__controls label { font-size: .875rem; }
+.moon-phase-preview__controls input { width: 100%; margin: 0; }
+.moon-phase-preview__controls output { color: #c4cddd; font-size: .8125rem; font-variant-numeric: tabular-nums; }
+.moon-phase-preview__controls button { justify-self: start; }
+.moon-phase-preview__selected { margin: 24px 0; padding: 16px 8px; background: #071426; border-radius: 8px; }
+.moon-phase-preview__sizes { display: flex; align-items: flex-end; justify-content: center; gap: 8px; }
+.moon-phase-preview__size { display: grid; justify-items: center; gap: 10px; flex-shrink: 0; }
+.moon-phase-preview__size > span:last-child { color: #a4b0c3; font-size: 10px; white-space: nowrap; }
+.moon-phase-preview__disc { display: block; }
+.moon-phase-preview__disc--marker { opacity: .75; }
+.moon-phase-preview__boundaries { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.moon-phase-preview__boundaries p { flex-basis: 100%; margin: 0 0 4px; color: #a4b0c3; font-size: .8125rem; }
+.moon-phase-preview__boundaries button, .moon-phase-preview__gallery button { min-height: 40px; border: 1px solid #475569; border-radius: 6px; background: #0b1322; color: #f5f3eb; font: inherit; cursor: pointer; }
+.moon-phase-preview__boundaries button { padding: 6px 10px; font-size: .75rem; }
+.moon-phase-preview__boundaries button:focus-visible, .moon-phase-preview__gallery button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
+.moon-phase-preview__gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; padding: 0; margin: 0; list-style: none; }
+.moon-phase-preview__gallery figure { margin: 0; padding: 12px; border: 1px solid #26354a; border-radius: 8px; background: #071426; }
+.moon-phase-preview__gallery figcaption { margin-bottom: 16px; }
+.moon-phase-preview__gallery button { width: 100%; padding: 6px; font-size: .8125rem; }
+.moon-phase-preview__gallery button[aria-pressed=true] { border-color: #7dd3fc; color: #7dd3fc; }
+.moon-phase-preview__gallery p { margin: 16px 0 0; color: #a4b0c3; text-align: center; font-size: .75rem; font-variant-numeric: tabular-nums; }

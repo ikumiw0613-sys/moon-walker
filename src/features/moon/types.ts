@@ -13,3 +13,6 @@ export type MoonPhaseInfo = {
   /** 見えている月の円盤のうち、太陽に照らされている割合。0以上1以下。 */
   illuminatedFraction: number
 }
+
+/** 円盤の満ち欠けの描画に必要な情報。月齢や観測日時は描画側で計算しない。 */
+export type MoonPhaseShape = Pick<MoonPhaseInfo, 'cycleAngle' | 'illuminatedFraction'>

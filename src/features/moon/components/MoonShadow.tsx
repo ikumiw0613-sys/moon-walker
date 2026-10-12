@@ -1,9 +1,9 @@
 import { getMoonShadowPath } from '../moonShadow'
-import type { MoonPhaseInfo } from '../types'
+import type { MoonPhaseShape } from '../types'
 import './MoonShadow.css'
 
 type MoonShadowProps = {
-  phase: MoonPhaseInfo
+  phase: MoonPhaseShape
 }
 
 export function MoonShadow({ phase }: MoonShadowProps) {

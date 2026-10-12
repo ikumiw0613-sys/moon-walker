@@ -1,14 +1,12 @@
 import { MOON_DISC_GEOMETRY } from './moonDiscGeometry'
-import type { MoonPhaseInfo } from './types'
-
-type MoonShadowPhase = Pick<MoonPhaseInfo, 'cycleAngle' | 'illuminatedFraction'>
+import type { MoonPhaseShape } from './types'
 
 /**
  * 月の影を表す閉じたSVGパスを返す。照明率が1の場合は影がないためnullを返す。
  * MoonDiscと同じ座標を使い、満ちていく月は右、欠けていく月は左を明るくする。
  * 影の傾き・色・不透明度・ぼかしは描画側で扱う。
  */
-export function getMoonShadowPath({ cycleAngle, illuminatedFraction }: MoonShadowPhase): string | null {
+export function getMoonShadowPath({ cycleAngle, illuminatedFraction }: MoonPhaseShape): string | null {
   if (!Number.isFinite(cycleAngle) || cycleAngle < 0 || cycleAngle >= 360) {
     throw new RangeError('月相角は0°以上360°未満の有限値で指定してください。')
   }
