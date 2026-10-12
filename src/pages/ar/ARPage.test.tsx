@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ARPage } from './ARPage'
@@ -6,10 +7,12 @@ const mocks = vi.hoisted(() => ({
   calibration: { calibrated: true, northCorrection: -90 },
   orientation: { alpha: 0 as number | null, beta: 90, gamma: 0, status: 'active', message: 'センサー取得中' },
   moon: { azimuth: 90, altitude: 0, isAboveHorizon: true },
+  phase: { ageDays: 7, cycleAngle: 90, illuminatedFraction: 0.5 },
 }))
 vi.mock('../../features/north-calibration/useNorthCalibration', () => ({ useNorthCalibration: () => mocks.calibration }))
 vi.mock('../../features/device-orientation/useDeviceOrientation', () => ({ useDeviceOrientation: () => ({ state: mocks.orientation, requestPermission: vi.fn() }) }))
 vi.mock('../../features/moon/astronomy', () => ({ getMoonPosition: () => mocks.moon }))
+vi.mock('../../features/moon/moonPhase', () => ({ getMoonPhase: () => mocks.phase }))
 
 const render = () => renderToStaticMarkup(<ARPage navigate={vi.fn()} requestLocation={vi.fn()} state={{ status: 'success', location: { latitude: 35, longitude: 139, accuracy: 10, timestamp: 0 } }} />)
 
@@ -21,6 +24,9 @@ beforeEach(() => {
   mocks.moon.azimuth = 90
   mocks.moon.altitude = 0
   mocks.moon.isAboveHorizon = true
+  mocks.phase.ageDays = 7
+  mocks.phase.cycleAngle = 90
+  mocks.phase.illuminatedFraction = 0.5
 })
 
 describe('AR moon guidance integration', () => {
@@ -35,6 +41,7 @@ describe('AR moon guidance integration', () => {
     expect(html).not.toContain('moon-sprite')
     expect(html).not.toContain('mw-ar-moon-marker')
     expect(html).not.toContain('月まで')
+    expect(html).not.toContain('moon-shadow')
   })
   it('shows the below-horizon notice even without calibration or sensor data', () => {
     mocks.moon.isAboveHorizon = false
@@ -96,6 +103,36 @@ describe('AR moon guidance integration', () => {
     for (const status of ['requesting', 'waiting', 'active', 'unsupported', 'unavailable']) {
       mocks.orientation.status = status
       expect(render()).not.toContain('向きセンサーを許可する')
+    }
+  })
+
+  it('月本体と画面端のマーカーが同じ月相の影を描画する', () => {
+    const container = document.createElement('div')
+    container.innerHTML = render()
+    const mainShadow = container.querySelector('.moon-sprite .moon-shadow')!
+    expect(mainShadow).not.toBeNull()
+    const mainPath = mainShadow.getAttribute('d')
+
+    mocks.moon.azimuth = 270
+    container.innerHTML = render()
+    const markerShadow = container.querySelector('.mw-ar-moon-thumbnail .moon-shadow')!
+    expect(markerShadow).not.toBeNull()
+    expect(markerShadow.getAttribute('d')).toBe(mainPath)
+
+    mocks.phase.cycleAngle = 270
+    container.innerHTML = render()
+    expect(container.querySelector('.moon-shadow')!.getAttribute('d')).not.toBe(mainPath)
+  })
+
+  it('満月では本体とマーカーの影を外し、月画像は表示する', () => {
+    mocks.phase.cycleAngle = 180
+    mocks.phase.illuminatedFraction = 1
+    const container = document.createElement('div')
+    for (const azimuth of [90, 270]) {
+      mocks.moon.azimuth = azimuth
+      container.innerHTML = render()
+      expect(container.querySelector('.moon-disc image')).not.toBeNull()
+      expect(container.querySelector('.moon-shadow')).toBeNull()
     }
   })
 })

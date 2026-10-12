@@ -1,16 +1,19 @@
 import { MoonDisc } from '../../../features/moon/components/MoonDisc'
+import type { MoonPhaseInfo } from '../../../features/moon/types'
 import './MoonSprite.css'
 
 type MoonSpriteProps = {
   x: number
   y: number
   visible: boolean
+  phase: MoonPhaseInfo
 }
 
 export function MoonSprite({
   x,
   y,
   visible,
+  phase,
 }: MoonSpriteProps) {
   if (!visible) return null
   return (
@@ -22,7 +25,7 @@ export function MoonSprite({
       }}
       aria-hidden="true"
     >
-      <MoonDisc />
+      <MoonDisc phase={phase} />
     </div>
   )
 }

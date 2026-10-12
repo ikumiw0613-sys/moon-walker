@@ -10,7 +10,7 @@ import '../../shared/styles/frontend.css'
 import './ARPage.css'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
-  const { now, timeMode, ready, isBelowHorizon, orientation, requestPermission, deviceState,
+  const { now, moonPhase, timeMode, ready, isBelowHorizon, orientation, requestPermission, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind } = useARView(location)
   return (
     <SkyBackground
@@ -46,11 +46,11 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
 
         <div className="mw-ar-viewport" aria-hidden="true">
           {guidance && moonScreen && (
-            <MoonSprite x={moonScreen.x} y={moonScreen.y} visible={moonScreen.visible} />
+            <MoonSprite x={moonScreen.x} y={moonScreen.y} visible={moonScreen.visible} phase={moonPhase} />
           )}
           {guidance && moonEdge && (
             <div className="mw-ar-moon-marker" style={{ left: `${moonEdge.x * 100}%`, top: `${moonEdge.y * 100}%` }}>
-              <span className="mw-ar-moon-thumbnail"><MoonDisc /></span>
+              <span className="mw-ar-moon-thumbnail"><MoonDisc phase={moonPhase} /></span>
               <span>{moonBehind ? '反対側に月' : '画面外に月'}</span>
               <span className="mw-ar-moon-marker-arrow">{guidance.arrow}</span>
             </div>

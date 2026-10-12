@@ -1,14 +1,18 @@
 import { useId } from 'react'
 import type { ReactNode } from 'react'
 import { MOON_DISC_GEOMETRY, MOON_IMAGE_PLACEMENT } from '../moonDiscGeometry'
+import type { MoonPhaseInfo } from '../types'
+import { MoonShadow } from './MoonShadow'
 import './MoonDisc.css'
 
 type MoonDiscProps = {
-  /** 後続で追加する影などのSVG要素。画像と同じ座標・切り抜き領域で描画する。 */
+  /** 指定した月相に合わせて、画像の上に影を重ねる。 */
+  phase?: MoonPhaseInfo
+  /** 画像と影の上に追加するSVG要素。同じ座標・切り抜き領域で描画する。 */
   children?: ReactNode
 }
 
-export function MoonDisc({ children }: MoonDiscProps) {
+export function MoonDisc({ phase, children }: MoonDiscProps) {
   // 月本体とマーカーを同時に描画しても、切り抜き領域のIDが重複しないようにする。
   const clipId = useId()
   const { size, centerX, centerY, radius } = MOON_DISC_GEOMETRY
@@ -22,6 +26,7 @@ export function MoonDisc({ children }: MoonDiscProps) {
       </defs>
       <g clipPath={`url(#${clipId})`}>
         <image href={`${import.meta.env.BASE_URL}moon-image.png`} {...MOON_IMAGE_PLACEMENT} />
+        {phase && <MoonShadow phase={phase} />}
         {children}
       </g>
     </svg>

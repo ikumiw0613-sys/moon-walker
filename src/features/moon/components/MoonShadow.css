@@ -1,0 +1,5 @@
+.moon-shadow {
+  /* 形状は月相で決め、影の色と濃さは描画側で調整する。 */
+  fill: var(--moon-shadow-color, #030814);
+  fill-opacity: var(--moon-shadow-opacity, .98);
+}
