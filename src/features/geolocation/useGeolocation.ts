@@ -1,0 +1,28 @@
+import { useRef, useState } from 'react'
+import { getCurrentLocation } from './geolocation'
+import type { GeolocationAccess, LocationState } from './types'
+
+export function useGeolocation(): GeolocationAccess {
+  const [state, setState] = useState<LocationState>({ status: 'idle' })
+  const pending = useRef(false)
+
+  async function requestLocation(): Promise<void> {
+    if (pending.current) return
+    pending.current = true
+    setState({ status: 'loading' })
+
+    try {
+      const location = await getCurrentLocation()
+      setState({ status: 'success', location })
+    } catch (error: unknown) {
+      setState({
+        status: 'error',
+        message: error instanceof Error ? error.message : '現在地を取得できませんでした。',
+      })
+    } finally {
+      pending.current = false
+    }
+  }
+
+  return { state, requestLocation }
+}

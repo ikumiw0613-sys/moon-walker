@@ -16,11 +16,11 @@ compassHeading はキャリブレーション時の基準、および headingErr
 
 ## 共通関数
 
-- src/lib/northReferencedDevice.ts
+- src/features/device-orientation/northReferencedDevice.ts
   - getNorthReferencedDeviceRotation: 太陽で確認した行列補正を移植。補正行列、逆行列、カメラ方向、方位、高度、比較誤差を返す。
   - getCameraView: カメラ方向の方位・高度への変換。太陽プレビューもこの関数を使う。
   - getCelestialDirectionInDevice: 補正済み行列の転置で世界方向を端末座標へ変換する。
-- src/lib/moonDeviceNavigation.ts
+- src/features/moon-guide/moonDeviceNavigation.ts
   - getMoonDeviceState: 姿勢と保存補正、天文計算済みの月を入力し、Debug / AR 共通の correctedHeading / correctedRotation / moonInDevice / angleToMoon / navigation を返す。
   - getMoonDeviceDiagnosticAttributes: 両画面の main 要素に非表示の診断属性を付ける。
 
@@ -65,6 +65,6 @@ console.log({ debugSnapshot, arSnapshot });
 
 ## 自動テスト
 
-DeviceReferenceParity.test.tsx は実際のDebug / ARコンポーネントを同じ現在時刻・現在地・姿勢で描画し、補正を保存して画面遷移させ、4つの診断出力が一致することを検証する。コンパスの変化、手動北合わせの保存先、未校正、PCの手動姿勢も検証する。
+src/app/tests/DeviceReferenceParity.test.tsx は実際のDebug / ARコンポーネントを同じ現在時刻・現在地・姿勢で描画し、補正を保存して画面遷移させ、4つの診断出力が一致することを検証する。コンパスの変化、手動北合わせの保存先、未校正、PCの手動姿勢も検証する。
 
-northReferencedDevice.test.ts は北・東・南・西、0/360°境界、傾いた姿勢、二重補正の回避、欠測、天頂・天底を検証する。既存の方位と回転行列の固定値テストも維持した。
+src/features/device-orientation/northReferencedDevice.test.ts は北・東・南・西、0/360°境界、傾いた姿勢、二重補正の回避、欠測、天頂・天底を検証する。既存の方位と回転行列の固定値テストも維持した。

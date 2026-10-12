@@ -26,3 +26,15 @@ https://moon-walker.vercel.app/
 - Geolocation API
 - DeviceOrientation API
 - Vercel
+
+## 開発
+
+```sh
+npm install
+npm run dev
+npm test -- --run
+npm run build
+npm run lint
+```
+
+ディレクトリの役割と依存関係のルールは [構成ガイド](./docs/architecture.md) を参照してください。

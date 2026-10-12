@@ -1,0 +1,23 @@
+.mw-home-content { width: 100%; max-width: 440px; margin: auto; padding: 36px 0 48px; text-align: center; }
+.mw-orbit { position: relative; width: 218px; height: 218px; margin: 0 auto 40px; border: 1px solid #d1c9ac1c; border-radius: 50%; display: grid; place-items: center; transform: rotate(-20deg); }
+.mw-orbit::before { content: ''; width: 170px; height: 170px; border: 1px solid #d1c9ac0b; border-radius: 50%; position: absolute; }
+.mw-orbit-star { position: absolute; right: 11px; top: 22px; font-size: 18px; color: #d9d0b7; }
+.mw-home-moon-status { margin: 0 0 24px; padding: 18px 16px; border: 1px solid var(--mw-line); border-radius: 12px; background: #ffffff04; }
+.mw-home-moon-label { margin: 0 0 10px; color: var(--mw-muted); font-size: 11px; }
+.mw-home-moon-title { margin: 0; font-size: 16px; line-height: 1.7; }
+.mw-home-moon-note { margin: 8px 0 0; color: var(--mw-muted); font-size: 11px; line-height: 1.8; }
+.mw-home-location-button { margin-top: 12px; padding: 10px 16px; border: 1px solid #c4ccd32e; border-radius: 6px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+.mw-home-location-button:focus-visible { outline: 2px solid #dcd3ae; outline-offset: 4px; }
+.mw-waiting-content { max-width: 400px; }
+.mw-waiting-content h1 { font-size: clamp(20px, 5.5vw, 28px); letter-spacing: .04em; }
+.mw-waiting-next { margin: 40px 0 0; }
+.mw-waiting-label { margin: 0; color: var(--mw-muted); font-size: 14px; line-height: 1.8; }
+.mw-waiting-time { margin: 8px 0 0; font-size: 24px; line-height: 1.6; font-variant-numeric: tabular-nums; }
+.mw-waiting-link { justify-content: center; margin-top: 48px; }
+@media (min-width: 700px) {
+.mw-home-content { padding: 48px 0; }
+.mw-orbit { width: 240px; height: 240px; }
+}
+@media (max-width: 360px) {
+.mw-orbit { width: 180px; height: 180px; margin-bottom: 28px; }
+}
