@@ -1,3 +1,4 @@
+import { MoonImage } from './MoonImage'
 import './MoonSprite.css'
 
 type MoonSpriteProps = {
@@ -21,7 +22,7 @@ export function MoonSprite({
       }}
       aria-hidden="true"
     >
-      <div className="moon-sprite__body" />
+      <MoonImage />
     </div>
   )
 }

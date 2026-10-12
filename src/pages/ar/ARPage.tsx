@@ -4,6 +4,7 @@ import type { GeolocationAccess } from '../../features/geolocation/types'
 import { getMoonDeviceDiagnosticAttributes } from '../../features/moon-guide/moonDeviceNavigation'
 import { SkyBackground } from '../../features/sky/SkyBackground'
 import { MoonSprite } from './components/MoonSprite'
+import { MoonImage } from './components/MoonImage'
 import { useARView } from './useARView'
 import '../../shared/styles/frontend.css'
 import './ARPage.css'
@@ -47,7 +48,7 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
           )}
           {guidance && moonEdge && (
             <div className="mw-ar-moon-marker" style={{ left: `${moonEdge.x * 100}%`, top: `${moonEdge.y * 100}%` }}>
-              <span className="mw-moon mw-ar-moon-thumbnail" />
+              <span className="mw-ar-moon-thumbnail"><MoonImage /></span>
               <span>{moonBehind ? '反対側に月' : '画面外に月'}</span>
               <span className="mw-ar-moon-marker-arrow">{guidance.arrow}</span>
             </div>

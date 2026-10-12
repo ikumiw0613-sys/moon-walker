@@ -5,12 +5,3 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
-
-.moon-sprite__body {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  /* Compensate for the transparent padding around the Moon in the source image. */
-  background: url('/moon-image.png') 50% 48% / 190% no-repeat;
-  box-shadow: 0 0 32px #eee4c322;
-}
