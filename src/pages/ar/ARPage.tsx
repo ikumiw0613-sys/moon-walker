@@ -10,7 +10,7 @@ import '../../shared/styles/frontend.css'
 import './ARPage.css'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
-  const { now, ready, isBelowHorizon, orientation, requestPermission, deviceState,
+  const { now, timeMode, ready, isBelowHorizon, orientation, requestPermission, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind } = useARView(location)
   return (
     <SkyBackground
@@ -41,6 +41,8 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
             月の情報
           </AppLink>
         </header>
+
+        {timeMode === 'fixed' && <p className="mw-ar-test-time" role="status">テスト日時で表示中（2026年10月11日 10:00 日本時間）</p>}
 
         <div className="mw-ar-viewport" aria-hidden="true">
           {guidance && moonScreen && (

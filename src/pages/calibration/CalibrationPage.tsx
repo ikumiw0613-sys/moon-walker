@@ -4,6 +4,7 @@ import type { Navigate } from '../../app/navigation/AppNavigation'
 import { useDeviceOrientation } from '../../features/device-orientation/useDeviceOrientation'
 import { useNorthCalibration } from '../../features/north-calibration/useNorthCalibration'
 import { getHorizontalCalibration, captureNorthCalibration } from '../../features/north-calibration/horizontalCalibration'
+import { useObservationTime } from '../../shared/time/useObservationTime'
 import '../../shared/styles/frontend.css'
 import './CalibrationPage.css'
 
@@ -14,6 +15,7 @@ const MAX_SAMPLE_GAP_MS = 250
 export function CalibrationPage({ navigate }: { navigate: Navigate }) {
   const { state, requestPermission } = useDeviceOrientation()
   const { saveNorthCalibration } = useNorthCalibration()
+  const { mode, changeMode } = useObservationTime()
   const [complete, setComplete] = useState(false)
   const saved = useRef(false)
   const hold = useRef<{ startedAt: number; lastSampleAt: number } | null>(null)
@@ -56,6 +58,15 @@ export function CalibrationPage({ navigate }: { navigate: Navigate }) {
   return <main className={`mw-screen mw-calibration${complete ? ' is-complete' : ''}`}>
     <header className="mw-top"><AppLink to="/" navigate={navigate} className="mw-back"><span aria-hidden="true">←</span><span className="mw-sr-only">ホームへ戻る</span></AppLink></header>
     <section className="mw-calibration-content" aria-labelledby="calibration-title">
+      <div className="mw-calibration-time">
+        <label htmlFor="observation-time-mode">月の位置を計算する時刻</label>
+        <select id="observation-time-mode" value={mode} disabled={complete}
+          onChange={event => changeMode(event.target.value === 'fixed' ? 'fixed' : 'current')}>
+          <option value="current">現在時刻</option>
+          <option value="fixed">テスト日時（固定）</option>
+        </select>
+        <p>{mode === 'fixed' ? '2026年10月11日 10:00（日本時間）で表示します。' : '端末の現在時刻で表示します。'}</p>
+      </div>
       <div className="mw-calibration-visual">
         <img className="mw-calibration-guide" src="/calibration-guide.png" alt="スマホをまっすぐ前に向けるイメージ" />
         <p className="mw-calibration-image-caption">スマホをまっすぐ前に向けてください</p>

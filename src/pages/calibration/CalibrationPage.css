@@ -23,3 +23,7 @@
 @media (prefers-reduced-motion: reduce) {
 .mw-calibration-visual { transition: none; }
 }
+.mw-calibration-time { margin-bottom: 24px; text-align: left; }
+.mw-calibration-time label { display: block; margin-bottom: 8px; font-size: 13px; color: #d8dfe8; }
+.mw-calibration-time select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--mw-line); border-radius: 12px; background: #121b2c; color: #f4f1e8; font: inherit; }
+.mw-calibration-time p { margin: 8px 0 0; color: #aeb9c8; font-size: 12px; line-height: 1.6; }

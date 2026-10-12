@@ -1,27 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { AppLink } from '../../app/navigation/AppNavigation'
 import type { Navigate } from '../../app/navigation/AppNavigation'
 import type { GeolocationAccess } from '../../features/geolocation/types'
 import { getMoonPosition, getNextMoonrise } from '../../features/moon/astronomy'
 import { formatMoonrise } from '../../features/moon/formatMoonrise'
-import { getObservationTime } from '../../shared/time/observationTime'
+import { useObservationTime } from '../../shared/time/useObservationTime'
 import '../../shared/styles/frontend.css'
 import './HomePage.css'
 
 export function HomePage({ navigate, state, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
-  const [now, setNow] = useState(getObservationTime)
+  const { now, mode } = useObservationTime()
   useEffect(() => {
     if (state.status === 'idle') void requestLocation()
   }, [state.status, requestLocation])
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(getObservationTime()), 10000)
-    const refresh = () => setNow(getObservationTime())
-    window.addEventListener('focus', refresh)
-    return () => {
-      window.clearInterval(timer)
-      window.removeEventListener('focus', refresh)
-    }
-  }, [])
   const moon = useMemo(() => {
     if (state.status !== 'success') return null
     const { latitude, longitude } = state.location
@@ -34,6 +25,7 @@ export function HomePage({ navigate, state, requestLocation }: { navigate: Navig
   return (
     <main className="mw-screen mw-home">
       <section className="mw-home-content mw-waiting-content" aria-labelledby="app-title">
+        {mode === 'fixed' && <p>テスト日時で表示中（2026年10月11日 10:00 日本時間）</p>}
         <div role="status" aria-live="polite">
           {moon ? <>
             <h1 id="app-title">{moon.isAboveHorizon ? '月を探す準備に進みます' : '今は月が見えません'}</h1>

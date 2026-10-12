@@ -7,6 +7,7 @@ import { ARPage } from '../pages/ar/ARPage'
 import { MoonInfoPage } from '../pages/moon-info/MoonInfoPage'
 import { SettingsPage } from '../pages/settings/SettingsPage'
 import { useNavigation } from './navigation/useNavigation'
+import { ObservationTimeProvider } from '../shared/time/ObservationTimeProvider'
 
 function App() {
   const location = useGeolocation()
@@ -23,7 +24,9 @@ function App() {
 
   return (
     <NorthCalibrationProvider>
-      {isDebugPage ? <DebugPage {...location} /> : page}
+      <ObservationTimeProvider>
+        {isDebugPage ? <DebugPage {...location} /> : page}
+      </ObservationTimeProvider>
     </NorthCalibrationProvider>
   )
 }

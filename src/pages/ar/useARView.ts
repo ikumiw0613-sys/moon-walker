@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useDeviceOrientation } from '../../features/device-orientation/useDeviceOrientation'
 import { useNorthCalibration } from '../../features/north-calibration/useNorthCalibration'
 import { getMoonPosition } from '../../features/moon/astronomy'
-import { getObservationTime } from '../../shared/time/observationTime'
+import { useObservationTime } from '../../shared/time/useObservationTime'
 import { getMoonDeviceState } from '../../features/moon-guide/moonDeviceNavigation'
 
 import { useSkyParallax } from '../../features/sky/useSkyParallax'
@@ -18,11 +18,7 @@ import type { LocationState } from '../../features/geolocation/types'
 export function useARView(location: LocationState) {
   const { northCorrection, calibrated } = useNorthCalibration()
   const { state: orientation, requestPermission } = useDeviceOrientation({ autoStart: true })
-  const [now, setNow] = useState(getObservationTime)
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(getObservationTime()), 10000)
-    return () => window.clearInterval(timer)
-  }, [])
+  const { now, mode } = useObservationTime()
   const moonPosition = useMemo(() => location.status === 'success'
     ? getMoonPosition(location.location.latitude, location.location.longitude, now) : null, [location, now])
   const ready = calibrated && northCorrection !== null && Number.isFinite(northCorrection)
@@ -41,6 +37,6 @@ export function useARView(location: LocationState) {
   const moonEdge = moonScreen && !moonScreen.visible ? getMoonEdgePosition(moonScreen) : null
   const moonBehind = guidance?.status === 'behind'
 
-  return { now, ready, isBelowHorizon, orientation, requestPermission, deviceState,
+  return { now, timeMode: mode, ready, isBelowHorizon, orientation, requestPermission, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind }
 }

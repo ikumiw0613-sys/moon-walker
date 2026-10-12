@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CalibrationPage } from './CalibrationPage'
+import { ObservationTimeProvider } from '../../shared/time/ObservationTimeProvider'
 
 const mocks = vi.hoisted(() => ({
   state: { status: 'active', alpha: 315, beta: 90, gamma: 0, compassHeading: 90 as number | null, message: '' },
@@ -19,7 +20,7 @@ const navigate = vi.fn()
 async function sample(ms = 100, beta = 90, compassHeading: number | null = 90) {
   now += ms
   mocks.state = { ...mocks.state, beta, compassHeading }
-  await act(async () => root.render(<CalibrationPage navigate={navigate} />))
+  await act(async () => root.render(<ObservationTimeProvider><CalibrationPage navigate={navigate} /></ObservationTimeProvider>))
 }
 async function hold() {
   for (let i = 0; i < 7; i++) await sample()
@@ -35,7 +36,7 @@ beforeEach(async () => {
   navigate.mockClear()
   container = document.createElement('div')
   root = createRoot(container)
-  await act(async () => root.render(<CalibrationPage navigate={navigate} />))
+  await act(async () => root.render(<ObservationTimeProvider><CalibrationPage navigate={navigate} /></ObservationTimeProvider>))
 })
 afterEach(async () => {
   await act(async () => root.unmount())
@@ -45,6 +46,20 @@ afterEach(async () => {
 })
 
 describe('automatic calibration', () => {
+  it('現在時刻とテスト日時を切り替えられる', async () => {
+    const select = container.querySelector('select')!
+    expect(select.value).toBe('current')
+    await act(async () => {
+      select.value = 'fixed'
+      select.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    expect(container.textContent).toContain('2026年10月11日 10:00（日本時間）で表示します。')
+    await act(async () => {
+      select.value = 'current'
+      select.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    expect(container.textContent).toContain('端末の現在時刻で表示します。')
+  })
   it('saves the existing correction after 700ms of continuous samples and navigates after 600ms', async () => {
     for (let i = 0; i < 6; i++) await sample()
     expect(mocks.save).not.toHaveBeenCalled()

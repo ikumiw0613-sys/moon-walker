@@ -155,3 +155,4 @@
   0%, 100% { transform: translate(-50%, -50%) scale(1); }
   50% { transform: translate(-50%, -50%) scale(1.03); }
 }
+.mw-ar-test-time { position: relative; z-index: 2; margin: 8px auto; padding: 8px 12px; width: fit-content; max-width: 100%; border-radius: 10px; background: #121b2ce6; color: #d8dfe8; font-size: 12px; text-align: center; }

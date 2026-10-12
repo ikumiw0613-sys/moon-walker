@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { getMoonPosition, getNextMoonrise } from './astronomy'
-import { getObservationTime } from '../../shared/time/observationTime'
 
 describe('getNextMoonrise', () => {
   it('次の月の出の前後で地平線を越える', () => {
@@ -14,8 +13,8 @@ describe('getNextMoonrise', () => {
 })
 
 describe('getMoonPosition', () => {
-  it('通常ページの固定時刻では東京の月が地平線より上にある', () => {
-    expect(getMoonPosition(35.6812, 139.7671, getObservationTime()).altitude).toBeGreaterThan(30)
+  it('2026年10月11日10時では東京の月が地平線より上にある', () => {
+    expect(getMoonPosition(35.6812, 139.7671, new Date('2026-10-11T10:00:00+09:00')).altitude).toBeGreaterThan(30)
   })
   it('月の方位角と高度を計算できる', () => {
     const latitude = 35.6812
