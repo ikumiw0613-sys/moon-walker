@@ -10,7 +10,7 @@ import '../../shared/styles/frontend.css'
 import './ARPage.css'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
-  const { now, moonPhase, timeMode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, deviceState,
+  const { now, moonPhase, timeMode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind } = useARView(location)
   return (
     <SkyBackground
@@ -101,6 +101,9 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
           <div className="mw-ar-state">
             <h2>スマホの向きを確認</h2>
             <p role="status">{orientation.message}</p>
+            {orientation.status === 'unavailable' && (
+              <button type="button" className="mw-primary" onClick={retryConnection}>向きセンサーに再接続する</button>
+            )}
             {['idle', 'denied', 'error'].includes(orientation.status) && (
               <button type="button" className="mw-primary" onClick={() => void requestPermission()}>
                 向きセンサーを許可する

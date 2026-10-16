@@ -13,7 +13,7 @@ export const CALIBRATION_COMPLETE_DISPLAY_MS = 600
 const MAX_SAMPLE_GAP_MS = 250
 
 export function CalibrationPage({ navigate }: { navigate: Navigate }) {
-  const { state, requestPermission } = useDeviceOrientation()
+  const { state, requestPermission, retryConnection } = useDeviceOrientation()
   const { saveNorthCalibration } = useNorthCalibration()
   const { mode, changeMode } = useObservationTime()
   const [complete, setComplete] = useState(false)
@@ -91,7 +91,8 @@ export function CalibrationPage({ navigate }: { navigate: Navigate }) {
       </div>
       <h1 id="calibration-title" className="mw-sr-only">向きセンサー</h1>
       <div className="mw-ar-controls mw-calibration-sensor">
-        {requiresPermission && !complete && <button type="button" className="mw-primary" disabled={['requesting', 'waiting', 'active'].includes(state.status)} onClick={() => void requestPermission()}>向きセンサーを許可する</button>}
+        {!complete && state.status === 'unavailable' && <button type="button" className="mw-primary" onClick={retryConnection}>向きセンサーに再接続する</button>}
+        {!complete && ['idle', 'denied', 'error'].includes(state.status) && <button type="button" className="mw-primary" onClick={() => void requestPermission()}>向きセンサーを許可する</button>}
         <p role="status"><span className="mw-calibration-status-dot" aria-hidden="true" />{complete ? 'センサーの準備完了' : state.message || '向きセンサーを取得中です'}</p>
       </div>
     </section>

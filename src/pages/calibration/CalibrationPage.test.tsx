@@ -8,9 +8,9 @@ import { ObservationTimeProvider } from '../../shared/time/ObservationTimeProvid
 
 const mocks = vi.hoisted(() => ({
   state: { status: 'active', alpha: 315, beta: 90, gamma: 0, compassHeading: 90 as number | null, message: '' },
-  save: vi.fn(), request: vi.fn(),
+  save: vi.fn(), request: vi.fn(), retry: vi.fn(),
 }))
-vi.mock('../../features/device-orientation/useDeviceOrientation', () => ({ useDeviceOrientation: () => ({ state: mocks.state, requestPermission: mocks.request }) }))
+vi.mock('../../features/device-orientation/useDeviceOrientation', () => ({ useDeviceOrientation: () => ({ state: mocks.state, requestPermission: mocks.request, retryConnection: mocks.retry }) }))
 vi.mock('../../features/north-calibration/useNorthCalibration', () => ({ useNorthCalibration: () => ({ saveNorthCalibration: mocks.save }) }))
 
 let root: Root
@@ -33,6 +33,7 @@ beforeEach(async () => {
   mocks.state = { status: 'active', alpha: 315, beta: 90, gamma: 0, compassHeading: 90, message: '' }
   mocks.save.mockClear()
   mocks.request.mockClear()
+  mocks.retry.mockClear()
   navigate.mockClear()
   container = document.createElement('div')
   root = createRoot(container)
@@ -46,6 +47,33 @@ afterEach(async () => {
 })
 
 describe('automatic calibration', () => {
+  it('許可要求APIの有無によらず、未受信時は再接続し、待機中は再試行ボタンを出さない', async () => {
+    for (const api of [{}, { requestPermission: vi.fn() }]) {
+      vi.stubGlobal('DeviceOrientationEvent', api)
+      mocks.state.status = 'unavailable'
+      await sample()
+      const button = container.querySelector('button')!
+      expect(button.textContent).toBe('向きセンサーに再接続する')
+      await act(async () => button.click())
+      expect(mocks.request).not.toHaveBeenCalled()
+      mocks.state.status = 'waiting'
+      await sample()
+      expect(container.querySelector('button')).toBeNull()
+    }
+    expect(mocks.retry).toHaveBeenCalledTimes(2)
+  })
+
+  it('許可拒否と開始エラーでは許可要求をやり直す', async () => {
+    for (const status of ['denied', 'error']) {
+      mocks.state.status = status
+      await sample()
+      const button = container.querySelector('button')!
+      expect(button.textContent).toBe('向きセンサーを許可する')
+      await act(async () => button.click())
+    }
+    expect(mocks.request).toHaveBeenCalledTimes(2)
+    expect(mocks.retry).not.toHaveBeenCalled()
+  })
   it('補正完了直後にバックグラウンドへ移った場合、自動遷移を止めて新しい値で補正し直す', async () => {
     let visibility: DocumentVisibilityState = 'visible'
     vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibility)

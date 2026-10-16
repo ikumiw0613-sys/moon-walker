@@ -50,11 +50,13 @@ export function useDeviceOrientation({ autoStart = false }: { autoStart?: boolea
   const [state, setState] = useState<OrientationState>(() => autoStart && canStartWithoutPermission()
     ? { ...EMPTY_VALUES, status: 'waiting', message: 'センサー値を待っています…' } : getInitialState())
   const [enabled, setEnabled] = useState(() => autoStart && canStartWithoutPermission())
+  const [connectionAttempt, setConnectionAttempt] = useState(0)
   const [diagnostics, setDiagnostics] = useState<{
     lastReceived: RawOrientationEvent | null
     lastAccepted: RawOrientationEvent | null
   }>({ lastReceived: null, lastAccepted: null })
   const pending = useRef(false)
+  const restartPending = useRef(false)
   const mounted = useRef(false)
 
   useEffect(() => {
@@ -64,13 +66,29 @@ export function useDeviceOrientation({ autoStart = false }: { autoStart?: boolea
 
   useEffect(() => {
     if (!enabled) return
+    restartPending.current = false
     let receivedAbsolute = false
+    let lastAcceptedAt: number | null = null
+    let timeout: number
 
-    const timeout = window.setTimeout(() => {
-      setState((previous) => previous.status === 'waiting'
-        ? { ...EMPTY_VALUES, status: 'unavailable', message: 'センサー値が届いていません。端末・ブラウザの対応や許可設定を確認してください。' }
-        : previous)
-    }, NO_DATA_TIMEOUT_MS)
+    function markUnavailable(): void {
+      // 古い姿勢を残すと案内に使われるため、停止時は角度と方位も消す。
+      setState({ ...EMPTY_VALUES, status: 'unavailable', message: lastAcceptedAt === null
+        ? 'センサー値が届いていません。端末・ブラウザの対応や許可設定を確認してください。'
+        : '向きセンサーの更新が止まったため、月の案内を停止しています。値の受信が再開すると案内を再開します。' })
+    }
+
+    function armTimeout(): void {
+      window.clearTimeout(timeout)
+      timeout = window.setTimeout(markUnavailable, NO_DATA_TIMEOUT_MS)
+    }
+
+    armTimeout()
+    // バックグラウンド中にタイマーが遅延しても、復帰時に鮮度を確認する。
+    function onVisibilityChange(): void {
+      if (document.visibilityState === 'visible' && lastAcceptedAt !== null
+        && performance.now() - lastAcceptedAt >= NO_DATA_TIMEOUT_MS) markUnavailable()
+    }
 
     function handleOrientation(event: DeviceOrientationEvent): void {
       // 観察用メタデータ。既存のイベント採用条件やセンサー値は変更しない。
@@ -91,7 +109,9 @@ export function useDeviceOrientation({ autoStart = false }: { autoStart?: boolea
       if (receivedAbsolute && !event.absolute) return
       if (event.absolute) receivedAbsolute = true
 
-      window.clearTimeout(timeout)
+      // 値が同じでも新しいイベントなら更新中。採用しないイベントでは延長しない。
+      lastAcceptedAt = performance.now()
+      armTimeout()
       const compass = (event as DeviceOrientationEvent & { webkitCompassHeading?: number }).webkitCompassHeading
       setState({
         status: 'active',
@@ -106,12 +126,23 @@ export function useDeviceOrientation({ autoStart = false }: { autoStart?: boolea
 
     window.addEventListener('deviceorientation', handleOrientation)
     window.addEventListener('deviceorientationabsolute', handleOrientation)
+    document.addEventListener('visibilitychange', onVisibilityChange)
     return () => {
       window.clearTimeout(timeout)
       window.removeEventListener('deviceorientation', handleOrientation)
       window.removeEventListener('deviceorientationabsolute', handleOrientation)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [enabled])
+  }, [enabled, connectionAttempt])
+
+  function retryConnection(): void {
+    if (!mounted.current || pending.current || restartPending.current || state.status !== 'unavailable') return
+    // 許可済みの受信監視だけを作り直す。連打しても監視を重複させない。
+    restartPending.current = true
+    setState({ ...EMPTY_VALUES, status: 'waiting', message: '向きセンサーに再接続しています。センサー値を待っています…' })
+    setDiagnostics({ lastReceived: null, lastAccepted: null })
+    setConnectionAttempt(previous => previous + 1)
+  }
 
   async function requestPermission(): Promise<void> {
     if (pending.current || enabled) return
@@ -147,5 +178,5 @@ export function useDeviceOrientation({ autoStart = false }: { autoStart?: boolea
     }
   }
 
-  return { state, requestPermission, diagnostics }
+  return { state, requestPermission, retryConnection, diagnostics }
 }

@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { renderToStaticMarkup } from 'react-dom/server'
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ARPage } from './ARPage'
 
@@ -8,15 +10,18 @@ const mocks = vi.hoisted(() => ({
   orientation: { alpha: 0 as number | null, beta: 90, gamma: 0, status: 'active', message: 'センサー取得中' },
   moon: { azimuth: 90, altitude: 0, isAboveHorizon: true },
   phase: { ageDays: 7, cycleAngle: 90, illuminatedFraction: 0.5 },
+  retry: vi.fn(), request: vi.fn(),
 }))
 vi.mock('../../features/north-calibration/useNorthCalibration', () => ({ useNorthCalibration: () => mocks.calibration }))
-vi.mock('../../features/device-orientation/useDeviceOrientation', () => ({ useDeviceOrientation: () => ({ state: mocks.orientation, requestPermission: vi.fn() }) }))
+vi.mock('../../features/device-orientation/useDeviceOrientation', () => ({ useDeviceOrientation: () => ({ state: mocks.orientation, requestPermission: mocks.request, retryConnection: mocks.retry }) }))
 vi.mock('../../features/moon/astronomy', () => ({ getMoonPosition: () => mocks.moon }))
 vi.mock('../../features/moon/moonPhase', () => ({ getMoonPhase: () => mocks.phase }))
 
 const render = () => renderToStaticMarkup(<ARPage navigate={vi.fn()} requestLocation={vi.fn()} state={{ status: 'success', location: { latitude: 35, longitude: 139, accuracy: 10, timestamp: 0 } }} />)
 
 beforeEach(() => {
+  mocks.retry.mockClear()
+  mocks.request.mockClear()
   mocks.calibration.calibrated = true
   mocks.calibration.northCorrection = -90
   mocks.orientation.alpha = 0
@@ -30,6 +35,43 @@ beforeEach(() => {
 })
 
 describe('AR moon guidance integration', () => {
+  it('未受信時の再接続ボタンは、許可要求ではなく受信監視の再試行を呼ぶ', async () => {
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+    const container = document.createElement('div')
+    const root = createRoot(container)
+    const show = () => root.render(<ARPage navigate={vi.fn()} requestLocation={vi.fn()} state={{ status: 'success', location: { latitude: 35, longitude: 139, accuracy: 10, timestamp: 0 } }} />)
+    try {
+      mocks.orientation.status = 'unavailable'
+      await act(async () => show())
+      const button = container.querySelector('button')!
+      expect(button.textContent).toBe('向きセンサーに再接続する')
+      await act(async () => button.click())
+      expect(mocks.retry).toHaveBeenCalledTimes(1)
+      expect(mocks.request).not.toHaveBeenCalled()
+      mocks.orientation.status = 'waiting'
+      await act(async () => show())
+      expect(container.querySelector('button')).toBeNull()
+      expect(container.querySelector('.moon-sprite')).toBeNull()
+    } finally {
+      await act(async () => root.unmount())
+      vi.unstubAllGlobals()
+    }
+  })
+  it('センサー停止時は数値が残っていても月・マーカー・案内を表示しない', () => {
+    mocks.orientation.status = 'unavailable'
+    for (const azimuth of [90, 150, 270]) {
+      mocks.moon.azimuth = azimuth
+      const html = render()
+      expect(html).toContain('スマホの向きを確認')
+      expect(html).not.toContain('moon-sprite')
+      expect(html).not.toContain('mw-ar-moon-marker')
+      expect(html).not.toContain('mw-ar-ring')
+      expect(html).not.toContain('月まで')
+    }
+    mocks.orientation.status = 'active'
+    mocks.moon.azimuth = 90
+    expect(render()).toContain('月はここ！')
+  })
   it('prioritizes the below-horizon notice over centered guidance', () => {
     mocks.moon.altitude = -1
     mocks.moon.isAboveHorizon = false

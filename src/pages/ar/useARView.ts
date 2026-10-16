@@ -18,7 +18,7 @@ import type { LocationState } from '../../features/geolocation/types'
 
 export function useARView(location: LocationState) {
   const { northCorrection, calibrated, needsRecalibration } = useNorthCalibration()
-  const { state: orientation, requestPermission } = useDeviceOrientation({ autoStart: true })
+  const { state: orientation, requestPermission, retryConnection } = useDeviceOrientation({ autoStart: true })
   const { now, mode } = useObservationTime()
   // 位置と月相に同じ観測時刻を渡し、固定日時の使用中も計算の基準をそろえる。
   const moonPhase = useMemo(() => getMoonPhase(now), [now])
@@ -26,7 +26,8 @@ export function useARView(location: LocationState) {
     ? getMoonPosition(location.location.latitude, location.location.longitude, now) : null, [location, now])
   const ready = calibrated && northCorrection !== null && Number.isFinite(northCorrection)
   const isBelowHorizon = moonPosition !== null && !moonPosition.isAboveHorizon
-  const deviceState = getMoonDeviceState(orientation, ready ? northCorrection : null, moonPosition, orientation.compassHeading)
+  // 非稼働状態の姿勢は、値が残っていても月の位置や案内に利用しない。
+  const deviceState = getMoonDeviceState(orientation, ready && orientation.status === 'active' ? northCorrection : null, moonPosition, orientation.compassHeading)
   const cameraForward = deviceState.correctedRotation ? getCameraForward(deviceState.correctedRotation) : null
   const viewAngles = cameraForward ? cameraVectorToViewAngles(cameraForward) : null
   const guidance = !isBelowHorizon ? deviceState.navigation : null
@@ -40,6 +41,6 @@ export function useARView(location: LocationState) {
   const moonEdge = moonScreen && !moonScreen.visible ? getMoonEdgePosition(moonScreen) : null
   const moonBehind = guidance?.status === 'behind'
 
-  return { now, moonPhase, timeMode: mode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, deviceState,
+  return { now, moonPhase, timeMode: mode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind }
 }
