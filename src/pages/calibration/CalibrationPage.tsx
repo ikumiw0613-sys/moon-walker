@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { AppLink } from '../../app/navigation/AppNavigation'
 import type { Navigate } from '../../app/navigation/AppNavigation'
 import { useDeviceOrientation } from '../../features/device-orientation/useDeviceOrientation'
 import { useNorthCalibration } from '../../features/north-calibration/useNorthCalibration'
@@ -75,7 +74,6 @@ export function CalibrationPage({ navigate }: { navigate: Navigate }) {
   }, [complete, navigate])
 
   return <main className={`mw-screen mw-calibration${complete ? ' is-complete' : ''}`}>
-    <header className="mw-top"><AppLink to="/" navigate={navigate} className="mw-back"><span aria-hidden="true">←</span><span className="mw-sr-only">ホームへ戻る</span></AppLink></header>
     <section className="mw-calibration-content" aria-labelledby="calibration-title">
       <p className="mw-calibration-current-time">現在時刻<br /><time dateTime={currentTime.toISOString()}>{currentTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZoneName: 'short' })}</time></p>
       <div className="mw-calibration-visual">
