@@ -99,19 +99,13 @@ describe('automatic calibration', () => {
     await act(async () => vi.advanceTimersByTime(600))
     expect(navigate).toHaveBeenCalledWith('/ar')
   })
-  it('現在時刻とテスト日時を切り替えられる', async () => {
-    const select = container.querySelector('select')!
-    expect(select.value).toBe('current')
-    await act(async () => {
-      select.value = 'fixed'
-      select.dispatchEvent(new Event('change', { bubbles: true }))
-    })
-    expect(container.textContent).toContain('2026年10月11日 10:00（日本時間）で表示します。')
-    await act(async () => {
-      select.value = 'current'
-      select.dispatchEvent(new Event('change', { bubbles: true }))
-    })
-    expect(container.textContent).toContain('端末の現在時刻で表示します。')
+  it('現在時刻を毎秒更新し、画面復帰時にも更新する', async () => {
+    const initial = new Date(container.querySelector('time')!.dateTime).getTime()
+    await act(async () => vi.advanceTimersByTime(1000))
+    expect(container.querySelector('time')!.dateTime).toBe(new Date(initial + 1000).toISOString())
+    vi.setSystemTime(new Date(initial + 60000))
+    await act(async () => window.dispatchEvent(new Event('focus')))
+    expect(container.querySelector('time')!.dateTime).toBe(new Date(initial + 60000).toISOString())
   })
   it('saves the existing correction after 700ms of continuous samples and navigates after 600ms', async () => {
     for (let i = 0; i < 6; i++) await sample()

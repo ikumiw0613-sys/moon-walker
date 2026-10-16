@@ -4,13 +4,13 @@ import { getObservationTime } from './observationTime'
 const UPDATE_INTERVAL_MS = 10000
 
 /** 現在時刻の更新処理。固定日時の使用中はタイマーと復帰イベントを停止する。 */
-export function useCurrentObservationTime(enabled: boolean) {
+export function useCurrentObservationTime(enabled: boolean, updateIntervalMs = UPDATE_INTERVAL_MS) {
   const [now, setNow] = useState(getObservationTime)
   const refresh = useCallback(() => setNow(getObservationTime()), [])
 
   useEffect(() => {
     if (!enabled) return
-    const timer = window.setInterval(refresh, UPDATE_INTERVAL_MS)
+    const timer = window.setInterval(refresh, updateIntervalMs)
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') refresh()
     }
@@ -21,7 +21,7 @@ export function useCurrentObservationTime(enabled: boolean) {
       window.removeEventListener('focus', refresh)
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [enabled, refresh])
+  }, [enabled, refresh, updateIntervalMs])
 
   return { now, refresh }
 }
