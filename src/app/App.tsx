@@ -18,7 +18,7 @@ function App() {
   const route = pathname.replace(/\/$/, '') || '/'
   const page = route === '/calibration' ? <CalibrationPage navigate={navigate} />
     : route === '/ar' ? <ARPage navigate={navigate} {...location} />
-      : route === '/moon-info' ? <MoonInfoPage navigate={navigate} />
+      : route === '/moon-info' ? <MoonInfoPage navigate={navigate} {...location} />
         : route === '/settings' ? <SettingsPage navigate={navigate} />
           : <HomePage navigate={navigate} {...location} />
 

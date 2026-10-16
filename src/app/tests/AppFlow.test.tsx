@@ -69,14 +69,15 @@ describe('frontend prototype navigation', () => {
     expect(requestLocation).toHaveBeenCalledTimes(1)
   })
 
-  it('月の仮データと設定項目をナビゲーションから開ける', async () => {
+  it('月の観測データと設定項目をナビゲーションから開ける', async () => {
     await clickLink('/moon-info')
-    expect(container.textContent).toContain('サンプルデータ')
+    expect(container.textContent).toContain('観測日時')
     for (const label of ['方位角', '高度', '月齢', '月までの距離']) expect(container.textContent).toContain(label)
     expect(container.querySelector('[aria-current="page"]')?.textContent).toBe('月の情報')
     await clickLink('/settings')
     for (const label of ['北補正', 'センサー設定', 'AR表示設定']) expect(container.textContent).toContain(label)
-    expect(requestLocation).toHaveBeenCalledTimes(1)
+    // モックの状態はidleのままなので、月の情報画面でも取得を要求する。
+    expect(requestLocation).toHaveBeenCalledTimes(2)
   })
 
   it('popstateによる履歴移動と直接URLの表示に対応する', async () => {
@@ -88,7 +89,7 @@ describe('frontend prototype navigation', () => {
       window.history.replaceState(null, '', '/moon-info/')
       window.dispatchEvent(new PopStateEvent('popstate'))
     })
-    expect(container.textContent).toContain('サンプルデータ')
+    expect(container.textContent).toContain('観測日時')
     await act(async () => {
       window.history.replaceState(null, '', '/')
       window.dispatchEvent(new PopStateEvent('popstate'))
