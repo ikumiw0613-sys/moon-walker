@@ -26,6 +26,8 @@ describe('debug diagnostic display', () => {
     expect(html).toContain('calibrated</dt><dd>false')
     expect(html).toContain('correctedHeading (°)</dt><dd>null')
     expect(html).toContain('headingError (°)</dt><dd>null')
+    expect(html).toContain('北補正候補の比較')
+    expect(html).toContain('candidate status</dt><dd>device rotation unavailable')
     expect(html).toMatch(/disabled=""[^>]*>北基準を合わせる/)
   })
 
@@ -54,6 +56,8 @@ describe('debug diagnostic display', () => {
     expect(html).toContain('northCorrection 候補 (°)</dt><dd>-132.0000')
     expect(html).toContain('northCorrection 保存値 (°)</dt><dd>null')
     expect(html).toContain('cameraForwardRaw')
+    expect(html).toContain('candidate northCorrection</dt><dd>-132.0°')
+    expect(html).toContain('saved northCorrection</dt><dd>null')
   })
 
   it('水平でもwebkitCompassHeadingがなければボタンを無効にする', () => {
@@ -65,6 +69,7 @@ describe('debug diagnostic display', () => {
     })
     const html = renderToStaticMarkup(<NorthCalibrationProvider><DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} /></NorthCalibrationProvider>)
     expect(html).toContain('コンパス方位を取得できません')
+    expect(html).toContain('candidate status</dt><dd>compass unavailable')
     expect(html).toMatch(/disabled=""[^>]*>北基準を合わせる/)
   })
 })

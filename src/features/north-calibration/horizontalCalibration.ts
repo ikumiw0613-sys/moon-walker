@@ -1,6 +1,6 @@
 import { normalizeAzimuth } from '../../shared/math/angles'
-import { multiplyMatrixVector } from '../../shared/math/vector3'
 import { deviceOrientationToMatrix } from '../device-orientation/deviceRotation'
+import { getNorthCorrectionDiagnostics } from './candidateNorthCorrection'
 
 // Camera direction must be within about 26° of the horizon.
 export const HORIZONTAL_CALIBRATION_THRESHOLD = 0.9
@@ -18,21 +18,16 @@ export function getHorizontalCalibration(input: CalibrationInput | null) {
   const { alpha = null, beta = null, gamma = null } = input ?? {}
   const validOrientation = alpha !== null && beta !== null && gamma !== null
     && [alpha, beta, gamma].every(Number.isFinite)
-  const cameraForwardRaw = validOrientation
-    ? multiplyMatrixVector(deviceOrientationToMatrix(alpha, beta, gamma), { x: 0, y: 0, z: -1 })
-    : null
-  const horizontalLength = cameraForwardRaw ? Math.hypot(cameraForwardRaw.x, cameraForwardRaw.y) : null
-  const isHorizontal = horizontalLength !== null && horizontalLength >= HORIZONTAL_CALIBRATION_THRESHOLD
-  const rawHeading = isHorizontal && cameraForwardRaw
-    ? normalizeAzimuth(Math.atan2(cameraForwardRaw.x, cameraForwardRaw.y) * 180 / Math.PI)
+  const deviceRotation = validOrientation
+    ? deviceOrientationToMatrix(alpha, beta, gamma)
     : null
   const heading = input?.webkitCompassHeading
   const compassHeading = typeof heading === 'number' && Number.isFinite(heading) && heading >= 0 && heading <= 360
     ? normalizeAzimuth(heading) : null
   // Rz(correction) decreases atan2(East, North) by correction in this ENU convention.
   // Store the shortest signed rotation, in [-180, 180). Do not apply it here.
-  const northCorrection = rawHeading !== null && compassHeading !== null
-    ? normalizeAzimuth(rawHeading - compassHeading + 180) - 180 : null
+  const { cameraForwardRaw, horizontalLength, isHorizontal, rawHeading, candidateNorthCorrection: northCorrection }
+    = getNorthCorrectionDiagnostics(deviceRotation, compassHeading, HORIZONTAL_CALIBRATION_THRESHOLD)
   return { cameraForwardRaw, horizontalLength, isHorizontal, rawHeading, compassHeading,
     northCorrection, canCalibrate: northCorrection !== null }
 }

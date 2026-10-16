@@ -1,4 +1,6 @@
 import { DeviceDiagnostics } from '../../features/debug/components/DeviceDiagnostics'
+import { NorthCorrectionDiagnostics } from '../../features/debug/components/NorthCorrectionDiagnostics'
+import { deviceOrientationToMatrix } from '../../features/device-orientation/deviceRotation'
 import { MoonTransformReadout } from '../../features/debug/components/MoonTransformReadout'
 import { useScreenOrientationAngle } from '../../features/device-orientation/useScreenOrientationAngle'
 import { useManualOrientation } from '../../features/debug/useManualOrientation'
@@ -43,6 +45,9 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
     : moonPosition && currentView ? getMoonNavigation(moonPosition, currentView) : null
   const rawEvent = diagnostics.lastAccepted
   const horizontalCalibration = getHorizontalCalibration(manualOrientationEnabled ? null : rawEvent)
+  const { alpha, beta, gamma } = sensorOrientation
+  const sensorRotation = alpha !== null && beta !== null && gamma !== null
+    && [alpha, beta, gamma].every(Number.isFinite) ? deviceOrientationToMatrix(alpha, beta, gamma) : null
 
   function handleManualNorthCalibration(): void {
     const sample = getHorizontalCalibration({ ...orientation, webkitCompassHeading: 0 })
@@ -184,6 +189,8 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
             使用中 gamma: {diagnosticValue(orientation.gamma)}
           </p>
         </section>
+        <NorthCorrectionDiagnostics deviceRotation={sensorRotation} compassHeading={sensorOrientation.compassHeading}
+          northCorrection={northCorrection} />
         <DeviceDiagnostics sensorOrientation={sensorOrientation} diagnostics={diagnostics} transform={transform}
           horizontalCalibration={horizontalCalibration} manualOrientationEnabled={manualOrientationEnabled}
           screenAngle={screenAngle} northCorrection={northCorrection} calibrated={calibrated}
