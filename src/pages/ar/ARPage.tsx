@@ -10,7 +10,7 @@ import '../../shared/styles/frontend.css'
 import './ARPage.css'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
-  const { now, moonPhase, timeMode, ready, isBelowHorizon, orientation, requestPermission, deviceState,
+  const { now, moonPhase, timeMode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind } = useARView(location)
   return (
     <SkyBackground
@@ -89,7 +89,7 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
           </section>
         )}
 
-        {isBelowHorizon && (
+        {isBelowHorizon && !needsRecalibration && (
           <section className="mw-ar-state mw-ar-below-horizon" role="status" aria-labelledby="below-horizon-title">
             <h1 id="below-horizon-title">月は地平線の<br />下にあります</h1>
             <p>今は空に月を見ることができません。</p>
@@ -109,16 +109,16 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
           </div>
         )}
 
-        {!isBelowHorizon && !ready && (
+        {(!isBelowHorizon || needsRecalibration) && !ready && (
           <div className="mw-ar-state">
-            <h2>まずは向きを合わせましょう</h2>
-            <p>月を探す準備ができていません</p>
+            <h2>{needsRecalibration ? '向きを再確認してください' : 'まずは向きを合わせましょう'}</h2>
+            <p>{needsRecalibration ? 'バックグラウンドから復帰したため、北補正をやり直してください。' : '月を探す準備ができていません'}</p>
             <AppLink
               to="/calibration"
               navigate={navigate}
               className="mw-primary"
             >
-              準備する
+              {needsRecalibration ? '北補正をやり直す' : '準備する'}
             </AppLink>
           </div>
         )}

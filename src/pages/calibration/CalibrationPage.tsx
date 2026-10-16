@@ -22,12 +22,28 @@ export function CalibrationPage({ navigate }: { navigate: Navigate }) {
   const requiresPermission = typeof window !== 'undefined'
     && typeof (window.DeviceOrientationEvent as typeof DeviceOrientationEvent & { requestPermission?: unknown } | undefined)?.requestPermission === 'function'
   useEffect(() => {
+    const reset = () => {
+      saved.current = false
+      hold.current = null
+      setComplete(false)
+    }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') reset()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', reset)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('pagehide', reset)
+    }
+  }, [])
+  useEffect(() => {
     if (!requiresPermission && state.status === 'idle') void requestPermission()
   }, [requiresPermission, state.status, requestPermission])
 
-  // Advance only when a new sensor sample arrives, never from a single held value.
+  // 新しいセンサー値が届いたときだけ判定し、非表示中の値では補正しない。
   useEffect(() => {
-    if (saved.current) return
+    if (saved.current || document.visibilityState === 'hidden') return
     const sample = getHorizontalCalibration({ ...state, webkitCompassHeading: state.compassHeading })
     if (state.status !== 'active' || !sample.canCalibrate || !sample.isHorizontal) {
       hold.current = null
@@ -51,7 +67,9 @@ export function CalibrationPage({ navigate }: { navigate: Navigate }) {
 
   useEffect(() => {
     if (!complete) return
-    const timer = window.setTimeout(() => navigate('/ar'), CALIBRATION_COMPLETE_DISPLAY_MS)
+    const timer = window.setTimeout(() => {
+      if (saved.current && document.visibilityState !== 'hidden') navigate('/ar')
+    }, CALIBRATION_COMPLETE_DISPLAY_MS)
     return () => window.clearTimeout(timer)
   }, [complete, navigate])
 

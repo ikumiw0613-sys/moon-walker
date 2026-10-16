@@ -17,7 +17,7 @@ import { getMoonEdgePosition, projectMoonToScreen } from '../../features/moon-gu
 import type { LocationState } from '../../features/geolocation/types'
 
 export function useARView(location: LocationState) {
-  const { northCorrection, calibrated } = useNorthCalibration()
+  const { northCorrection, calibrated, needsRecalibration } = useNorthCalibration()
   const { state: orientation, requestPermission } = useDeviceOrientation({ autoStart: true })
   const { now, mode } = useObservationTime()
   // 位置と月相に同じ観測時刻を渡し、固定日時の使用中も計算の基準をそろえる。
@@ -40,6 +40,6 @@ export function useARView(location: LocationState) {
   const moonEdge = moonScreen && !moonScreen.visible ? getMoonEdgePosition(moonScreen) : null
   const moonBehind = guidance?.status === 'behind'
 
-  return { now, moonPhase, timeMode: mode, ready, isBelowHorizon, orientation, requestPermission, deviceState,
+  return { now, moonPhase, timeMode: mode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind }
 }

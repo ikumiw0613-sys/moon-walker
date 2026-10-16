@@ -46,6 +46,31 @@ afterEach(async () => {
 })
 
 describe('automatic calibration', () => {
+  it('補正完了直後にバックグラウンドへ移った場合、自動遷移を止めて新しい値で補正し直す', async () => {
+    let visibility: DocumentVisibilityState = 'visible'
+    vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibility)
+    await hold()
+    expect(mocks.save).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      visibility = 'hidden'
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+    await act(async () => vi.advanceTimersByTime(1000))
+    await hold()
+    expect(navigate).not.toHaveBeenCalled()
+    expect(mocks.save).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      visibility = 'visible'
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+    await sample()
+    for (let i = 0; i < 6; i++) await sample()
+    expect(mocks.save).toHaveBeenCalledTimes(1)
+    await sample()
+    expect(mocks.save).toHaveBeenCalledTimes(2)
+    await act(async () => vi.advanceTimersByTime(600))
+    expect(navigate).toHaveBeenCalledWith('/ar')
+  })
   it('現在時刻とテスト日時を切り替えられる', async () => {
     const select = container.querySelector('select')!
     expect(select.value).toBe('current')
