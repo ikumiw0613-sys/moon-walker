@@ -2,6 +2,8 @@ import { DeviceDiagnostics } from '../../features/debug/components/DeviceDiagnos
 import { NorthCorrectionDiagnostics } from '../../features/debug/components/NorthCorrectionDiagnostics'
 import { deviceOrientationToMatrix } from '../../features/device-orientation/deviceRotation'
 import { MoonTransformReadout } from '../../features/debug/components/MoonTransformReadout'
+import { GravityDiagnostics } from '../../features/debug/components/GravityDiagnostics'
+import { useDebugDeviceMotion } from '../../features/debug/useDebugDeviceMotion'
 import { useScreenOrientationAngle } from '../../features/device-orientation/useScreenOrientationAngle'
 import { useManualOrientation } from '../../features/debug/useManualOrientation'
 import { useDebugObservation } from '../../features/debug/useDebugObservation'
@@ -23,6 +25,7 @@ import './DebugPage.css'
 
 export function DebugPage({ state, requestLocation }: GeolocationAccess) {
   const { state: sensorOrientation, requestPermission: requestOrientationPermission, diagnostics } = useDeviceOrientation()
+  const { state: motion, requestPermission: requestMotionPermission } = useDebugDeviceMotion()
   const { northCorrection, calibrated, calibratedAt, saveNorthCalibration } = useNorthCalibration()
   const screenAngle = useScreenOrientationAngle()
   const { manualOrientationEnabled, setManualOrientationEnabled, manualOrientation, setManualOrientation, orientation } = useManualOrientation(sensorOrientation)
@@ -95,8 +98,6 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
           </p>
         )}
           <dl className="debug-data">
-            <div><dt>月の方位角</dt><dd>{moonPosition?.azimuth.toFixed(2) ?? '—'}°</dd></div>
-            <div><dt>月の高度</dt><dd>{moonPosition?.altitude.toFixed(2) ?? '—'}°</dd></div>
             <div><dt>地平線</dt><dd>{moonPosition ? moonPosition.isAboveHorizon ? '上' : '下' : '—'}</dd></div>
           </dl>
         </section>
@@ -197,6 +198,9 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
           calibratedAt={calibratedAt} onCalibrate={handleNorthCalibration} />
         <SunDebugCard state={state} correctedHeading={transform.correctedHeading} cameraForwardCorrected={transform.cameraForwardCorrected} />
         <MoonTransformReadout transform={transform} moonPosition={moonPosition} />
+        <GravityDiagnostics motion={motion} correctedRotation={transform.correctedRotation}
+          manualOrientationEnabled={manualOrientationEnabled} orientationActive={sensorOrientation.status === 'active'}
+          onEnable={requestMotionPermission} />
       </div>
       <section className="debug-panel" aria-labelledby="preview-title">
         <div className="debug-preview-heading"><h2 id="preview-title"><span>04</span> 画面投影プレビュー</h2>

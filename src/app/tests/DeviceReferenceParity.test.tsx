@@ -31,6 +31,8 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(now)
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  vi.stubGlobal('isSecureContext', true)
+  vi.stubGlobal('DeviceMotionEvent', {})
   mocks.orientation.alpha = 315
   mocks.orientation.compassHeading = 90
   container = document.createElement('div')
@@ -67,6 +69,23 @@ function snapshot() {
 }
 
 describe('Debug / AR shared north reference', () => {
+  it('Debugの加速度を変えても保存済み北補正とAR共通の月・姿勢出力は変わらない', async () => {
+    await show('debug')
+    await useCurrentTime()
+    await click('北基準を合わせる')
+    const before = snapshot()
+    await click('加速度センサーを有効にする（Debug専用）')
+    for (const sample of [{ x: 0, y: 9.8, z: 0 }, { x: 9.8, y: 0, z: 0 }, null]) {
+      await act(async () => window.dispatchEvent(Object.assign(new Event('devicemotion'), { accelerationIncludingGravity: sample })))
+      expect(snapshot()).toEqual(before)
+      expect(container.textContent).toContain('northCorrection 保存値 (°)-45.0000')
+    }
+    expect(container.textContent).toContain('算出不可: データ未取得')
+    await show('ar')
+    expect(snapshot()).toEqual(before)
+    expect(container.querySelector('#gravity-title')).toBeNull()
+  })
+
   it('太陽プレビューと同じ保存済み補正を使い、同じ時刻・場所・姿勢の全出力が一致する', async () => {
     await show('debug')
     await useCurrentTime()

@@ -89,26 +89,5 @@ export function DeviceDiagnostics({ sensorOrientation, diagnostics, transform, h
             <div><dt>altitude (°)</dt><dd>{diagnosticValue(transform.rawView?.altitude ?? null)}</dd></div>
           </dl>
         </section>
-        <section className="debug-panel" aria-labelledby="after-title">
-          <h2 id="after-title">cameraForward after correction</h2>
-          <p className="search-status">共通ロジックのcorrectedRotation × (0, 0, −1)。太陽プレビュー・月の変換・ARで同じ回転行列を使います。</p>
-          <VectorReadout label="cameraForward / ENU・補正後" vector={transform.cameraForwardCorrected} />
-          <dl className="debug-data">
-            <div><dt>azimuth (°)</dt><dd>{diagnosticValue(transform.correctedView?.azimuth ?? null)}</dd></div>
-            <div><dt>altitude (°)</dt><dd>{diagnosticValue(transform.correctedView?.altitude ?? null)}</dd></div>
-          </dl>
-          {!transform.cameraForwardCorrected && <p className="search-status">null: 向きの未取得、方位の未確定、または北基準なし。</p>}
-        </section>
-        <section className="debug-panel" aria-labelledby="after-calibration-title">
-          <h2 id="after-calibration-title">cameraForward after calibration</h2>
-          <p className="search-status">保存したnorthCorrectionで Rz(northCorrection) × deviceRotation を計算する診断表示です。</p>
-          <VectorReadout label="cameraForwardCorrected / ENU" vector={transform.cameraForwardCorrected} />
-          <dl className="debug-data">
-            <div><dt>correctedHeading (°)</dt><dd>{diagnosticValue(transform.correctedHeading)}</dd></div>
-            <div><dt>webkitCompassHeading (°)</dt><dd>{diagnosticValue(horizontalCalibration.compassHeading)}</dd></div>
-            <div><dt>headingError (°)</dt><dd>{diagnosticValue(transform.headingError)}</dd></div>
-          </dl>
-          <p className="debug-diagnostic-note">headingError = correctedHeading − webkitCompassHeading（最短角度差）。未保存・姿勢未取得・コンパス未取得ではnullです。カメラが真上・真下の場合も方位はnullです。</p>
-        </section>
   </>
 }
