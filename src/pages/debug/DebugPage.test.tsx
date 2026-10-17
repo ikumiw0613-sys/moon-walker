@@ -33,6 +33,11 @@ describe('debug diagnostic display', () => {
       expect(html).toContain(reason)
     }
     expect(html).toContain('Moon diagnostics をコピー')
+    expect(html).toContain('Pose stability')
+    expect(html).toContain('pose stability status</dt><dd>unavailable')
+    expect(html).toContain('pose stability reason</dt><dd>orientation unavailable')
+    expect(html).toContain('heading delta (°)</dt><dd>null')
+    expect(html).toContain('pose.stability: unavailable')
     expect(html).toContain('算出不可: DeviceMotion未対応')
     expect(html).toContain('北補正候補の比較')
     expect(html).toContain('candidate status</dt><dd>device rotation unavailable')

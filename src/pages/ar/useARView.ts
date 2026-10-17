@@ -15,10 +15,16 @@ import {
 import { getMoonEdgePosition, projectMoonToScreen } from '../../features/moon-guide/moonProjection'
 
 import type { LocationState } from '../../features/geolocation/types'
+import { useDeviceMotion } from '../../features/device-motion/useDeviceMotion'
+import { usePoseStability } from '../../features/device-orientation/usePoseStability'
+import { getARGravityConvention } from '../../features/device-orientation/auxiliaryGravity'
+import { getARConfidentGuidance } from '../../features/moon-guide/arGuidanceConfidence'
 
 export function useARView(location: LocationState) {
   const { northCorrection, calibrated, needsRecalibration } = useNorthCalibration()
-  const { state: orientation, requestPermission, retryConnection } = useDeviceOrientation({ autoStart: true })
+  const { state: orientation, requestPermission, retryConnection, diagnostics } = useDeviceOrientation({ autoStart: true })
+  const gravityConvention = getARGravityConvention()
+  const { state: motion, requestPermission: requestMotionPermission } = useDeviceMotion({ autoStart: gravityConvention !== null })
   const { now, mode } = useObservationTime()
   // 位置と月相に同じ観測時刻を渡し、固定日時の使用中も計算の基準をそろえる。
   const moonPhase = useMemo(() => getMoonPhase(now), [now])
@@ -30,9 +36,11 @@ export function useARView(location: LocationState) {
   const deviceState = getMoonDeviceState(orientation, ready && orientation.status === 'active' ? northCorrection : null, moonPosition, orientation.compassHeading)
   const cameraForward = deviceState.correctedRotation ? getCameraForward(deviceState.correctedRotation) : null
   const viewAngles = cameraForward ? cameraVectorToViewAngles(cameraForward) : null
-  const guidance = !isBelowHorizon ? deviceState.navigation : null
-  const isNear = guidance !== null && guidance.angleToMoon <= 15
-  const isCentered = guidance?.status === 'centered'
+  const poseStability = usePoseStability({ rotation: deviceState.correctedRotation, heading: deviceState.correctedHeading,
+    active: orientation.status === 'active', sampleId: diagnostics?.lastAccepted?.sequence ?? diagnostics?.lastAccepted?.receivedAt ?? null,
+    calibrationKey: ready ? northCorrection : null, motion, gravityConvention })
+  const { guidance, isNear, isCentered } = getARConfidentGuidance(deviceState.navigation, poseStability, isBelowHorizon)
+  const isPoseChecking = Boolean(ready && orientation.status === 'active' && deviceState.correctedRotation && poseStability.status !== 'stable')
   const parallax = useSkyParallax({
     heading: viewAngles?.heading ?? null,
     altitude: viewAngles?.altitude ?? null,
@@ -42,5 +50,6 @@ export function useARView(location: LocationState) {
   const moonBehind = guidance?.status === 'behind'
 
   return { now, moonPhase, timeMode: mode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
-    guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind }
+    guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind, poseStability, isPoseChecking,
+    motion, requestMotionPermission, canCheckMotion: gravityConvention !== null }
 }

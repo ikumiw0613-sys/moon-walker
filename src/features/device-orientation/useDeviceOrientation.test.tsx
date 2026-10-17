@@ -144,6 +144,15 @@ describe('向きセンサーの更新停止', () => {
     expect(sensor.state.status).toBe('unavailable')
   })
 
+  it('同じ角度・同じ端末時刻でも新しい採用サンプルを一意に識別できる', async () => {
+    await send()
+    const first = sensor.diagnostics.lastAccepted!
+    await send()
+    const second = sensor.diagnostics.lastAccepted!
+    expect(second.receivedAt).toBe(first.receivedAt)
+    expect(second.sequence).toBe(first.sequence! + 1)
+  })
+
   it('全角度nullや採用しない相対イベントでは受信期限を延長しない', async () => {
     await send()
     await advance(2000)

@@ -26,6 +26,7 @@ function canStartWithoutPermission(): boolean {
 }
 
 export type RawOrientationEvent = {
+  sequence?: number
   alpha: number | null
   beta: number | null
   gamma: number | null
@@ -69,6 +70,7 @@ export function useDeviceOrientation({ autoStart = false }: { autoStart?: boolea
     restartPending.current = false
     let receivedAbsolute = false
     let lastAcceptedAt: number | null = null
+    let receivedSequence = 0
     let timeout: number
 
     function markUnavailable(): void {
@@ -94,6 +96,7 @@ export function useDeviceOrientation({ autoStart = false }: { autoStart?: boolea
       // 観察用メタデータ。既存のイベント採用条件やセンサー値は変更しない。
       const webkitEvent = event as DeviceOrientationEvent & { webkitCompassHeading?: number; webkitCompassAccuracy?: number }
       const rawEvent: RawOrientationEvent = {
+        sequence: ++receivedSequence,
         alpha: event.alpha, beta: event.beta, gamma: event.gamma,
         absolute: event.absolute, eventType: event.type, receivedAt: Date.now(),
         webkitCompassHeading: webkitEvent.webkitCompassHeading,

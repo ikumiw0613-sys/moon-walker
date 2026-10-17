@@ -6,12 +6,13 @@ import type { DebugMotionState } from '../useDebugDeviceMotion'
 import { diagnosticValue, eventTime } from '../formatDiagnostics'
 import { VectorReadout } from './VectorReadout'
 
-export function GravityDiagnostics({ motion, correctedRotation, manualOrientationEnabled, orientationActive, onEnable }: {
+export function GravityDiagnostics({ motion, correctedRotation, manualOrientationEnabled, orientationActive, onEnable, onConventionChange }: {
   motion: DebugMotionState
   correctedRotation: Matrix3 | null
   manualOrientationEnabled: boolean
   orientationActive: boolean
   onEnable: () => Promise<void>
+  onConventionChange?: (convention: GravitySensorConvention) => void
 }) {
   // The reported target is iPhone/Safari; use its verified WebKit/Core Motion sign.
   // This state is local to the debug card, never saved with northCorrection.
@@ -63,7 +64,10 @@ export function GravityDiagnostics({ motion, correctedRotation, manualOrientatio
     <label className="debug-time-mode">
       DeviceMotion → Downの符号（Debug専用）
       <select value={convention} onChange={event => {
-        if (event.target.value === 'raw-is-down' || event.target.value === 'raw-is-up') setConvention(event.target.value)
+        if (event.target.value === 'raw-is-down' || event.target.value === 'raw-is-up') {
+          setConvention(event.target.value)
+          onConventionChange?.(event.target.value)
+        }
       }}>
         <option value="raw-is-down">反転なし（rawがDown / iPhone・Safari実装）</option>
         <option value="raw-is-up">反転あり（rawがUp / W3Cの例）</option>
@@ -80,6 +84,6 @@ export function GravityDiagnostics({ motion, correctedRotation, manualOrientatio
     </dl>
     <p className="search-status">Gravity sensorは生値を0.9 / 0.1で平滑化・正規化し、選択した符号でDownを求めた値です。既定はiPhone / Safariの反転なし。計算側のDownは transpose(correctedRotation) × (0, 0, −1) です。符号比較の2つの角度も同じ平滑化値から計算し、フィルタ前のNormalized rawと区別します。符号は固定姿勢で確かめ、正常時とズレた時の比較中は変更しないでください。</p>
     <p className="debug-diagnostic-note">正常時とズレた時に数秒静止して、moon transformのcorrectedHeading・correctedAltitude・moonInDevice・moonScreenと角度差を比較してください。動作中はフィルタの遅れや加速度が混ざります。0°に近ければ傾きは整合していますが、重力では方位（yaw）の誤差を検出できません。角度差が小さい場合も、方位・北基準とmoonInDevice / projectionの両方を確認してください。</p>
-    <p className="search-status">加速度はDebug表示専用です。本番AR・northCorrection・キャリブレーションには使用しません。</p>
+    <p className="search-status">加速度は診断とAR案内の信頼度確認にだけ使用します。correctedRotation・northCorrection・キャリブレーションの補正には使用しません。</p>
   </section>
 }

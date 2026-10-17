@@ -4,6 +4,7 @@ import type { MoonPosition } from '../moon/types'
 import type { getMoonDeviceState } from '../moon-guide/moonDeviceNavigation'
 import { getMoonProjectionDiagnostics } from '../moon-guide/moonProjection'
 import { getCameraForward, cameraVectorToViewAngles } from '../sky/skyParallax'
+import type { PoseStability } from '../device-orientation/poseStability'
 
 export type MoonPipelineContext = {
   observationDate: Date | null
@@ -12,6 +13,7 @@ export type MoonPipelineContext = {
   orientationSource: 'sensor' | 'manual'
   orientationStatus: string
   northCorrection: number | null
+  poseStability?: PoseStability
 }
 
 export type MoonPipelineInput = {
@@ -62,6 +64,7 @@ export function getMoonPipelineDiagnostics({ transform, moonPosition, context }:
   if (context.orientationSource === 'manual') renderingReason = 'Debug manual orientation (AR uses the device sensor)'
   else if (context.orientationStatus !== 'active') renderingReason = 'orientation inactive (AR withholds correctedRotation)'
   else if (rotationReason) renderingReason = rotationReason
+  else if (context.poseStability && context.poseStability.status !== 'stable') renderingReason = `pose ${context.poseStability.status} (AR suppresses guidance)`
   else if (!moonPosition) renderingReason = 'moon position unavailable'
   else if (!moonPosition.isAboveHorizon) renderingReason = 'moon below horizon (AR suppresses guidance and MoonSprite)'
   else if (!navigation) renderingReason = 'navigation unavailable'
@@ -122,8 +125,14 @@ export function formatMoonPipelineDiagnostics(data: MoonPipelineDiagnostics): st
     ['MoonSprite.left (%)', projection.screen ? projection.screen.x * 100 : null],
     ['MoonSprite.top (%)', projection.screen ? projection.screen.y * 100 : null],
     ['MoonSprite.mapping', 'left = screenX * 100%; top = screenY * 100%; translate(-50%, -50%)'],
-    ['MoonSprite.gates', 'AR requires active orientation, navigation and projection; below-horizon guidance is hidden; visible=false renders nothing; positions are relative to .mw-ar-viewport'],
+    ['MoonSprite.gates', 'AR requires active stable orientation, navigation and projection; below-horizon guidance is hidden; visible=false renders nothing; positions are relative to .mw-ar-viewport'],
   ]
+  if (context.poseStability) {
+    const pose = context.poseStability
+    lines.push(['pose.stability', pose.status], ['pose.reason', pose.reason], ['pose.headingDelta', pose.headingDelta],
+      ['pose.altitudeDelta', pose.altitudeDelta], ['pose.rotationDelta', pose.rotationDelta],
+      ['pose.intervalMs', pose.intervalMs], ['pose.gravityDifference', pose.gravityDifference], ['pose.gravityReason', pose.gravityReason ?? 'available'])
+  }
   for (const [stage, reason] of Object.entries(data.reasons)) lines.push([`pipeline.${stage}.status`, reason ?? 'available'])
   return ['Moon transform pipeline', ...lines.map(([key, value]) => `${key}: ${snapshotValue(value)}`)].join('\n')
 }

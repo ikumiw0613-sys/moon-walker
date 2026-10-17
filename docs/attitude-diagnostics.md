@@ -1,6 +1,6 @@
 # Debugの姿勢診断
 
-加速度はDebugPageだけの `useDebugDeviceMotion` が取得する。AR・月位置・月相・northCorrectionの保存/適用・キャリブレーション・既存の復帰処理への入力は増やしていない。
+加速度取得・重力計算は共通の `features/device-motion` にあり、Debugの `useDebugDeviceMotion` は互換APIを維持する。ARでも姿勢の信頼度確認だけに使用できるようにした（[姿勢信頼度](pose-stability.md)）。月位置・月相・correctedRotation・northCorrectionの保存/適用・キャリブレーションの補正には使わない。
 
 ## 座標と計算
 

@@ -70,7 +70,7 @@ describe('AR moon guidance integration', () => {
     }
     mocks.orientation.status = 'active'
     mocks.moon.azimuth = 90
-    expect(render()).toContain('月はここ！')
+    expect(render()).toContain('このあたりに月があります')
   })
   it('prioritizes the below-horizon notice over centered guidance', () => {
     mocks.moon.altitude = -1
@@ -95,7 +95,7 @@ describe('AR moon guidance integration', () => {
   })
   it('uses saved north correction and rear camera forward', () => {
     const html = render()
-    expect(html).toContain('月はここ！')
+    expect(html).toContain('このあたりに月があります')
     expect(html).toContain('0.0°')
     expect(html).toContain('mw-ar-ring--centered')
     expect(html).toContain('moon-sprite')

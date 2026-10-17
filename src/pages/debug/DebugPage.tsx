@@ -1,3 +1,7 @@
+import { useState } from 'react'
+import { usePoseStability } from '../../features/device-orientation/usePoseStability'
+import type { GravitySensorConvention } from '../../features/device-motion/gravityDiagnostics'
+import { PoseStabilityDiagnostics } from '../../features/debug/components/PoseStabilityDiagnostics'
 import { DeviceDiagnostics } from '../../features/debug/components/DeviceDiagnostics'
 import { NorthCorrectionDiagnostics } from '../../features/debug/components/NorthCorrectionDiagnostics'
 import { deviceOrientationToMatrix } from '../../features/device-orientation/deviceRotation'
@@ -26,6 +30,7 @@ import './DebugPage.css'
 export function DebugPage({ state, requestLocation }: GeolocationAccess) {
   const { state: sensorOrientation, requestPermission: requestOrientationPermission, diagnostics } = useDeviceOrientation()
   const { state: motion, requestPermission: requestMotionPermission } = useDebugDeviceMotion()
+  const [gravityConvention, setGravityConvention] = useState<GravitySensorConvention>('raw-is-down')
   const { northCorrection, calibrated, calibratedAt, saveNorthCalibration } = useNorthCalibration()
   const screenAngle = useScreenOrientationAngle()
   const { manualOrientationEnabled, setManualOrientationEnabled, manualOrientation, setManualOrientation, orientation } = useManualOrientation(sensorOrientation)
@@ -35,6 +40,10 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
   const transform = getMoonDeviceState(
     orientation, calibrated ? northCorrection : null, moonPosition, orientation.compassHeading,
   )
+  const poseStability = usePoseStability({ rotation: transform.correctedRotation, heading: transform.correctedHeading,
+    active: !manualOrientationEnabled && sensorOrientation.status === 'active',
+    sampleId: diagnostics.lastAccepted?.sequence ?? diagnostics.lastAccepted?.receivedAt ?? null, calibrationKey: calibrated ? northCorrection : null,
+    motion, gravityConvention })
 
   const hasCompass = !manualOrientationEnabled && (orientation.absolute || orientation.compassHeading !== null)
   const sensorView = transform.correctedView
@@ -199,10 +208,11 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
         <SunDebugCard state={state} correctedHeading={transform.correctedHeading} cameraForwardCorrected={transform.cameraForwardCorrected} />
         <MoonTransformReadout transform={transform} moonPosition={moonPosition} context={{ observationDate,
           location: state, timeMode, orientationSource: manualOrientationEnabled ? 'manual' : 'sensor',
-          orientationStatus: orientation.status, northCorrection: calibrated ? northCorrection : null }} />
+          orientationStatus: orientation.status, northCorrection: calibrated ? northCorrection : null, poseStability }} />
         <GravityDiagnostics motion={motion} correctedRotation={transform.correctedRotation}
           manualOrientationEnabled={manualOrientationEnabled} orientationActive={sensorOrientation.status === 'active'}
-          onEnable={requestMotionPermission} />
+          onEnable={requestMotionPermission} onConventionChange={setGravityConvention} />
+        <PoseStabilityDiagnostics stability={poseStability} transform={transform} />
       </div>
       <section className="debug-panel" aria-labelledby="preview-title">
         <div className="debug-preview-heading"><h2 id="preview-title"><span>04</span> 画面投影プレビュー</h2>

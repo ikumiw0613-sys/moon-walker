@@ -11,7 +11,7 @@ Debugの既存moon transform表示を「Moon transform pipeline」に集約し�
 - normalizedX/Y: 本番最終出力を `2*screenX−1` / `1−2*screenY` で逆算する。投影式の別実装はなく、浮動小数点の丸め誤差がある。depthは−z。背面/カメラ平面では本番が途中でreturnするためnormalized値はnullで、その理由を表示する。最終出力は既存どおり(0.5,0.5,false)。
 - MoonSprite: 上記screenX/Y/visibleがそのままpropsになる。left=x×100%、top=y×100%、translate(−50%,−50%)で、基準は画面全体ではなくARの `.mw-ar-viewport`。
 
-visibleは画角内判定で、地平線判定とは別。地平線下でも診断のprojectionやnavigationは計算されるが、本番ARは案内とMoonSpriteを表示しない。また、ARは姿勢activeの場合だけ北補正を渡す。従来のDebug経路は変えず、manual入力やinactive姿勢など本番表示との条件差をMoonSprite欄に明記する。この欄は現在のDebug入力に基づく描画資格の説明であり、別画面の実DOMを取得した値ではない。
+visibleは画角内判定で、地平線判定とは別。地平線下でも診断のprojectionやnavigationは計算されるが、本番ARは案内とMoonSpriteを表示しない。また、ARは姿勢activeの場合だけ北補正を渡し、[姿勢信頼度](pose-stability.md)がstableの場合だけ案内を表示する。従来のDebug変換経路は変えず、manual入力・inactive姿勢・pose不安定など本番表示との条件差をMoonSprite欄に明記する。この欄は現在のDebug入力に基づく描画資格の説明であり、別画面の実DOMを取得した値ではない。
 
 null・非有限値・不正な長さは0で埋めず、各段階に理由を表示する。screen出力がオーバーフローした場合も診断結果を算出不可とする。本番の無効入力処理は変えていない。
 

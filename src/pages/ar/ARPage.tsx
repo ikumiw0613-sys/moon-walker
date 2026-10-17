@@ -11,13 +11,15 @@ import './ARPage.css'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
   const { now, moonPhase, timeMode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
-    guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind } = useARView(location)
+    guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind, poseStability, isPoseChecking,
+    motion, requestMotionPermission, canCheckMotion } = useARView(location)
   return (
     <SkyBackground
       offsetX={parallax.offsetX}
       offsetY={parallax.offsetY}
     >
-      <main className="mw-screen mw-ar" aria-label="月を探す" {...getMoonDeviceDiagnosticAttributes(deviceState, now)}>
+      <main className="mw-screen mw-ar" aria-label="月を探す" {...getMoonDeviceDiagnosticAttributes(deviceState, now)}
+        data-pose-stability={poseStability.status} data-pose-stability-reason={poseStability.reason}>
         <header className="mw-top">
           <AppLink
             to="/"
@@ -67,14 +69,14 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
 
         {guidance && (
           <section className={`mw-ar-guide${isCentered ? ' is-centered' : ''}`} aria-label="月への案内">
-            <p className="mw-ar-guide-label">{isCentered ? '月の方向に向いています' : 'スマホをゆっくり動かして'}</p>
+            <p className="mw-ar-guide-label">{isCentered ? 'リングの周辺の空を探してください' : 'スマホをゆっくり動かして'}</p>
             {moonEdge && <p className="mw-ar-visibility-note">{moonBehind ? '月はスマホの反対側にあります' : '月は画面の外にあります'}。矢印の方向へ向けてください。</p>}
             <div className="mw-ar-guidance-row">
               <span className="mw-ar-arrow" aria-hidden="true">
                 {guidance.arrow}
               </span>
               <p className="mw-ar-message" role="status" aria-live="polite" aria-atomic="true">
-                {guidance.message}
+                {isCentered ? 'このあたりに月があります' : guidance.message}
               </p>
             </div>
             <div className="mw-ar-guide-footer">
@@ -85,6 +87,11 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
                 </strong>
               </span>
               <AppLink to="/calibration" navigate={navigate} className="mw-ar-recalibrate">向きを調整</AppLink>
+              {canCheckMotion && ['idle', 'denied', 'error'].includes(motion.status) && (
+                <button type="button" className="mw-ar-motion-enable" onClick={() => void requestMotionPermission()}>
+                  動きの補助確認を有効にする
+                </button>
+              )}
             </div>
           </section>
         )}
@@ -99,8 +106,8 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
 
         {!isBelowHorizon && ready && location.status === 'success' && !guidance && (
           <div className="mw-ar-state">
-            <h2>スマホの向きを確認</h2>
-            <p role="status">{orientation.message}</p>
+            <h2>{isPoseChecking ? '向きを確認しています…' : 'スマホの向きを確認'}</h2>
+            <p role="status">{isPoseChecking ? '姿勢が落ち着くと案内を再開します。リングの周辺も見渡してください。' : orientation.message}</p>
             {orientation.status === 'unavailable' && (
               <button type="button" className="mw-primary" onClick={retryConnection}>向きセンサーに再接続する</button>
             )}
