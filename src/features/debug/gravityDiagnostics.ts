@@ -2,6 +2,7 @@ import type { Matrix3, Vector3 } from '../../shared/math/types'
 import { multiplyMatrixVector, transposeMatrix3 } from '../../shared/math/vector3'
 
 export type AccelerationSample = { x: number | null; y: number | null; z: number | null }
+export type GravitySensorConvention = 'raw-is-down' | 'raw-is-up'
 
 export const GRAVITY_FILTER_PREVIOUS_WEIGHT = 0.9
 export const MOTION_STALE_TIMEOUT_MS = 5000
@@ -41,14 +42,18 @@ export function filterAcceleration(previous: Vector3 | null, current: Accelerati
 }
 
 /**
- * W3C DeviceMotion reports proper acceleration: face-up at rest is (0, 0, +9.8).
- * Negate the filtered reading to express physical gravity (down) in device axes.
- * https://www.w3.org/TR/orientation-event/
+ * The sign is an explicit diagnostic setting, never inferred from agreement with R.
+ * iOS WebKit passes (userAcceleration + Core Motion gravity) * 9.80665 through:
+ * at rest it already points down, so raw-is-down does NOT negate it.
+ * https://github.com/WebKit/WebKit/blob/main/Source/WebCore/platform/ios/WebCoreMotionManager.mm#L212-L227
+ * In contrast, the W3C example is face-up (0, 0, +9.8), requiring raw-is-up.
+ * https://www.w3.org/TR/orientation-event/#introduction
  */
-export function gravityFromAcceleration(filtered: Vector3 | null): Vector3 | null {
-  if (accelerationIssue(filtered)) return null
+export function gravityFromAcceleration(filtered: Vector3 | null, convention: GravitySensorConvention): Vector3 | null {
+  if (accelerationIssue(filtered) || !['raw-is-down', 'raw-is-up'].includes(convention)) return null
   const unit = normalizeGravity(filtered)
-  return unit ? { x: -unit.x, y: -unit.y, z: -unit.z } : null
+  if (!unit || convention === 'raw-is-down') return unit
+  return { x: -unit.x, y: -unit.y, z: -unit.z }
 }
 
 /**

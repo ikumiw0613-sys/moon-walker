@@ -75,6 +75,12 @@ describe('Debug / AR shared north reference', () => {
     await click('北基準を合わせる')
     const before = snapshot()
     await click('加速度センサーを有効にする（Debug専用）')
+    const sign = container.querySelector<HTMLSelectElement>('[aria-labelledby="gravity-title"] select')!
+    for (const value of ['raw-is-down', 'raw-is-up', 'raw-is-down']) {
+      await act(async () => { sign.value = value; sign.dispatchEvent(new Event('change', { bubbles: true })) })
+      expect(snapshot()).toEqual(before)
+      expect(container.textContent).toContain('northCorrection 保存値 (°)-45.0000')
+    }
     for (const sample of [{ x: 0, y: 9.8, z: 0 }, { x: 9.8, y: 0, z: 0 }, null]) {
       await act(async () => window.dispatchEvent(Object.assign(new Event('devicemotion'), { accelerationIncludingGravity: sample })))
       expect(snapshot()).toEqual(before)

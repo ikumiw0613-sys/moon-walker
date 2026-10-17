@@ -37,16 +37,17 @@ describe('debug gravity math', () => {
     },
   )
 
-  it('初回をそのまま使い、以降は0.9/0.1で平滑化して下向きへ反転する', () => {
+  it('初回をそのまま使い、以降は0.9/0.1で平滑化し、指定した符号でDownへ変換する', () => {
     const initial = { x: 0, y: 0, z: 9.8 }
     expect(filterAcceleration(null, initial)).toEqual(initial)
     const filtered = filterAcceleration(initial, { x: 0, y: 9.8, z: 0 })!
     expectVector(filtered, { x: 0, y: 0.98, z: 8.82 })
-    const gravity = gravityFromAcceleration(filtered)!
+    const gravity = gravityFromAcceleration(filtered, 'raw-is-up')!
     expect(Math.hypot(gravity.x, gravity.y, gravity.z)).toBeCloseTo(1)
     expect(gravity.y).toBeLessThan(0)
     expect(gravity.z).toBeLessThan(0)
-    expectVector(gravityFromAcceleration(initial), { x: 0, y: 0, z: -1 })
+    expectVector(gravityFromAcceleration(initial, 'raw-is-up'), { x: 0, y: 0, z: -1 })
+    expectVector(gravityFromAcceleration(initial, 'raw-is-down'), { x: 0, y: 0, z: 1 })
   })
 
   it.each([null, { x: null, y: 0, z: 9.8 }, { x: NaN, y: 0, z: 9.8 },
@@ -54,13 +55,68 @@ describe('debug gravity math', () => {
     '異常値はフィルタに混入させず理由を返す: %s', sample => {
       expect(accelerationIssue(sample)).not.toBeNull()
       expect(filterAcceleration({ x: 0, y: 0, z: 9.8 }, sample)).toBeNull()
+      for (const convention of ['raw-is-down', 'raw-is-up'] as const) {
+        expect(gravityFromAcceleration(filterAcceleration(null, sample), convention)).toBeNull()
+      }
     },
   )
 
   it('平滑化で互いに打ち消したときも比較しない', () => {
     const filtered = { x: 0, y: 0, z: 0 }
-    expect(gravityFromAcceleration(filtered)).toBeNull()
+    expect(gravityFromAcceleration(filtered, 'raw-is-down')).toBeNull()
     expect(accelerationIssue(filtered)).toContain('ベクトル長が極端')
+  })
+})
+
+describe('DeviceMotion signs verified against physical device axes', () => {
+  // +x = physical right edge, +y = physical top edge, +z = out of the screen.
+  // Literal stationary readings for BOTH implementations, independent of matrix output.
+  // iOS WebKit: totalAccel = Core Motion userAcceleration + gravity (no negation).
+  // W3C: face-up example is +z, the opposite of physical Down.
+  it.each([
+    ['画面上向き', 0, 0, { x: 0, y: 0, z: -9.8 }, { x: 0, y: 0, z: 9.8 }, { x: 0, y: 0, z: -1 }],
+    ['画面下向き', 180, 0, { x: 0, y: 0, z: 9.8 }, { x: 0, y: 0, z: -9.8 }, { x: 0, y: 0, z: 1 }],
+    ['上端を上にして立てる', 90, 0, { x: 0, y: -9.8, z: 0 }, { x: 0, y: 9.8, z: 0 }, { x: 0, y: -1, z: 0 }],
+    ['上端を下にして立てる', -90, 0, { x: 0, y: 9.8, z: 0 }, { x: 0, y: -9.8, z: 0 }, { x: 0, y: 1, z: 0 }],
+    ['右端が下', 0, 90, { x: 9.8, y: 0, z: 0 }, { x: -9.8, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }],
+    ['左端が下', 0, -90, { x: -9.8, y: 0, z: 0 }, { x: 9.8, y: 0, z: 0 }, { x: -1, y: 0, z: 0 }],
+  ] as const)('%s: iOSは反転なし、W3Cの例は反転ありで物理Downになる', (_pose, beta, gamma, ios, w3c, down) => {
+    const iosDown = gravityFromAcceleration(filterAcceleration(null, ios), 'raw-is-down')
+    const w3cDown = gravityFromAcceleration(filterAcceleration(null, w3c), 'raw-is-up')
+    expectVector(iosDown, down)
+    expectVector(w3cDown, down)
+    const calculated = gravityFromCorrectedRotation(deviceOrientationToMatrix(37, beta, gamma))
+    expectVector(calculated, down)
+    expect(gravityAngleDegrees(iosDown, calculated)).toBeCloseTo(0, 5)
+    expect(gravityAngleDegrees(w3cDown, calculated)).toBeCloseTo(0, 5)
+    expect(gravityAngleDegrees(gravityFromAcceleration(ios, 'raw-is-up'), down)).toBeCloseTo(180, 5)
+  })
+
+  it('提供されたiPhone/Safariのraw値では、反転なしがDownと約3.50°、反転ありが約176.50°', () => {
+    const raw = Object.freeze({ x: 0.3202, y: -10.8923, z: 0.5620 })
+    const calculatedDown = { x: -0.0177, y: -0.9957, z: 0.0905 }
+    const direct = gravityFromAcceleration(raw, 'raw-is-down')
+    const inverted = gravityFromAcceleration(raw, 'raw-is-up')
+    expectVector(direct, { x: 0.02934521842618224, y: -0.9982414823969546, z: 0.05150534901784642 })
+    expect(gravityAngleDegrees(direct, calculatedDown)).toBeCloseTo(3.5047062163, 8)
+    expect(gravityAngleDegrees(inverted, calculatedDown)).toBeCloseTo(176.4952937837, 8)
+    expect(raw).toEqual({ x: 0.3202, y: -10.8923, z: 0.5620 })
+  })
+
+  it('提供された反転後の平滑化値は約177.74°、反転を取り消すと約2.26°', () => {
+    // This is a different (filtered) reading; do not equate it with normalize(raw).
+    const displayedNegated = { x: 0.0210, y: 0.9985, z: -0.0513 }
+    const calculatedDown = { x: -0.0177, y: -0.9957, z: 0.0905 }
+    const filteredBeforeNegation = { x: -0.0210 * 9.8, y: -0.9985 * 9.8, z: 0.0513 * 9.8 }
+    expect(gravityAngleDegrees(displayedNegated, calculatedDown)).toBeCloseTo(177.7402148298, 8)
+    expect(gravityAngleDegrees(gravityFromAcceleration(filteredBeforeNegation, 'raw-is-down'), calculatedDown)).toBeCloseTo(2.2597851702, 8)
+  })
+
+  it('行列に合うよう符号を選び直さず、姿勢が逆なら180°を保持する', () => {
+    const iosFaceUp = { x: 0, y: 0, z: -9.8 }
+    const sensorDown = gravityFromAcceleration(iosFaceUp, 'raw-is-down')
+    const incorrectFaceDown = gravityFromCorrectedRotation(deviceOrientationToMatrix(0, 180, 0))
+    expect(gravityAngleDegrees(sensorDown, incorrectFaceDown)).toBeCloseTo(180)
   })
 })
 
@@ -80,7 +136,7 @@ describe('correctedRotation → device gravity fixed poses', () => {
         const rotation = applyNorthCorrection(deviceOrientationToMatrix(alpha, beta, gamma), north)
         expectVector(gravityFromCorrectedRotation(rotation), expected)
         const sensor = { x: -expected.x * 9.8, y: -expected.y * 9.8, z: -expected.z * 9.8 }
-        expect(gravityAngleDegrees(gravityFromAcceleration(sensor), gravityFromCorrectedRotation(rotation))).toBeCloseTo(0, 5)
+        expect(gravityAngleDegrees(gravityFromAcceleration(sensor, 'raw-is-up'), gravityFromCorrectedRotation(rotation))).toBeCloseTo(0, 5)
       }
     }
   })
@@ -105,7 +161,9 @@ describe('correctedRotation → device gravity fixed poses', () => {
     expectVector(before.moonInDevice, { x: Math.SQRT1_2, y: 0, z: -Math.SQRT1_2 })
     expect(before.angleToMoon).toBeCloseTo(45)
     for (const sample of [{ x: 0, y: 9.8, z: 0 }, { x: 0, y: 0, z: 9.8 }, null]) {
-      gravityAngleDegrees(gravityFromAcceleration(sample), gravityFromCorrectedRotation(before.correctedRotation))
+      for (const convention of ['raw-is-down', 'raw-is-up'] as const) {
+        gravityAngleDegrees(gravityFromAcceleration(sample, convention), gravityFromCorrectedRotation(before.correctedRotation))
+      }
       expect(JSON.stringify(before)).toBe(beforeJson)
       expect(getMoonDeviceState(orientation, northCorrection, moon)).toEqual(before)
       expect(getMoonInDevice(moon, before.deviceRotation!, northCorrection)).toEqual(before.moonInDevice)

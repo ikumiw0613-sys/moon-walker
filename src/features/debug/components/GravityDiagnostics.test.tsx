@@ -8,7 +8,7 @@ import { getMoonDeviceState } from '../../moon-guide/moonDeviceNavigation'
 
 const identity: Matrix3 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 const active: DebugMotionState = { status: 'active', updating: true, lastReceivedAt: 1234,
-  accelerationIncludingGravity: { x: 0, y: 0, z: 9.8 }, filteredAcceleration: { x: 0, y: 0, z: 9.8 } }
+  accelerationIncludingGravity: { x: 0, y: 0, z: -9.8 }, filteredAcceleration: { x: 0, y: 0, z: -9.8 } }
 function render(motion: Partial<DebugMotionState> = {}, rotation: Matrix3 | null = identity,
   manual = false, orientationActive = true) {
   return renderToStaticMarkup(<GravityDiagnostics motion={{ ...active, ...motion }} correctedRotation={rotation}
@@ -21,11 +21,21 @@ describe('gravity diagnostic readout', () => {
     expect(html).toContain('Gravity sensor')
     expect(html).toContain('Gravity from correctedRotation')
     expect(html).toContain('Gravity difference (°)</dt><dd>0.0000')
+    expect(html).toContain('符号比較: 反転なし vs Down (°)</dt><dd>0.0000')
+    expect(html).toContain('符号比較: 反転あり vs Down (°)</dt><dd>180.0000')
+    expect(html).toContain('センサーに適用する符号</dt><dd>+1（反転なし）')
     expect(html).toContain('accelerationIncludingGravity (m/s²・生値)')
     expect(html).toContain('9.8000')
     expect(html).toContain('加速度センサー更新中</dt><dd>true')
     expect(html).toContain('.234 (端末時刻)')
     expect(html).toContain('重力では方位（yaw）の誤差を検出できません')
+  })
+
+  it('W3Cの静止値を無条件にiOSへ合わせず、既定では180°を表示する', () => {
+    const html = render({ accelerationIncludingGravity: { x: 0, y: 0, z: 9.8 },
+      filteredAcceleration: { x: 0, y: 0, z: 9.8 } })
+    expect(html).toContain('Gravity difference (°)</dt><dd>180.0000')
+    expect(html).toContain('符号比較: 反転あり vs Down (°)</dt><dd>0.0000')
   })
 
   const invalidStates: [Partial<DebugMotionState>, string][] = [
