@@ -27,6 +27,10 @@
 .debug-vector dd { margin: 8px 0 0; color: #a5f3fc; font: 1rem ui-monospace, monospace; overflow-wrap: anywhere; }
 .debug-matrix table { width: 100%; table-layout: fixed; border-collapse: collapse; }
 .debug-matrix td { padding: 6px 0; text-align: right; color: #c4cddd; font: 0.75rem ui-monospace, monospace; }
+.debug-panel .debug-pipeline-heading { margin: 28px 0 12px; color: #7dd3fc; }
+.debug-pipeline-snapshot { margin-top: 20px; color: #a4b0c3; font-size: 0.8125rem; }
+.debug-pipeline-snapshot summary { cursor: pointer; }
+.debug-pipeline-snapshot textarea { box-sizing: border-box; width: 100%; margin-top: 12px; padding: 12px; border: 1px solid #475569; border-radius: 6px; background: #0b1322; color: #c4cddd; font: 0.75rem/1.7 ui-monospace, monospace; }
 .debug-preview-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .debug-preview-heading h2 { margin-bottom: 0; }
 .debug-preview-data { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 16px; }

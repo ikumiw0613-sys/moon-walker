@@ -48,3 +48,61 @@ export function projectMoonToScreen(
   }
 
 }
+
+/** Debug-only readout of the existing projection; FOV values are in degrees. */
+export function getMoonProjectionDiagnostics(moon: Vector3 | null): {
+  screen: ReturnType<typeof projectMoonToScreen> | null
+  depth: number | null
+  normalizedX: number | null
+  normalizedY: number | null
+  horizontalFov: number
+  verticalFov: number
+  reason: string | null
+} {
+  const unavailable = {
+    screen: null,
+    depth: null,
+    normalizedX: null,
+    normalizedY: null,
+    horizontalFov: HORIZONTAL_FOV,
+    verticalFov: VERTICAL_FOV,
+  }
+
+  if (moon == null) {
+    return { ...unavailable, reason: 'moonInDevice unavailable' }
+  }
+  if (![moon.x, moon.y, moon.z].every(Number.isFinite)) {
+    return { ...unavailable, reason: 'projection unavailable (non-finite input)' }
+  }
+
+  const depth = -moon.z
+  const screen = projectMoonToScreen(moon)
+  if (!Number.isFinite(depth) || !Number.isFinite(screen.x) || !Number.isFinite(screen.y)) {
+    return { ...unavailable, reason: 'projection unavailable (non-finite output)' }
+  }
+  if (depth <= 0) {
+    // Production returns before calculating normalized coordinates in this case.
+    return {
+      ...unavailable,
+      screen,
+      depth,
+      reason: depth < 0 ? 'behind camera' : 'on camera plane',
+    }
+  }
+
+  // Invert the production screen mapping, rather than duplicating its FOV math.
+  const normalizedX = 2 * screen.x - 1
+  const normalizedY = 1 - 2 * screen.y
+  if (!Number.isFinite(normalizedX) || !Number.isFinite(normalizedY)) {
+    return { ...unavailable, reason: 'projection unavailable (non-finite output)' }
+  }
+  return {
+    screen,
+    depth,
+    normalizedX,
+    normalizedY,
+    horizontalFov: HORIZONTAL_FOV,
+    verticalFov: VERTICAL_FOV,
+    reason: null,
+  }
+}

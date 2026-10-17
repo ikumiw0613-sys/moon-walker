@@ -7,6 +7,7 @@ import { DebugPage } from '../../pages/debug/DebugPage'
 import { ARPage } from '../../pages/ar/ARPage'
 import { NorthCalibrationProvider } from '../../features/north-calibration/NorthCalibrationProvider'
 import { getMoonPosition } from '../../features/moon/astronomy'
+import * as astronomy from '../../features/moon/astronomy'
 import { getMoonDeviceState } from '../../features/moon-guide/moonDeviceNavigation'
 import type { LocationState } from '../../features/geolocation/types'
 
@@ -44,6 +45,7 @@ afterEach(async () => {
   await act(async () => root.unmount())
   container.remove()
   vi.useRealTimers()
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -69,6 +71,31 @@ function snapshot() {
 }
 
 describe('Debug / AR shared north reference', () => {
+  it('pipelineの最終座標がARのMoonSpriteへ同じ値で渡り、診断追加で描画経路を変えない', async () => {
+    vi.spyOn(astronomy, 'getMoonPosition').mockReturnValue({ azimuth: 90, altitude: 0, isAboveHorizon: true })
+    await show('debug')
+    await useCurrentTime()
+    await click('北基準を合わせる')
+    const debug = snapshot()
+    const text = container.querySelector<HTMLTextAreaElement>('[aria-labelledby="results-title"] textarea')!.value
+    const values = Object.fromEntries(text.split('\n').slice(1).map(line => {
+      const separator = line.indexOf(': ')
+      return [line.slice(0, separator), line.slice(separator + 2)]
+    }))
+    expect(values['moon.azimuth']).toBe('90')
+    expect(values['visible']).toBe('true')
+    expect(values['navigation.status']).toBe('centered')
+    expect(Number(values['screenX'])).toBeCloseTo(0.5)
+    expect(Number(values['screenY'])).toBeCloseTo(0.5)
+    await show('ar')
+    expect(snapshot()).toEqual(debug)
+    const sprite = container.querySelector<HTMLElement>('.moon-sprite')!
+    expect(sprite).not.toBeNull()
+    expect(sprite.style.left).toBe(`${Number(values.screenX) * 100}%`)
+    expect(sprite.style.top).toBe(`${Number(values.screenY) * 100}%`)
+    expect(container.querySelector('#results-title')).toBeNull()
+  })
+
   it('Debugの加速度を変えても保存済み北補正とAR共通の月・姿勢出力は変わらない', async () => {
     await show('debug')
     await useCurrentTime()

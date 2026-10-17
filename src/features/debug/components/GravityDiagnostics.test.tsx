@@ -5,6 +5,13 @@ import type { DebugMotionState } from '../useDebugDeviceMotion'
 import { GravityDiagnostics } from './GravityDiagnostics'
 import { MoonTransformReadout } from './MoonTransformReadout'
 import { getMoonDeviceState } from '../../moon-guide/moonDeviceNavigation'
+import type { MoonPipelineContext } from '../moonPipelineDiagnostics'
+
+const context: MoonPipelineContext = {
+  observationDate: new Date('2026-10-11T01:00:00Z'), timeMode: 'current', orientationSource: 'sensor',
+  orientationStatus: 'active', northCorrection: 0,
+  location: { status: 'success', location: { latitude: 35.68, longitude: 139.76, accuracy: 10, timestamp: 0 } },
+}
 
 const identity: Matrix3 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 const active: DebugMotionState = { status: 'active', updating: true, lastReceivedAt: 1234,
@@ -68,7 +75,7 @@ describe('moon path readout', () => {
   it('ARの3D投影とnavigationを表示し、moonInDeviceが正面なら(0.5, 0.5, true)', () => {
     const moon = { azimuth: 0, altitude: 0, isAboveHorizon: true }
     const transform = getMoonDeviceState({ alpha: 0, beta: 90, gamma: 0 }, 0, moon)
-    const html = renderToStaticMarkup(<MoonTransformReadout transform={transform} moonPosition={moon} />)
+    const html = renderToStaticMarkup(<MoonTransformReadout transform={transform} moonPosition={moon} context={context} />)
     expect(html).toContain('moonScreen.x</dt><dd>0.5000')
     expect(html).toContain('moonScreen.y</dt><dd>0.5000')
     expect(html).toContain('moonScreen.visible</dt><dd>true')
@@ -80,7 +87,7 @@ describe('moon path readout', () => {
   it('天頂・天底ではheadingがnullでもaltitudeを表示する', () => {
     for (const [beta, altitude] of [[0, '-90.0000'], [180, '90.0000']] as const) {
       const transform = getMoonDeviceState({ alpha: 0, beta, gamma: 0 }, 0, null)
-      const html = renderToStaticMarkup(<MoonTransformReadout transform={transform} moonPosition={null} />)
+      const html = renderToStaticMarkup(<MoonTransformReadout transform={transform} moonPosition={null} context={context} />)
       expect(html).toContain('correctedHeading (°)</dt><dd>null')
       expect(html).toContain(`correctedAltitude (°)</dt><dd>${altitude}`)
     }
@@ -89,7 +96,7 @@ describe('moon path readout', () => {
   it('背面・画面外も既存projectionの値と状態を隠さず表示する', () => {
     const moon = { azimuth: 180, altitude: 0, isAboveHorizon: false }
     const transform = getMoonDeviceState({ alpha: 0, beta: 90, gamma: 0 }, 0, moon)
-    const html = renderToStaticMarkup(<MoonTransformReadout transform={transform} moonPosition={moon} />)
+    const html = renderToStaticMarkup(<MoonTransformReadout transform={transform} moonPosition={moon} context={context} />)
     expect(html).toContain('moonScreen.visible</dt><dd>false')
     expect(html).toContain('navigation.status</dt><dd>behind')
     expect(html).toContain('navigation.angleToMoon (°)</dt><dd>180.0000')

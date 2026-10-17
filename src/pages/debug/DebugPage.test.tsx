@@ -16,7 +16,7 @@ describe('debug diagnostic display', () => {
       requestPermission: vi.fn(), diagnostics: { lastReceived: null, lastAccepted: null },
     })
     const html = renderToStaticMarkup(<NorthCalibrationProvider><DebugPage state={{ status: 'idle' }} requestLocation={vi.fn()} /></NorthCalibrationProvider>)
-    for (const label of ['raw sensor', 'compass', 'cameraForward before correction', 'corrected cameraForward / ENU', 'moon transform', '姿勢診断 / Gravity']) {
+    for (const label of ['raw sensor', 'compass', 'cameraForward before correction', 'corrected cameraForward / ENU', 'Moon transform pipeline', '姿勢診断 / Gravity']) {
       expect(html).toContain(label)
     }
     expect(html).toContain('null (未受信)')
@@ -26,9 +26,13 @@ describe('debug diagnostic display', () => {
     expect(html).toContain('calibrated</dt><dd>false')
     expect(html).toContain('correctedHeading (°)</dt><dd>null')
     expect(html).toContain('headingError (°)</dt><dd>null')
-    for (const label of ['moon azimuth (°)', 'moon altitude (°)', 'correctedAltitude (°)', 'moonScreen.x', 'moonScreen.y', 'moonScreen.visible', 'navigation.angleToMoon (°)', 'navigation.status']) {
+    for (const label of ['moon.azimuth (°)', 'moon.altitude (°)', 'correctedAltitude (°)', 'moonScreen.x', 'moonScreen.y', 'moonScreen.visible', 'navigation.angleToMoon (°)', 'navigation.status']) {
       expect(html).toContain(`${label}</dt><dd>null`)
     }
+    for (const reason of ['location unavailable', 'moon position unavailable', 'correctedRotation unavailable', 'moonInDevice unavailable']) {
+      expect(html).toContain(reason)
+    }
+    expect(html).toContain('Moon diagnostics をコピー')
     expect(html).toContain('算出不可: DeviceMotion未対応')
     expect(html).toContain('北補正候補の比較')
     expect(html).toContain('candidate status</dt><dd>device rotation unavailable')

@@ -197,7 +197,9 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
           screenAngle={screenAngle} northCorrection={northCorrection} calibrated={calibrated}
           calibratedAt={calibratedAt} onCalibrate={handleNorthCalibration} />
         <SunDebugCard state={state} correctedHeading={transform.correctedHeading} cameraForwardCorrected={transform.cameraForwardCorrected} />
-        <MoonTransformReadout transform={transform} moonPosition={moonPosition} />
+        <MoonTransformReadout transform={transform} moonPosition={moonPosition} context={{ observationDate,
+          location: state, timeMode, orientationSource: manualOrientationEnabled ? 'manual' : 'sensor',
+          orientationStatus: orientation.status, northCorrection: calibrated ? northCorrection : null }} />
         <GravityDiagnostics motion={motion} correctedRotation={transform.correctedRotation}
           manualOrientationEnabled={manualOrientationEnabled} orientationActive={sensorOrientation.status === 'active'}
           onEnable={requestMotionPermission} />
