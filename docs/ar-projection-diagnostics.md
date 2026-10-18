@@ -14,6 +14,14 @@
 
 ## 起動と切替
 
+本番URL: https://moon-walker.vercel.app/ar?arDebug=projection
+
+AR投影診断は `arDebug=projection` の完全一致だけで有効になる。`import.meta.env.DEV` や `VITE_ENABLE_DEBUG` は不要。別画面の `/debug` に対する環境条件は引き続き独立している。
+直接開いた直後は従来どおり校正が必要。「準備する」から校正へ進み、完了後にARへ戻る際も、ARと校正画面の往復に限って診断queryを引き継ぐ。ホーム・月の情報へ移ると引き継がない。URLからqueryを外した場合も診断は終了する。校正の条件・保存処理には変更を加えない。
+Vercelでは既知のSPAルートを `vercel.json` から `/index.html` へrewriteする。リダイレクトではないため、`/ar` のパスとqueryを維持してReactのルーティングへ渡す。静的assetsやAPIを巻き込む全パスrewriteは使用しない。
+
+本番成果物の確認: `npm run build` 後に `node scripts/verify-ar-production.mjs`。配信中のHTTP応答とJS entryを含める場合は `node scripts/verify-ar-production.mjs https://moon-walker.vercel.app`。JSの実行はJSDOMによるもので、端末のレイアウトやセンサーの実測を代替しない。
+
 通常の `/ar` は既存の配置・FOV・表示条件のまま。計測用observerやパネルも起動しない。
 
 - `/ar?arDebug=projection`: 本番と同じviewport配置から診断開始。

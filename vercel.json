@@ -1,6 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    { "source": "/ar", "destination": "/index.html" },
+    { "source": "/ar/", "destination": "/index.html" },
+    { "source": "/calibration", "destination": "/index.html" },
+    { "source": "/calibration/", "destination": "/index.html" },
+    { "source": "/moon-info", "destination": "/index.html" },
+    { "source": "/moon-info/", "destination": "/index.html" },
     { "source": "/debug", "destination": "/index.html" },
     { "source": "/debug/", "destination": "/index.html" }
   ]

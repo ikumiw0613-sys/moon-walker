@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Navigate } from './AppNavigation'
+import { projectionDiagnosticDestination } from './projectionDiagnosticNavigation'
 
 export function useNavigation() {
   const [pathname, setPathname] = useState(() => window.location.pathname)
@@ -12,8 +13,9 @@ export function useNavigation() {
 
   const navigate: Navigate = useCallback((path, options) => {
     if (window.location.pathname !== path) {
-      if (options?.replace) window.history.replaceState(null, '', path)
-      else window.history.pushState(null, '', path)
+      const destination = projectionDiagnosticDestination(window.location.pathname, window.location.search, path)
+      if (options?.replace) window.history.replaceState(null, '', destination)
+      else window.history.pushState(null, '', destination)
     }
     setPathname(path)
     window.scrollTo({ top: 0, behavior: 'instant' })
