@@ -1,4 +1,7 @@
 import { AppLink } from '../../app/navigation/AppNavigation'
+import { useRef, useState } from 'react'
+import { readARProjectionFlags } from '../../features/debug/arProjectionDiagnostics'
+import { ARProjectionExperiment } from './components/ARProjectionExperiment'
 import type { Navigate } from '../../app/navigation/AppNavigation'
 import type { GeolocationAccess } from '../../features/geolocation/types'
 import { getMoonDeviceDiagnosticAttributes } from '../../features/moon-guide/moonDeviceNavigation'
@@ -10,9 +13,11 @@ import '../../shared/styles/frontend.css'
 import './ARPage.css'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
-  const { now, moonPhase, timeMode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
+  const { now, moonPhase, moonPosition, timeMode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind, poseStability, isPoseChecking,
     motion, requestMotionPermission, canCheckMotion } = useARView(location)
+  const viewportRef = useRef<HTMLDivElement | null>(null)
+  const [projectionDebug] = useState(() => readARProjectionFlags(typeof window === 'undefined' ? '' : window.location.search))
   return (
     <SkyBackground
       offsetX={parallax.offsetX}
@@ -46,8 +51,11 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
 
         {timeMode === 'fixed' && <p className="mw-ar-test-time" role="status">テスト日時で表示中（2026年10月11日 10:00 日本時間）</p>}
 
-        <div className="mw-ar-viewport" aria-hidden="true">
-          {guidance && moonScreen && (
+        <div ref={viewportRef} className="mw-ar-viewport" aria-hidden="true">
+          {projectionDebug.enabled ? <ARProjectionExperiment viewportRef={viewportRef} screen={moonScreen}
+            moonPosition={moonPosition} deviceState={deviceState} phase={moonPhase} canRender={Boolean(guidance)} now={now}
+            timeMode={timeMode} orientationStatus={orientation.status} poseStatus={poseStability.status}
+            initialPlacement={projectionDebug.placement} /> : guidance && moonScreen && (
             <MoonSprite x={moonScreen.x} y={moonScreen.y} visible={moonScreen.visible} phase={moonPhase} />
           )}
           {guidance && moonEdge && (

@@ -49,7 +49,7 @@ export function useARView(location: LocationState) {
   const moonEdge = moonScreen && !moonScreen.visible ? getMoonEdgePosition(moonScreen) : null
   const moonBehind = guidance?.status === 'behind'
 
-  return { now, moonPhase, timeMode: mode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
+  return { now, moonPhase, moonPosition, timeMode: mode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind, poseStability, isPoseChecking,
     motion, requestMotionPermission, canCheckMotion: gravityConvention !== null }
 }

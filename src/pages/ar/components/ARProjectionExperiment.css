@@ -1,0 +1,17 @@
+.ar-projection-diagnostic { position: fixed; z-index: 1000; left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); max-height: 46dvh; overflow-y: auto; padding: 10px 14px; border: 1px solid #7dd3fc; border-radius: 8px; background: #06111af5; color: #e2e8f0; font: 12px/1.6 system-ui, sans-serif; pointer-events: auto; }
+.ar-projection-diagnostic summary { cursor: pointer; padding: 7px 0; min-height: 38px; }
+.ar-projection-diagnostic label { display: block; margin: 10px 0; }
+.ar-projection-diagnostic select, .ar-projection-diagnostic button { display: block; width: 100%; min-width: 0; min-height: 44px; padding: 8px; background: #132638; color: #e2e8f0; border: 1px solid #536b85; border-radius: 5px; font: inherit; }
+.ar-projection-diagnostic dl { margin: 12px 0; }
+.ar-projection-diagnostic dl > div { display: flex; gap: 10px; justify-content: space-between; border-bottom: 1px solid #334155; padding: 6px 0; }
+.ar-projection-diagnostic dt, .ar-projection-diagnostic dd { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ar-projection-diagnostic dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.ar-projection-diagnostic pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.6 monospace; }
+.ar-projection-diagnostic textarea { box-sizing: border-box; width: 100%; min-width: 0; color: #e2e8f0; background: #132638; font: 11px/1.6 monospace; }
+.ar-projection-warning { color: #fde68a; border-left: 2px solid #fde68a; padding-left: 8px; }
+.ar-projection-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.ar-projection-point { position: fixed; width: 20px; height: 20px; display: grid; place-items: center; transform: translate(-50%, -50%); z-index: 900; font: 24px/20px monospace; pointer-events: none; text-shadow: 0 0 3px #000; }
+.ar-projection-point span { position: absolute; top: 22px; left: 0; font: 10px/1.4 system-ui, sans-serif; white-space: nowrap; }
+.ar-projection-point.is-2d { color: #fdba74; }
+.ar-projection-point.is-trial { color: #67e8f9; }
+@media (max-width: 600px) { .ar-projection-columns { grid-template-columns: minmax(0, 1fr); } }

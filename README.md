@@ -39,6 +39,7 @@ npm run lint
 
 ディレクトリの役割と依存関係のルールは [構成ガイド](./docs/architecture.md) を参照してください。
 Debugの磁気環境診断と場所比較の実機確認は [コンパス診断ガイド](./docs/compass-diagnostics.md) を参照してください。
+AR表示側のviewport・FOV・CSSの切り分けは [AR投影診断ガイド](./docs/ar-projection-diagnostics.md) を参照してください。
 
 ## 今後やること
 - [] 探す画面をARっぽくする
