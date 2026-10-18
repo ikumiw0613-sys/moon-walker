@@ -1,8 +1,0 @@
-.mw-settings-list { margin: 0; }
-.mw-settings-list > div { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px 0; border-bottom: 1px solid var(--mw-line); }
-.mw-settings-list dt { font-size: 14px; display: flex; align-items: center; gap: 16px; }
-.mw-settings-list small { display: block; color: #8190a6; font-size: 11px; margin-top: 8px; }
-.mw-setting-icon { font-size: 24px; color: #b8c2d0; width: 28px; text-align: center; }
-.mw-settings-list dd { font-size: 10px; color: #8190a6; margin: 0; white-space: nowrap; }
-.mw-settings-signature { margin: 64px 0 0; color: #6f7c91; font-size: 15px; text-align: center; }
-.mw-settings-signature > span { display: block; font-size: 10px; margin-top: 8px; }

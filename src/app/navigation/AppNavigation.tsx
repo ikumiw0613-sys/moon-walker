@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type AppPath = '/' | '/calibration' | '/ar' | '/moon-info' | '/settings'
+export type AppPath = '/' | '/calibration' | '/ar' | '/moon-info'
 export type Navigate = (path: AppPath, options?: { replace?: boolean }) => void
 
 export function AppLink({ to, navigate, children, className, current }: {
@@ -18,7 +18,6 @@ export function AppNavigation({ navigate, active }: { navigate: Navigate; active
     <nav className="mw-navigation" aria-label="メインナビゲーション">
       <AppLink to="/" navigate={navigate} current={active === '/'}>ホーム</AppLink>
       <AppLink to="/moon-info" navigate={navigate} current={active === '/moon-info'}>月の情報</AppLink>
-      <AppLink to="/settings" navigate={navigate} current={active === '/settings'}>設定</AppLink>
     </nav>
   )
 }

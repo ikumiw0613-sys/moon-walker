@@ -14,7 +14,6 @@ src/
 │  ├─ ar/                      # AR画面・表示状態のHook・専用部品
 │  ├─ calibration/             # 北基準を合わせる画面
 │  ├─ moon-info/               # 月の情報画面
-│  ├─ settings/                # 設定画面
 │  └─ debug/                   # 診断画面の組み立て
 ├─ features/
 │  ├─ geolocation/             # 位置情報API・状態・取得操作UI

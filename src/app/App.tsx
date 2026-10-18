@@ -5,7 +5,6 @@ import { NorthCalibrationProvider } from '../features/north-calibration/NorthCal
 import { CalibrationPage } from '../pages/calibration/CalibrationPage'
 import { ARPage } from '../pages/ar/ARPage'
 import { MoonInfoPage } from '../pages/moon-info/MoonInfoPage'
-import { SettingsPage } from '../pages/settings/SettingsPage'
 import { useNavigation } from './navigation/useNavigation'
 import { ObservationTimeProvider } from '../shared/time/ObservationTimeProvider'
 
@@ -19,8 +18,7 @@ function App() {
   const page = route === '/calibration' ? <CalibrationPage navigate={navigate} />
     : route === '/ar' ? <ARPage navigate={navigate} {...location} />
       : route === '/moon-info' ? <MoonInfoPage navigate={navigate} {...location} />
-        : route === '/settings' ? <SettingsPage navigate={navigate} />
-          : <HomePage navigate={navigate} {...location} />
+        : <HomePage navigate={navigate} {...location} />
 
   return (
     <NorthCalibrationProvider>
