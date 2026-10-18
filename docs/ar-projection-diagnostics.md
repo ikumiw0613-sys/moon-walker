@@ -29,7 +29,8 @@ Vercelでは既知のSPAルートを `vercel.json` から `/index.html` へrewri
 
 クエリはAR画面のマウント時に読む。比較は再読み込みせず、パネルの **viewport projection / full-screen projection** を切り替える。再読み込みすると既存仕様どおり北補正が消えるため、比較の途中では行わない。
 
-パネルはbodyにportalしたfixed overlayで、ARのgridに行を追加しない。閉じたsummaryだけを残して月を見ることもできる。
+診断は最初は閉じており、ヘッダーの下の右上に小さな「投影診断を開く」ボタンだけを表示する。パネルの空白部分はタップを受け取らず、下側の準備・現在地・校正ボタンを操作できる。開いた後も、スクロール領域の外に常にある「診断を閉じる」で最小化できる。Escapeでも閉じられ、配置・FOVなどの選択は維持する。
+パネルはbodyにportalしたfixed overlayで、ARのgridに行を追加しない。
 
 全画面モードでは本物のMoonSpriteをbodyへportalし、`position: fixed` と `left = screenX * innerWidth px`、`top = screenY * innerHeight px` を使う。これはモバイルでのvhとinnerHeightの違いを避け、計測に使ったwindowサイズへ直接対応させるため。アプリ祖先のtransformにも影響されない。body/html自体にtransform等があれば診断で警告する。
 

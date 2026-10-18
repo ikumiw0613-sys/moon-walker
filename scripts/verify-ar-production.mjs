@@ -16,6 +16,8 @@ const html = baseUrl ? await getText(target) : await readFile('dist/index.html',
 const entry = html.match(/<script\b[^>]*\bsrc="([^"]+)"/i)?.[1]
 if (!entry) throw new Error('Production module entry missing')
 const source = baseUrl ? await getText(new URL(entry, target)) : await readFile(resolve('dist', '.' + entry), 'utf8')
+const stylesheets = [...html.matchAll(/<link\b[^>]*\bhref="([^"]+\.css)"[^>]*>/gi)].map(match => match[1])
+const styles = await Promise.all(stylesheets.map(path => baseUrl ? getText(new URL(path, target)) : readFile(resolve('dist', '.' + path), 'utf8')))
 
 for (const [path, enabled] of [['/ar?arDebug=projection', true], ['/ar', false], ['/ar?arDebug=other', false]]) {
   const virtualConsole = new VirtualConsole()
@@ -31,6 +33,9 @@ for (const [path, enabled] of [['/ar?arDebug=projection', true], ['/ar', false],
     },
   })
   try {
+    const style = dom.window.document.createElement('style')
+    style.textContent = styles.join('\n')
+    dom.window.document.head.appendChild(style)
     dom.window.eval(source)
     for (let attempt = 0; attempt < 100; attempt++) {
       if (dom.window.document.querySelector('main.mw-ar') && (!enabled || dom.window.document.querySelector('.ar-projection-diagnostic'))) break
@@ -41,6 +46,19 @@ for (const [path, enabled] of [['/ar?arDebug=projection', true], ['/ar', false],
     if (dom.window.location.pathname !== '/ar') throw new Error(`${path}: redirected to ${dom.window.location.pathname}`)
     console.log(`PASS ${path}: AR rendered; diagnostics=${enabled}; no home redirect`)
     if (enabled) {
+      const panel = dom.window.document.querySelector('#ar-projection-panel')
+      const toggle = dom.window.document.querySelector('.ar-projection-toggle')
+      if (!panel?.hidden || !toggle || panel.contains(toggle)) throw new Error('Diagnosis must start minimized with its toggle outside the scroll area')
+      const computed = element => dom.window.getComputedStyle(element)
+      if (computed(panel).display !== 'none' || computed(panel.parentElement).pointerEvents !== 'none'
+        || computed(toggle).pointerEvents !== 'auto') throw new Error('Collapsed diagnosis CSS blocks underlying AR controls')
+      toggle.click()
+      await new Promise(resolve => setTimeout(resolve, 20))
+      if (panel.hidden || computed(panel).pointerEvents !== 'auto') throw new Error('Diagnosis did not open with interactive controls')
+      toggle.click()
+      await new Promise(resolve => setTimeout(resolve, 20))
+      if (!panel.hidden) throw new Error('Diagnosis did not minimize')
+      console.log('PASS diagnosis starts minimized and opens/closes without covering the AR controls by default')
       const prepare = dom.window.document.querySelector('.mw-ar-state a[href="/calibration"]')
       if (!prepare) throw new Error('Direct entry calibration link missing')
       prepare.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }))
@@ -56,6 +74,7 @@ for (const [path, enabled] of [['/ar?arDebug=projection', true], ['/ar', false],
       await new Promise(resolve => setTimeout(resolve, 700))
       if (dom.window.location.pathname !== '/ar' || dom.window.location.search !== '?arDebug=projection'
         || !dom.window.document.querySelector('.ar-projection-diagnostic')) throw new Error('Calibration return lost diagnosis mode')
+      if (!dom.window.document.querySelector('#ar-projection-panel')?.hidden) throw new Error('Diagnosis should remain minimized on calibration return')
       console.log('PASS direct entry -> calibration -> AR: production diagnosis query retained')
     }
   } finally { dom.window.close() }

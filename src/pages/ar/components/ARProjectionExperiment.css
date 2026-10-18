@@ -1,4 +1,8 @@
-.ar-projection-diagnostic { position: fixed; z-index: 1000; left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); max-height: 46dvh; overflow-y: auto; padding: 10px 14px; border: 1px solid #7dd3fc; border-radius: 8px; background: #06111af5; color: #e2e8f0; font: 12px/1.6 system-ui, sans-serif; pointer-events: auto; }
+.ar-projection-diagnostic { position: fixed; z-index: 1000; top: max(76px, calc(env(safe-area-inset-top) + 68px)); right: max(8px, env(safe-area-inset-right)); width: min(480px, calc(100% - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right)))); max-height: calc(100dvh - max(76px, calc(env(safe-area-inset-top) + 68px)) - max(8px, env(safe-area-inset-bottom))); display: flex; flex-direction: column; align-items: stretch; gap: 8px; color: #e2e8f0; font: 12px/1.6 system-ui, sans-serif; pointer-events: none; }
+.ar-projection-panel { min-height: 0; max-height: 46dvh; overflow-y: auto; overscroll-behavior: contain; padding: 10px 14px; border: 1px solid #7dd3fc; border-radius: 8px; background: #06111af5; pointer-events: auto; }
+.ar-projection-panel[hidden] { display: none; }
+.ar-projection-panel h2 { margin: 0 0 10px; font: inherit; font-weight: 600; }
+.ar-projection-diagnostic > .ar-projection-toggle { width: auto; flex-shrink: 0; align-self: flex-end; pointer-events: auto; }
 .ar-projection-diagnostic summary { cursor: pointer; padding: 7px 0; min-height: 38px; }
 .ar-projection-diagnostic label { display: block; margin: 10px 0; }
 .ar-projection-diagnostic select, .ar-projection-diagnostic button { display: block; width: 100%; min-width: 0; min-height: 44px; padding: 8px; background: #132638; color: #e2e8f0; border: 1px solid #536b85; border-radius: 5px; font: inherit; }

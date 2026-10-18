@@ -55,10 +55,38 @@ function data() {
   return JSON.parse(document.querySelector<HTMLElement>('[data-ar-projection-diagnostics]')!.dataset.arProjectionDiagnostics!)
 }
 async function choose(label: string, value: string) {
+  if (document.querySelector<HTMLElement>('#ar-projection-panel')!.hidden) {
+    await act(async () => document.querySelector<HTMLButtonElement>('.ar-projection-toggle')!.click())
+  }
   const select = [...document.querySelectorAll<HTMLLabelElement>('.ar-projection-diagnostic label')]
     .find(element => element.textContent!.startsWith(label))!.querySelector('select')!
   await act(async () => { select.value = value; select.dispatchEvent(new Event('change', { bubbles: true })) })
 }
+
+it('starts minimized, keeps the close button outside the scroll area, and preserves settings when minimized', async () => {
+  await show('?arDebug=projection')
+  const panel = document.querySelector<HTMLElement>('#ar-projection-panel')!
+  const toggle = document.querySelector<HTMLButtonElement>('.ar-projection-toggle')!
+  expect(panel.hidden).toBe(true)
+  expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  expect(toggle.textContent).toBe('投影診断を開く')
+  expect(panel.contains(toggle)).toBe(false)
+  expect(container.querySelector('.mw-ar-recalibrate')).not.toBeNull()
+  await choose('月本体の配置基準', 'full-screen')
+  expect(panel.hidden).toBe(false)
+  expect(toggle.textContent).toBe('診断を閉じる')
+  await act(async () => toggle.click())
+  expect(panel.hidden).toBe(true)
+  expect(data().placement).toBe('full-screen')
+  await act(async () => vi.advanceTimersByTime(250))
+  expect(panel.hidden).toBe(true)
+  await act(async () => toggle.click())
+  expect(panel.hidden).toBe(false)
+  expect(data().placement).toBe('full-screen')
+  await act(async () => panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
+  expect(panel.hidden).toBe(true)
+  expect(document.activeElement).toBe(toggle)
+})
 
 it('normal AR retains the exact percentage-based placement and has no diagnostic observers or panel', async () => {
   const interval = vi.spyOn(window, 'setInterval')

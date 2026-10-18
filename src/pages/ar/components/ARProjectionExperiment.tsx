@@ -35,6 +35,8 @@ export function ARProjectionExperiment({ viewportRef, screen, moonPosition, devi
   const [fovMode, setFovMode] = useState<FovMode>('production')
   const [markers, setMarkers] = useState(true)
   const [copied, setCopied] = useState<string | null>(null)
+  const [panelOpen, setPanelOpen] = useState(false)
+  const toggleRef = useRef<HTMLButtonElement | null>(null)
   const measurement = useARProjectionMeasurements(viewportRef, spriteRef,
     `${screen?.x}|${screen?.y}|${screen?.visible}|${canRender}|${placement}`)
   const comparison = compareProjections(moonPosition, deviceState.correctedView, deviceState.moonInDevice)
@@ -59,9 +61,18 @@ export function ARProjectionExperiment({ viewportRef, screen, moonPosition, devi
     windowPosition, fullPosition, actualDelta, consistency, fovMode, trialFov: fov, trial, trialConsistency }
 
   const panel = <aside className="ar-projection-diagnostic" aria-label="AR projection diagnostics"
-    data-ar-projection-diagnostics={JSON.stringify(snapshot)}>
-    <details open>
-      <summary>AR 投影診断（比較専用）</summary>
+    data-ar-projection-diagnostics={JSON.stringify(snapshot)} onKeyDown={event => {
+      if (event.key === 'Escape' && panelOpen) {
+        setPanelOpen(false)
+        toggleRef.current?.focus()
+      }
+    }}>
+    <button ref={toggleRef} type="button" className="ar-projection-toggle" aria-expanded={panelOpen}
+      aria-controls="ar-projection-panel" onClick={() => setPanelOpen(open => !open)}>
+      {panelOpen ? '診断を閉じる' : '投影診断を開く'}
+    </button>
+    <div id="ar-projection-panel" className="ar-projection-panel" hidden={!panelOpen}>
+      <h2>AR 投影診断（比較専用）</h2>
       <p>センサー・北補正は共通。月本体は本番90° / 60°のまま、配置基準だけ切り替えます。リング・画面端マーカーは従来のviewport基準です。</p>
       <label>月本体の配置基準<select value={placement} onChange={event => setPlacement(event.target.value as Placement)}>
         <option value="viewport">viewport projection</option><option value="full-screen">full-screen projection</option>
@@ -126,7 +137,7 @@ export function ARProjectionExperiment({ viewportRef, screen, moonPosition, devi
         <button type="button" onClick={() => setCopied(JSON.stringify(snapshot, null, 2))}>診断テキストを固定</button>
         <textarea aria-label="AR projection 診断テキスト" readOnly rows={10} value={copied ?? JSON.stringify(snapshot, null, 2)} />
       </details>
-    </details>
+    </div>
   </aside>
 
   return <>
