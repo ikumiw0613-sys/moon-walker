@@ -8,7 +8,7 @@ import type { Vector3 } from '../../../shared/math/types'
 const UPDATE_INTERVAL_MS = 1000
 
 // DebugPageからだけ読み込む。削除時はこのフォルダと親のimport・JSXを外す。
-export function SunDebugCard({ state, correctedHeading, cameraForwardCorrected = null }: { state: LocationState; correctedHeading: number | null; cameraForwardCorrected?: Vector3 | null }) {
+export function SunDebugCard({ state, correctedHeading, cameraForwardCorrected = null, grouped = false }: { state: LocationState; correctedHeading: number | null; cameraForwardCorrected?: Vector3 | null; grouped?: boolean }) {
   const [date, setDate] = useState(() => new Date())
   useEffect(() => {
     const update = () => setDate(new Date())
@@ -33,11 +33,11 @@ export function SunDebugCard({ state, correctedHeading, cameraForwardCorrected =
       <p className="search-status">月の固定テスト日時とは独立して、現在時刻で1秒ごとに更新します。</p>
       <dl className="debug-data">
         <div><dt>計算時刻（日本時間）</dt><dd>{date.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}</dd></div>
-        <div><dt>現在地（緯度 / 経度）</dt><dd>{state.status === 'success' ? `${state.location.latitude.toFixed(7)} / ${state.location.longitude.toFixed(7)}` : '—'}</dd></div>
+        {!grouped && <div><dt>現在地（緯度 / 経度）</dt><dd>{state.status === 'success' ? `${state.location.latitude.toFixed(7)} / ${state.location.longitude.toFixed(7)}` : '—'}</dd></div>}
         <div><dt>太陽の方位角（真北基準）</dt><dd>{degrees(sun?.azimuth)}</dd></div>
         <div><dt>太陽の高度</dt><dd>{degrees(sun?.altitude)}</dd></div>
         <div><dt>地平線</dt><dd>{sun ? sun.isAboveHorizon ? '上' : '下' : '—'}</dd></div>
-        <div><dt>スマホ方位（correctedHeading）</dt><dd>{degrees(correctedHeading)}</dd></div>
+        {!grouped && <div><dt>スマホ方位（correctedHeading）</dt><dd>{degrees(correctedHeading)}</dd></div>}
         <div><dt>誤差（スマホ方位 − 太陽方位）</dt><dd>{degrees(comparison?.headingError)}</dd></div>
       </dl>
       <p className="search-status" role="status">

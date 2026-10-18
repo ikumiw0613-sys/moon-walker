@@ -43,4 +43,32 @@
 .debug-crosshair::after { left: 13px; width: 1px; height: 28px; }
 .debug-preview-label { position: absolute; top: 14px; left: 14px; color: #64748b; font: 0.75rem ui-monospace, monospace; pointer-events: none; }
 .debug-preview-navigation { position: absolute; bottom: 12px; left: 12px; right: 12px; margin: 0; text-align: center; color: #fff8df; background: #0b1322dd; padding: 10px; font-size: 0.8125rem; pointer-events: none; }
+.debug-details { min-width: 0; margin-top: 20px; font-size: .8125rem; }
+.debug-details > summary { min-height: 44px; align-content: center; cursor: pointer; color: #bae6fd; overflow-wrap: anywhere; }
+.debug-details > summary:focus-visible { outline: 2px solid #bae6fd; outline-offset: 3px; }
+.debug-quality { display: inline-block; padding: 5px 9px; border: 1px solid currentColor; border-radius: 6px; font-size: .75rem; letter-spacing: .04em; }
+.debug-quality.is-good { color: #86efac; background: #102a23; }
+.debug-quality.is-caution { color: #fde68a; background: #332b18; }
+.debug-quality.is-poor { color: #fda4af; background: #351d29; }
+.debug-quality.is-unavailable { color: #cbd5e1; background: #263244; }
+.debug-quality-reasons { padding-left: 20px; color: #c4cddd; font-size: .8125rem; line-height: 1.8; overflow-wrap: anywhere; }
+.debug-statistics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
+.debug-time-mode input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 10px; background: #0b1322; color: #f5f3eb; border: 1px solid #475569; border-radius: 6px; font: inherit; }
+.debug-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.debug-snapshots { display: grid; gap: 16px; margin-top: 16px; }
+.debug-snapshot { min-width: 0; border: 1px solid #475569; border-radius: 8px; padding: 16px; background: #0b1322; }
+.debug-snapshot-header { display: flex; align-items: start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.debug-snapshot-header h3 { margin: 6px 0; }
+.debug-memo { font-size: .875rem; line-height: 1.7; overflow-wrap: anywhere; white-space: pre-wrap; }
+.debug-astronomy { margin-top: 20px; }
+.debug-astronomy .debug-panel { padding: 12px; border: 0; background: transparent; }
+.debug-panel section[aria-labelledby="pose-stability-title"] { margin-top: 24px; }
+.debug-preview-details { margin-bottom: 20px; }
+@media (max-width: 640px) {
+  .debug-statistics { grid-template-columns: minmax(0, 1fr); }
+  .debug-header { flex-wrap: wrap; }
+  .debug-vector, .debug-matrix { padding: 10px; }
+  .debug-vector dd { font-size: .8125rem; }
+  .debug-matrix td { overflow-wrap: anywhere; }
+}
 @media (max-width: 640px) { .debug-screen { padding: 24px 16px; } .debug-grid { grid-template-columns: 1fr; } .debug-panel { padding: 18px; } .debug-header { align-items: start; } .debug-preview-heading { align-items: start; flex-direction: column; } .debug-preview { height: 280px; } }

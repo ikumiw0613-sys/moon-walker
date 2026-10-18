@@ -106,12 +106,12 @@ describe('Debug / AR shared north reference', () => {
     for (const value of ['raw-is-down', 'raw-is-up', 'raw-is-down']) {
       await act(async () => { sign.value = value; sign.dispatchEvent(new Event('change', { bubbles: true })) })
       expect(snapshot()).toEqual(before)
-      expect(container.textContent).toContain('northCorrection 保存値 (°)-45.0000')
+      expect(container.textContent).toContain('saved northCorrection-45.0°')
     }
     for (const sample of [{ x: 0, y: 9.8, z: 0 }, { x: 9.8, y: 0, z: 0 }, null]) {
       await act(async () => window.dispatchEvent(Object.assign(new Event('devicemotion'), { accelerationIncludingGravity: sample })))
       expect(snapshot()).toEqual(before)
-      expect(container.textContent).toContain('northCorrection 保存値 (°)-45.0000')
+      expect(container.textContent).toContain('saved northCorrection-45.0°')
     }
     expect(container.textContent).toContain('算出不可: データ未取得')
     await show('ar')
@@ -126,7 +126,8 @@ describe('Debug / AR shared north reference', () => {
     await click('スマホの向きで操作する')
     const debug = snapshot()
     expect(Number(debug['data-corrected-heading'])).toBeCloseTo(90)
-    expect(container.querySelector('#sun-debug-title')!.parentElement!.textContent).toContain('90.0°')
+    expect(container.querySelector('#sun-debug-title')).not.toBeNull()
+    expect(container.querySelector('[aria-labelledby="device-pose-title"]')!.textContent).toContain('correctedHeading (°)90.00')
     expect(container.textContent).toContain('視点の方位 / 高度90.0° / -0.0°')
     const moon = getMoonPosition(35.68, 139.76, now)
     const expected = getMoonDeviceState(mocks.orientation, -45, moon)

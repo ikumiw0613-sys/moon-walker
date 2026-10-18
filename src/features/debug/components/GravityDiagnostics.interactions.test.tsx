@@ -36,13 +36,13 @@ function read(label: string) {
 it('iPhone/Safari既定は反転なし、切替時は符号だけ変え、両候補は固定する', async () => {
   await show()
   expect(container.querySelector('select')!.value).toBe('raw-is-down')
-  expect(read('Gravity difference (°)')).toBe('0.0000')
+  expect(read('Gravity difference (°)')).toBe('0.00')
   await selectSign('raw-is-up')
-  expect(read('Gravity difference (°)')).toBe('180.0000')
-  expect(read('符号比較: 反転なし vs Down (°)')).toBe('0.0000')
-  expect(read('符号比較: 反転あり vs Down (°)')).toBe('180.0000')
+  expect(read('Gravity difference (°)')).toBe('180.00')
+  expect(read('符号比較: 反転なし vs Down (°)')).toBe('0.00')
+  expect(read('符号比較: 反転あり vs Down (°)')).toBe('180.00')
   await selectSign('raw-is-down')
-  expect(read('Gravity difference (°)')).toBe('0.0000')
+  expect(read('Gravity difference (°)')).toBe('0.00')
   expect(identity).toEqual([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
   expect(iosFaceUp.accelerationIncludingGravity).toEqual({ x: 0, y: 0, z: -9.8 })
 })
@@ -51,7 +51,7 @@ it('姿勢が逆になっても角度差の小さい符号を自動採用しな�
   await show()
   await show(iosFaceUp, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
   expect(container.querySelector('select')!.value).toBe('raw-is-down')
-  expect(read('Gravity difference (°)')).toBe('180.0000')
+  expect(read('Gravity difference (°)')).toBe('180.00')
 })
 
 it('更新停止では両符号の角度比較も停止し、古い値を正常と見せない', async () => {

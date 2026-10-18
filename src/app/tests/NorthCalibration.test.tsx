@@ -65,16 +65,16 @@ describe('app-wide north calibration lifetime', () => {
           northCorrection: expected, calibrated: true, calibratedAt: 123456789,
         })
         await navigate('/debug')
-        expect(container.textContent).toContain(`northCorrection 保存値 (°)${expected.toFixed(4)}`)
+        expect(container.textContent).toContain(`saved northCorrection${expected.toFixed(1)}°`)
         expect(container.textContent).toContain('calibratedtrue')
-        expect(container.textContent).toContain('headingError (°)0.0000')
+        expect(container.textContent).toContain('headingError (°)0.00')
 
         // A new app tree models the in-memory lifetime ending on a page reload.
         await act(async () => root.unmount())
         root = createRoot(container)
         await act(async () => root.render(<App />))
         expect(container.textContent).toContain('calibratedfalse')
-        expect(container.textContent).toContain('northCorrection 保存値 (°)null')
+        expect(container.textContent).toContain('saved northCorrectionnull')
         await navigate('/')
         expect(JSON.parse(container.querySelector('output')!.textContent!)).toEqual({
           northCorrection: null, calibrated: false, calibratedAt: null,

@@ -44,7 +44,7 @@ export function GravityDiagnostics({ motion, correctedRotation, manualOrientatio
   const directAngle = reason ? null : gravityAngleDegrees(direct, calculated)
   const invertedAngle = reason ? null : gravityAngleDegrees(inverted, calculated)
   return <section className="debug-panel" aria-labelledby="gravity-title">
-    <h2 id="gravity-title">姿勢診断 / Gravity</h2>
+    <h2 id="gravity-title"><span>E</span> 姿勢診断 / Gravity・DeviceMotion</h2>
     <button type="button" className="find-moon-button" onClick={() => { void onEnable() }}
       disabled={['unsupported', 'requesting', 'waiting', 'active', 'unavailable'].includes(motion.status)}>
       加速度センサーを有効にする（Debug専用）
@@ -54,6 +54,10 @@ export function GravityDiagnostics({ motion, correctedRotation, manualOrientatio
       <div><dt>加速度センサー更新中</dt><dd>{String(motion.updating)}</dd></div>
       <div><dt>加速度の最終受信時刻</dt><dd>{eventTime(motion.lastReceivedAt ?? undefined)}</dd></div>
     </dl>
+    <dl className="debug-data">
+      <div><dt>Gravity difference (°)</dt><dd>{angle === null ? `算出不可: ${reason ?? '重力方向が不正'}` : diagnosticValue(angle)}</dd></div>
+    </dl>
+    <details className="debug-details"><summary>重力ベクトル・符号比較の詳細を表示</summary>
     <div className="debug-vector">
       <h3>accelerationIncludingGravity (m/s²・生値)</h3>
       <dl>{(['x', 'y', 'z'] as const).map(axis => <div key={axis}>
@@ -61,6 +65,8 @@ export function GravityDiagnostics({ motion, correctedRotation, manualOrientatio
       </div>)}</dl>
     </div>
     <VectorReadout label="Normalized raw / 反転なし・フィルタ前" vector={rawNormalized} />
+    <VectorReadout label="filtered gravity (m/s²・符号適用前)" vector={motion.filteredAcceleration && [motion.filteredAcceleration.x, motion.filteredAcceleration.y, motion.filteredAcceleration.z].every(value => value !== null && Number.isFinite(value))
+      ? { x: motion.filteredAcceleration.x!, y: motion.filteredAcceleration.y!, z: motion.filteredAcceleration.z! } : null} />
     <label className="debug-time-mode">
       DeviceMotion → Downの符号（Debug専用）
       <select value={convention} onChange={event => {
@@ -78,11 +84,11 @@ export function GravityDiagnostics({ motion, correctedRotation, manualOrientatio
     <VectorReadout label="Gravity from correctedRotation" vector={calculated} />
     <dl className="debug-data">
       <div><dt>センサーに適用する符号</dt><dd>{convention === 'raw-is-down' ? '+1（反転なし）' : '−1（反転あり）'}</dd></div>
-      <div><dt>Gravity difference (°)</dt><dd>{angle === null ? `算出不可: ${reason ?? '重力方向が不正'}` : diagnosticValue(angle)}</dd></div>
       <div><dt>符号比較: 反転なし vs Down (°)</dt><dd>{directAngle === null ? `算出不可: ${reason ?? '重力方向が不正'}` : diagnosticValue(directAngle)}</dd></div>
       <div><dt>符号比較: 反転あり vs Down (°)</dt><dd>{invertedAngle === null ? `算出不可: ${reason ?? '重力方向が不正'}` : diagnosticValue(invertedAngle)}</dd></div>
     </dl>
     <p className="search-status">Gravity sensorは生値を0.9 / 0.1で平滑化・正規化し、選択した符号でDownを求めた値です。既定はiPhone / Safariの反転なし。計算側のDownは transpose(correctedRotation) × (0, 0, −1) です。符号比較の2つの角度も同じ平滑化値から計算し、フィルタ前のNormalized rawと区別します。符号は固定姿勢で確かめ、正常時とズレた時の比較中は変更しないでください。</p>
+    </details>
     <p className="debug-diagnostic-note">正常時とズレた時に数秒静止して、moon transformのcorrectedHeading・correctedAltitude・moonInDevice・moonScreenと角度差を比較してください。動作中はフィルタの遅れや加速度が混ざります。0°に近ければ傾きは整合していますが、重力では方位（yaw）の誤差を検出できません。角度差が小さい場合も、方位・北基準とmoonInDevice / projectionの両方を確認してください。</p>
     <p className="search-status">加速度は診断とAR案内の信頼度確認にだけ使用します。correctedRotation・northCorrection・キャリブレーションの補正には使用しません。</p>
   </section>

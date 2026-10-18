@@ -2,16 +2,18 @@ import type { PoseTracker } from '../../device-orientation/poseStability'
 import type { getMoonDeviceState } from '../../moon-guide/moonDeviceNavigation'
 import { diagnosticValue } from '../formatDiagnostics'
 
-export function PoseStabilityDiagnostics({ stability, transform }: {
-  stability: PoseTracker; transform: ReturnType<typeof getMoonDeviceState>
+export function PoseStabilityDiagnostics({ stability, transform, compact = false }: {
+  stability: PoseTracker; transform: ReturnType<typeof getMoonDeviceState>; compact?: boolean
 }) {
-  return <section className="debug-panel" aria-labelledby="pose-stability-title">
+  return <section className={compact ? '' : 'debug-panel'} aria-labelledby="pose-stability-title">
     <h2 id="pose-stability-title">Pose stability</h2>
     <dl className="debug-data">
       <div><dt>pose stability status</dt><dd>{stability.status}</dd></div>
       <div><dt>pose stability reason</dt><dd>{stability.reason}</dd></div>
-      <div><dt>correctedHeading (stability, °)</dt><dd>{diagnosticValue(transform.correctedHeading)}</dd></div>
-      <div><dt>correctedAltitude (stability, °)</dt><dd>{diagnosticValue(stability.previous?.altitude ?? null)}</dd></div>
+      {!compact && <>
+        <div><dt>correctedHeading (stability, °)</dt><dd>{diagnosticValue(transform.correctedHeading)}</dd></div>
+        <div><dt>correctedAltitude (stability, °)</dt><dd>{diagnosticValue(stability.previous?.altitude ?? null)}</dd></div>
+      </>}
       <div><dt>heading delta (°)</dt><dd>{diagnosticValue(stability.headingDelta)}</dd></div>
       <div><dt>altitude delta (°)</dt><dd>{diagnosticValue(stability.altitudeDelta)}</dd></div>
       <div><dt>3D rotation delta (°)</dt><dd>{diagnosticValue(stability.rotationDelta)}</dd></div>

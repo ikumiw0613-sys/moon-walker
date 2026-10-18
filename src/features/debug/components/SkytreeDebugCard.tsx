@@ -2,7 +2,7 @@ import { TOKYO_SKYTREE } from '../landmarks'
 import { calculateBearing, calculateDistance, compareHeadingToBearing } from '../../../shared/geo/geographicBearing'
 import type { LocationState } from '../../geolocation/types'
 
-export function SkytreeDebugCard({ state, correctedHeading }: { state: LocationState; correctedHeading: number | null }) {
+export function SkytreeDebugCard({ state, correctedHeading, grouped = false }: { state: LocationState; correctedHeading: number | null; grouped?: boolean }) {
   const location = state.status === 'success' ? state.location : null
   const skytreeBearing = location
     ? calculateBearing(location.latitude, location.longitude, TOKYO_SKYTREE.latitude, TOKYO_SKYTREE.longitude) : null
@@ -16,12 +16,14 @@ export function SkytreeDebugCard({ state, correctedHeading }: { state: LocationS
     <section className="debug-panel" aria-labelledby="skytree-title">
       <h2 id="skytree-title">東京スカイツリー検証</h2>
       <dl className="debug-data">
-        <div><dt>現在地（緯度 / 経度）</dt><dd>{location ? `${location.latitude.toFixed(7)} / ${location.longitude.toFixed(7)}` : '—'}</dd></div>
-        <div><dt>現在地の推定精度</dt><dd>{location ? `約${location.accuracy.toFixed(0)} m` : '—'}</dd></div>
+        {!grouped && <>
+          <div><dt>現在地（緯度 / 経度）</dt><dd>{location ? `${location.latitude.toFixed(7)} / ${location.longitude.toFixed(7)}` : '—'}</dd></div>
+          <div><dt>現在地の推定精度</dt><dd>{location ? `約${location.accuracy.toFixed(0)} m` : '—'}</dd></div>
+        </>}
         <div><dt>スカイツリー（緯度 / 経度）</dt><dd>{TOKYO_SKYTREE.latitude} / {TOKYO_SKYTREE.longitude}</dd></div>
         <div><dt>スカイツリーまでの地表距離</dt><dd>{distance === null ? '—' : distance < 1000 ? `${distance.toFixed(1)} m` : `${(distance / 1000).toFixed(2)} km`}</dd></div>
         <div><dt>スカイツリー方位（skytreeBearing）</dt><dd>{degrees(skytreeBearing)}</dd></div>
-        <div><dt>スマホ方位（correctedHeading）</dt><dd>{degrees(correctedHeading)}</dd></div>
+        {!grouped && <div><dt>スマホ方位（correctedHeading）</dt><dd>{degrees(correctedHeading)}</dd></div>}
         <div><dt>誤差（headingErrorToSkytree）</dt><dd>{degrees(headingErrorToSkytree)}</dd></div>
       </dl>
       <p className="search-status" role="status">
