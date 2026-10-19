@@ -48,7 +48,7 @@ afterEach(async () => {
 async function show(query: string) {
   window.history.replaceState(null, '', '/ar' + query)
   await act(async () => root.render(<ARPage navigate={vi.fn()} state={{ status: 'success',
-    location: { latitude: 35, longitude: 139, accuracy: 10, timestamp: 0 } }} requestLocation={vi.fn()} />))
+    location: { latitude: 35, longitude: 139, altitude: 42.3, accuracy: 10, timestamp: 0 } }} requestLocation={vi.fn()} />))
   await act(async () => vi.advanceTimersByTime(250))
 }
 function data() {
@@ -78,6 +78,11 @@ it('starts minimized, keeps the close button outside the scroll area, and preser
   expect(direction.closest('[hidden]')).toBeNull()
   expect(direction.textContent).toContain('Main error axis: HEADING')
   expect(data().directionError).toMatchObject({ moonAzimuth: 15, moonAltitude: 1, mainErrorAxis: 'HEADING' })
+  const location = document.querySelector<HTMLElement>('[aria-label="Current location"]')!
+  expect(location.closest('[hidden]')).toBeNull()
+  expect(panel.contains(location)).toBe(false)
+  for (const text of ['35.000000°', '139.000000°', '42.3 m']) expect(location.textContent).toContain(text)
+  expect(data().location).toMatchObject({ latitude: 35, longitude: 139, altitude: 42.3 })
   expect(container.querySelector('.mw-ar-recalibrate')).not.toBeNull()
   await choose('月本体の配置基準', 'full-screen')
   expect(panel.hidden).toBe(false)

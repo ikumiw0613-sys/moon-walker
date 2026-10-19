@@ -31,6 +31,7 @@ export function getCurrentLocation(): Promise<UserLocation> {
         resolve({
           latitude: coords.latitude,
           longitude: coords.longitude,
+          altitude: coords.altitude != null && Number.isFinite(coords.altitude) ? coords.altitude : null,
           accuracy: coords.accuracy,
           timestamp,
         })

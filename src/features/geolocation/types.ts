@@ -1,6 +1,8 @@
 export interface UserLocation {
   latitude: number
   longitude: number
+  /** Device-reported elevation in meters; absent or null when unavailable. Diagnostics only. */
+  altitude?: number | null
   accuracy: number
   timestamp: number
 }

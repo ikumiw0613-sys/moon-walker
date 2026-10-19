@@ -107,6 +107,7 @@ export function formatMoonPipelineDiagnostics(data: MoonPipelineDiagnostics): st
   const lines: [string, number | boolean | string | null | undefined][] = [
     ['time', data.observationTime], ['timeMode', context.timeMode],
     ['latitude', data.location?.latitude], ['longitude', data.location?.longitude],
+    ['location.altitude (m)', data.location?.altitude],
     ['orientation.source', context.orientationSource], ['orientation.status', context.orientationStatus],
     ['northCorrection (saved, degrees)', context.northCorrection],
     ['moon.azimuth', data.moonPosition?.azimuth], ['moon.altitude', data.moonPosition?.altitude],

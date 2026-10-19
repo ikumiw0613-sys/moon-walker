@@ -38,6 +38,8 @@ Vercelでは既知のSPAルートを `vercel.json` から `/index.html` へrewri
 
 ## 計測値と比較点
 
+Current locationには観測に使っている位置情報の緯度・経度（度、小数6桁）と、端末が返す現在地の高度（m、小数1桁）を表示する。DebugとAR診断の両方で表示し、ARでは詳細パネルを閉じても表示を維持する。高度が未提供の場合はunavailable (未取得)とする。高度は診断表示・コピー用データにのみ追加し、天体計算には渡さない。
+
 DebugのMoon transform pipelineとAR診断のDirection errorには、Moon azimuth / Corrected heading / Heading error、Moon altitude / Corrected altitude / Altitude errorを表示する。誤差は月−カメラで、方位差のみ[-180°, 180°)の最短角差へ正規化する（359°−1°は−2°）。表示は小数1桁、判定は丸め前の値を使う。
 
 Main error axisは絶対誤差が両方3°以下ならALIGNED、方位のみ5°超で高度3°以下ならHEADING、高度のみ5°超で方位3°以下ならALTITUDE、両方5°超ならBOTH。それ以外はCAUTION、必要な角度が欠ける場合はUNAVAILABLEとする。値は地平線下・画面外・姿勢不安定でも取得可能な範囲で表示し、AR診断JSONとDebugのコピーテキストにも含める。保存済み北補正・天体計算・本番投影・表示条件には反映しない。

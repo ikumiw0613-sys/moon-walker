@@ -40,6 +40,10 @@ describe('debug diagnostic display', () => {
     expect(html).toContain('headingError: unavailable')
     expect(html).toContain('altitudeError: unavailable')
     expect(html).toContain('mainErrorAxis: UNAVAILABLE')
+    for (const label of ['Current location / 現在地', 'Latitude / 緯度', 'Longitude / 経度', '現在地の高度']) {
+      expect(html).toContain(label)
+    }
+    expect(html).toContain('location.altitude (m): unavailable')
     expect(html).toContain('Pose stability')
     expect(html).toContain('pose stability status</dt><dd>unavailable')
     expect(html).toContain('pose stability reason</dt><dd>orientation unavailable')

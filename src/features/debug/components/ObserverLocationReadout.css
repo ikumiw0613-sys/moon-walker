@@ -1,0 +1,8 @@
+.observer-location-readout { font-size: 12px; line-height: 1.5; }
+.observer-location-readout h3 { margin: 0 0 4px; }
+.observer-location-readout dl { margin: 0; }
+.observer-location-readout dl > div { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+.observer-location-readout dd { margin: 0; font-variant-numeric: tabular-nums; }
+.ar-projection-diagnostic > .observer-location-readout { padding: 8px 10px; border: 1px solid #7dd3fc; border-radius: 8px; background: #06111af5; flex-shrink: 0; }
+.ar-projection-diagnostic .observer-location-readout dl { margin: 0; }
+.ar-projection-diagnostic .observer-location-readout dl > div { padding: 2px 0; }

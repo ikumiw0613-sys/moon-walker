@@ -54,6 +54,7 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
         <div ref={viewportRef} className="mw-ar-viewport" aria-hidden="true">
           {projectionDebug.enabled ? <ARProjectionExperiment viewportRef={viewportRef} screen={moonScreen}
             moonPosition={moonPosition} deviceState={deviceState} phase={moonPhase} canRender={Boolean(guidance)} now={now}
+            location={location.status === 'success' ? location.location : null}
             timeMode={timeMode} orientationStatus={orientation.status} poseStatus={poseStability.status}
             initialPlacement={projectionDebug.placement} /> : guidance && moonScreen && (
             <MoonSprite x={moonScreen.x} y={moonScreen.y} visible={moonScreen.visible} phase={moonPhase} />

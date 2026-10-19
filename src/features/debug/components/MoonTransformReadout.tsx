@@ -5,6 +5,7 @@ import type { MoonPipelineInput } from '../moonPipelineDiagnostics'
 import { VectorReadout } from './VectorReadout'
 import { MatrixReadout } from './MatrixReadout'
 import { DirectionErrorReadout } from './DirectionErrorReadout'
+import { ObserverLocationReadout } from './ObserverLocationReadout'
 
 function StageStatus({ reason }: { reason: string | null }) {
   return <p className={reason ? 'debug-diagnostic-note' : 'search-status'}>{reason ?? 'available'}</p>
@@ -41,6 +42,7 @@ export function MoonTransformReadout(input: MoonPipelineInput & { grouped?: bool
     {copyStatus && <p className="search-status" role="status">{copyStatus}</p>}
 
     <DirectionErrorReadout data={data.directionError} />
+    <ObserverLocationReadout location={data.location} />
     <h3 className="debug-pipeline-heading">Astronomy</h3>
     <StageStatus reason={data.reasons.astronomy} />
     <dl className="debug-data">

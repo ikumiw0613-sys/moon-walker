@@ -10,6 +10,8 @@ import { MoonSprite } from './MoonSprite'
 import { getDirectionErrorDiagnostics } from '../../../features/debug/directionErrorDiagnostics'
 import { DirectionErrorReadout } from '../../../features/debug/components/DirectionErrorReadout'
 import { cameraVectorToViewAngles } from '../../../features/sky/skyParallax'
+import type { UserLocation } from '../../../features/geolocation/types'
+import { ObserverLocationReadout } from '../../../features/debug/components/ObserverLocationReadout'
 import './ARProjectionExperiment.css'
 
 const number = (value: number | null | undefined, digits = 2) => value == null || !Number.isFinite(value) ? '—' : value.toFixed(digits)
@@ -20,10 +22,11 @@ const vectorText = (vector: { x: number; y: number; z: number } | null) => vecto
   ? `${number(vector.x)} / ${number(vector.y)} / ${number(vector.z)}` : '—'
 
 export function ARProjectionExperiment({ viewportRef, screen, moonPosition, deviceState, phase, canRender, now,
-  timeMode, orientationStatus, poseStatus, initialPlacement }: {
+  timeMode, orientationStatus, poseStatus, initialPlacement, location }: {
   viewportRef: RefObject<HTMLDivElement | null>
   screen: ProjectionPoint | null
   moonPosition: MoonPosition | null
+  location: UserLocation | null
   deviceState: ReturnType<typeof getMoonDeviceState>
   phase: MoonPhaseInfo
   canRender: boolean
@@ -62,7 +65,7 @@ export function ARProjectionExperiment({ viewportRef, screen, moonPosition, devi
     ? cameraVectorToViewAngles(deviceState.cameraForwardCorrected).altitude : null
   const directionError = getDirectionErrorDiagnostics(moonPosition, deviceState.correctedHeading, correctedAltitude)
   const snapshot = { observationTime: now.toISOString(), timeMode, orientationStatus, poseStatus, canRender, placement,
-    screen, moonPosition, moonWorld: deviceState.moonWorld, moonInDevice: deviceState.moonInDevice,
+    screen, moonPosition, location, moonWorld: deviceState.moonWorld, moonInDevice: deviceState.moonInDevice,
     correctedRotation: deviceState.correctedRotation, correctedView: deviceState.correctedView, comparison, measurement,
     windowPosition, fullPosition, actualDelta, consistency, fovMode, trialFov: fov, trial, trialConsistency, directionError }
 
@@ -74,6 +77,7 @@ export function ARProjectionExperiment({ viewportRef, screen, moonPosition, devi
       }
     }}>
     <DirectionErrorReadout data={directionError} />
+    <ObserverLocationReadout location={location} />
     <button ref={toggleRef} type="button" className="ar-projection-toggle" aria-expanded={panelOpen}
       aria-controls="ar-projection-panel" onClick={() => setPanelOpen(open => !open)}>
       {panelOpen ? '診断を閉じる' : '投影診断を開く'}
