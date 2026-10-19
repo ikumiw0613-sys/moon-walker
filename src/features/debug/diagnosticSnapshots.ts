@@ -1,10 +1,14 @@
 import type { CompassQuality } from './compassDiagnostics'
+import type { LandmarkAccuracy } from './landmarkCompassDiagnostics'
 
 export const MAX_DIAGNOSTIC_SNAPSHOTS = 10
 export type DiagnosticSnapshot = {
   timestamp: number
   latitude: number | null; longitude: number | null; locationTimestamp: number | null
   compassHeading: number | null; compassAccuracy: number | null
+  referenceTarget: string; referenceBearing: number | null; distanceToTarget: number | null
+  compassError: number | null; correctedHeadingError: number | null
+  webkitCompassAccuracy: number | null; landmarkAccuracy: LandmarkAccuracy
   northCorrection: number | null; candidateMedian: number | null; candidateRange: number | null
   headingRange: number | null; gravityDifference: number | null
   correctedHeading: number | null; correctedAltitude: number | null

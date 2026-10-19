@@ -27,6 +27,7 @@ export function CompassStabilityDiagnostics({ diagnostic, northCorrection, rawAc
   const limits = COMPASS_QUALITY_LIMITS
   return <section className="debug-panel" aria-labelledby="compass-stability-title">
     <h2 id="compass-stability-title"><span>C</span> Compass stability / 磁気環境診断</h2>
+    <p className="search-status">ここでは時間変動と端末報告のaccuracyを確認します。既知の対象への絶対方位誤差はLandmark compass validationで確認してください。</p>
     <p>Compass Quality: <strong className={`debug-quality is-${quality.status}`}>{quality.status.toUpperCase()}</strong></p>
     <ul className="debug-quality-reasons">{quality.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
     <p className="search-status">端末を同じ向きで数秒静止させて比較してください。端末の回転も heading range に含まれます。GOOD は磁北・真北の一致や磁気干渉がないことの保証ではありません。</p>

@@ -5,6 +5,7 @@ import { useCompassDiagnostics } from '../../features/debug/useCompassDiagnostic
 import { CompassStabilityDiagnostics } from '../../features/debug/components/CompassStabilityDiagnostics'
 import { DiagnosticSnapshots } from '../../features/debug/components/DiagnosticSnapshots'
 import { SkytreeDebugCard } from '../../features/debug/components/SkytreeDebugCard'
+import { getLandmarkCompassDiagnostics } from '../../features/debug/landmarkCompassDiagnostics'
 import { HORIZONTAL_CALIBRATION_THRESHOLD } from '../../features/north-calibration/horizontalCalibration'
 import { getAuxiliaryGravity } from '../../features/device-orientation/auxiliaryGravity'
 import { cameraVectorToViewAngles } from '../../features/sky/skyParallax'
@@ -62,6 +63,12 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
     : moonPosition && currentView ? getMoonNavigation(moonPosition, currentView) : null
   const rawEvent = diagnostics.lastAccepted
   const compass = useCompassDiagnostics(rawEvent, sensorOrientation.status === 'active', manualOrientationEnabled)
+  const landmark = getLandmarkCompassDiagnostics({ state,
+    compassHeading: compass.current?.heading ?? null,
+    webkitCompassAccuracy: compass.current ? rawEvent?.webkitCompassAccuracy : null,
+    correctedHeading: compass.current ? transform.correctedHeading : null,
+    rawHeading: compass.current ? transform.rawView?.azimuth ?? null : null,
+  })
   const gravity = !manualOrientationEnabled && sensorOrientation.status === 'active'
     ? getAuxiliaryGravity(motion, transform.correctedRotation, compass.now, gravityConvention)
     : { angle: null, reason: '実機姿勢の取得待ち' }
@@ -158,11 +165,16 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
         </NorthCorrectionDiagnostics>
         <CompassStabilityDiagnostics diagnostic={compass} northCorrection={northCorrection}
           rawAccuracy={rawEvent ? rawEvent.webkitCompassAccuracy : null} />
+        <SkytreeDebugCard data={landmark} />
         <DiagnosticSnapshots values={{
           latitude: state.status === 'success' ? state.location.latitude : null,
           longitude: state.status === 'success' ? state.location.longitude : null,
           locationTimestamp: state.status === 'success' ? state.location.timestamp : null,
-          compassHeading: compass.current?.heading ?? null, compassAccuracy: compass.current?.accuracy ?? null,
+          compassHeading: landmark.compassHeading, compassAccuracy: compass.current?.accuracy ?? null,
+          referenceTarget: landmark.referenceTarget, referenceBearing: landmark.referenceBearing,
+          compassError: landmark.compassError, correctedHeadingError: landmark.correctedHeadingError,
+          webkitCompassAccuracy: landmark.webkitCompassAccuracy, landmarkAccuracy: landmark.landmarkAccuracy,
+          distanceToTarget: landmark.distanceToTarget,
           northCorrection, candidateMedian: compass.stats.candidate?.median ?? null,
           candidateRange: compass.stats.candidate?.range ?? null, headingRange: compass.stats.heading?.range ?? null,
           candidateCount: compass.stats.candidate?.count ?? 0, headingCount: compass.stats.heading?.count ?? 0,
@@ -291,9 +303,6 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
         <h2 id="astronomy-title"><span>G</span> Astronomy / landmarks</h2>
         <details className="debug-details"><summary>Sun debug を表示</summary>
           <SunDebugCard grouped state={state} correctedHeading={transform.correctedHeading} cameraForwardCorrected={transform.cameraForwardCorrected} />
-        </details>
-        <details className="debug-details"><summary>Skytree debug を表示</summary>
-          <SkytreeDebugCard grouped state={state} correctedHeading={transform.correctedHeading} />
         </details>
         <details className="debug-details"><summary>月相プレビューを表示</summary><MoonPhasePreview /></details>
       </section>

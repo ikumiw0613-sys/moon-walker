@@ -9,6 +9,8 @@ import { DiagnosticSnapshots } from './DiagnosticSnapshots'
 const values: Omit<DiagnosticSnapshot, 'memo' | 'timestamp'> = {
   latitude: 35.68, longitude: 139.76, locationTimestamp: 1000,
   compassHeading: 228.4, compassAccuracy: 6, northCorrection: 134.9,
+  referenceTarget: '東京スカイツリー', referenceBearing: 217.7, compassError: 10.7,
+  correctedHeadingError: -117.7, webkitCompassAccuracy: 10, landmarkAccuracy: 'BAD', distanceToTarget: 12400,
   candidateMedian: 136.1, candidateRange: 1.5, headingRange: 2.4, gravityDifference: 3,
   correctedHeading: 100, correctedAltitude: 20, moonAzimuth: 120, moonAltitude: 30,
   quality: 'good', qualityReasons: ['北補正候補は安定'], candidateCount: 24, headingCount: 24,
@@ -50,7 +52,9 @@ it('records the click time, optional memo and all comparison values, frozen acro
   for (const text of ['19:00:00', 'GOOD', '6.0°', '1.5°', '2.4°', '35.68000', '139.76000', '228.4°',
     '134.9°', '136.1° / 24', '3.0°', '100.0° / 20.0°', '120.0° / 30.0°', 'sensor / current', '北補正候補は安定']) expect(recorded).toContain(text)
   expect(memo.value).toBe('')
-  await show({ ...values, compassAccuracy: 25, quality: 'poor', latitude: 40 })
+  for (const text of ['Landmark Accuracy: BAD', '東京スカイツリー', '217.7°', '+10.7°', '-117.7°', '10.0°', '12.40 km']) expect(recorded).toContain(text)
+  await show({ ...values, compassAccuracy: 25, quality: 'poor', latitude: 40,
+    referenceBearing: 300, compassError: 1, correctedHeadingError: 1, landmarkAccuracy: 'GOOD' })
   expect(card.textContent).toBe(recorded)
   await click('現在の診断を記録')
   expect(container.querySelector('article')!.textContent).toContain('POOR')

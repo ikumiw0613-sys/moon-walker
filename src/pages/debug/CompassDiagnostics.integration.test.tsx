@@ -4,6 +4,8 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { NorthCalibrationProvider } from '../../features/north-calibration/NorthCalibrationProvider'
 import { DebugPage } from './DebugPage'
+import { TOKYO_SKYTREE } from '../../features/debug/landmarks'
+import { calculateBearing } from '../../shared/geo/geographicBearing'
 
 vi.mock('../../features/moon/astronomy', () => ({ getMoonPosition: () => ({ azimuth: 90, altitude: 20, isAboveHorizon: true }) }))
 let root: ReturnType<typeof createRoot>
@@ -41,6 +43,10 @@ async function sensor(accuracy: number, heading = 90, absolute = true) {
   })
 }
 function compassPanel() { return container.querySelector('[aria-labelledby="compass-stability-title"]')! }
+function landmarkPanel() { return container.querySelector('[aria-labelledby="skytree-title"]')! }
+function landmarkField(label: string) {
+  return [...landmarkPanel().querySelectorAll('dt')].find(dt => dt.textContent === label)!.nextElementSibling!.textContent
+}
 function output() {
   const main = container.querySelector('main')!
   return ['correctedRotation', 'moonInDevice', 'correctedHeading', 'angleToMoon'].map(key => main.dataset[key])
@@ -78,4 +84,55 @@ it('one accepted sample is not multiplied by time-mode changes, UI renders or sn
   const counts = [...compassPanel().querySelectorAll('dt')].filter(dt => dt.textContent === 'sample count')
   expect(counts.map(dt => dt.nextElementSibling!.textContent)).toEqual(['1', '1'])
   expect(compassPanel().textContent).toContain('UNAVAILABLE')
+})
+
+it('shows a stable but wrong compass and freezes landmark errors in location comparison records', async () => {
+  const bearing = calculateBearing(35.68, 139.76, TOKYO_SKYTREE.latitude, TOKYO_SKYTREE.longitude)!
+  for (let i = 0; i < 12; i++) await sensor(6, bearing + 11)
+  expect(compassPanel().textContent).toContain('Compass Quality: GOOD')
+  expect(landmarkPanel().textContent).toContain('Landmark Accuracy BAD')
+  expect(landmarkField('Compass error / actual error')).toBe('+11.0°')
+  expect(landmarkField('Corrected heading')).toBe('unavailable')
+  expect(container.querySelectorAll('#skytree-title')).toHaveLength(1)
+  await click('北基準を合わせる')
+  const calibrated = output()
+  expect(landmarkField('Corrected heading error')).toBe('+11.0°')
+  await click('現在の診断を記録')
+  const first = container.querySelector('article')!.textContent
+  expect(first).toContain('Landmark Accuracy: BAD')
+  expect(first).toContain('+11.0°')
+  await sensor(6, bearing + 1)
+  expect(landmarkField('Compass error / actual error')).toBe('+1.0°')
+  expect(landmarkPanel().textContent).toContain('Landmark Accuracy GOOD')
+  expect(output()).toEqual(calibrated)
+  await click('現在の診断を記録')
+  expect(container.querySelector('article')!.textContent).toContain('Landmark Accuracy: GOOD')
+  expect(container.querySelectorAll('article')[1].textContent).toBe(first)
+})
+
+it('does not substitute computed headings, manual input, stale data or ignored events for real Safari headings', async () => {
+  await sensor(10, 50)
+  const initial = landmarkField('Compass error / actual error')
+  await sensor(1, 200, false)
+  expect(landmarkField('Compass error / actual error')).toBe(initial)
+  expect(landmarkField('webkitCompassAccuracy')).toBe('10.0°')
+  await act(async () => vi.advanceTimersByTime(1500))
+  expect(landmarkField('Compass error / actual error')).toBe('unavailable')
+  await sensor(10, 50)
+  const manual = [...container.querySelectorAll('label')].find(label => label.textContent?.includes('PCで向きを手動テストする'))!.querySelector('input')!
+  await act(async () => manual.click())
+  expect(landmarkField('webkitCompassHeading')).toBe('unavailable')
+  expect(landmarkField('Corrected heading error')).toBe('unavailable')
+})
+
+it('does not use an absolute alpha-derived heading when webkitCompassHeading is absent', async () => {
+  await act(async () => {
+    vi.advanceTimersByTime(100)
+    window.dispatchEvent(Object.assign(new Event('deviceorientation'), {
+      alpha: 315, beta: 90, gamma: 0, absolute: true,
+    }))
+  })
+  expect(landmarkField('Reference bearing')).not.toBe('unavailable')
+  expect(landmarkField('webkitCompassHeading')).toBe('unavailable')
+  expect(landmarkField('Compass error / actual error')).toBe('unavailable')
 })

@@ -3,6 +3,7 @@ import { normalizeSignedAngle } from '../../../shared/math/angles'
 import { INITIAL_SNAPSHOTS, MAX_DIAGNOSTIC_SNAPSHOTS, snapshotReducer } from '../diagnosticSnapshots'
 import type { DiagnosticSnapshot } from '../diagnosticSnapshots'
 import { diagnosticDegrees as degrees } from '../formatDiagnostics'
+import { diagnosticSignedDegrees } from '../formatDiagnostics'
 
 type SnapshotValues = Omit<DiagnosticSnapshot, 'timestamp' | 'memo'>
 const time = (timestamp: number) => new Date(timestamp).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false })
@@ -27,9 +28,14 @@ export function DiagnosticSnapshots({ values }: { values: SnapshotValues }) {
     <p className="search-status" role="status">{state.items.length} / {MAX_DIAGNOSTIC_SNAPSHOTS}件（一時保存・更新で消去、上限で古い順に削除）</p>
     <div className="debug-snapshots">{state.items.map(item => <article className="debug-snapshot" key={item.id} aria-label={`記録 #${item.id}`}>
       <div className="debug-snapshot-header"><h3>#{item.id} {time(item.timestamp)}（日本時間）</h3>
-        <strong className={`debug-quality is-${item.quality}`}>{item.quality.toUpperCase()}</strong></div>
+        <strong className={`debug-quality is-${item.quality}`}>Compass Quality: {item.quality.toUpperCase()}</strong></div>
+      <p>Landmark Accuracy: <strong className={`debug-quality is-${item.landmarkAccuracy.toLowerCase()}`}>{item.landmarkAccuracy}</strong></p>
       {item.memo && <p className="debug-memo">{item.memo}</p>}
       <dl className="debug-data">
+        <div><dt>Reference target</dt><dd>{item.referenceTarget}</dd></div>
+        <div><dt>Reference bearing</dt><dd>{degrees(item.referenceBearing)}</dd></div>
+        <div><dt>Compass heading</dt><dd>{degrees(item.compassHeading)}</dd></div>
+        <div><dt>Compass error</dt><dd>{diagnosticSignedDegrees(item.compassError)}</dd></div>
         <div><dt>accuracy</dt><dd>{degrees(item.compassAccuracy)}</dd></div>
         <div><dt>candidate range</dt><dd>{degrees(item.candidateRange)}</dd></div>
         <div><dt>heading range</dt><dd>{degrees(item.headingRange)}</dd></div>
@@ -42,6 +48,9 @@ export function DiagnosticSnapshots({ values }: { values: SnapshotValues }) {
           <div><dt>orientation source / time mode</dt><dd>{item.orientationSource} / {item.timeMode}</dd></div>
           <div><dt>月の観測時刻</dt><dd>{item.observationTime ?? '—'}</dd></div>
           <div><dt>compassHeading</dt><dd>{degrees(item.compassHeading)}</dd></div>
+          <div><dt>webkitCompassAccuracy</dt><dd>{degrees(item.webkitCompassAccuracy)}</dd></div>
+          <div><dt>Distance to target</dt><dd>{item.distanceToTarget === null ? 'unavailable' : `${(item.distanceToTarget / 1000).toFixed(2)} km`}</dd></div>
+          <div><dt>Corrected heading error</dt><dd>{diagnosticSignedDegrees(item.correctedHeadingError)}</dd></div>
           <div><dt>saved northCorrection</dt><dd>{degrees(item.northCorrection)}</dd></div>
           <div><dt>candidate median / samples</dt><dd>{degrees(item.candidateMedian === null ? null : normalizeSignedAngle(item.candidateMedian))} / {item.candidateCount}</dd></div>
           <div><dt>median candidate − saved</dt><dd>{degrees(item.candidateMedian === null || item.northCorrection === null ? null : normalizeSignedAngle(item.candidateMedian - item.northCorrection))}</dd></div>

@@ -11,3 +11,9 @@ export function eventTime(value: number | undefined): string {
 
 export const diagnosticDegrees = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? '—' : `${value.toFixed(1)}°`
 
+export const diagnosticSignedDegrees = (value: number | null | undefined) => {
+  if (value == null || !Number.isFinite(value)) return 'unavailable'
+  const rounded = Number(value.toFixed(1))
+  return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}°`
+}
+

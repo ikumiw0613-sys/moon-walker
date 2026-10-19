@@ -58,6 +58,9 @@ describe('heading error to landmark', () => {
 
   it('符号付き角度は既存と同じ[-180,180)になる', () => {
     expect(normalizeSignedAngle(180)).toBe(-180)
+    expect(normalizeSignedAngle(-180)).toBe(-180)
+    expect(compareHeadingToBearing(180, 0)?.headingError).toBe(-180)
+    expect(compareHeadingToBearing(0, 180)?.headingError).toBe(-180)
     expect(normalizeSignedAngle(361)).toBe(1)
     expect(normalizeSignedAngle(-361)).toBe(-1)
   })
