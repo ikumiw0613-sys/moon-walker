@@ -33,6 +33,13 @@ describe('debug diagnostic display', () => {
       expect(html).toContain(reason)
     }
     expect(html).toContain('Moon diagnostics をコピー')
+    for (const label of ['Direction error', 'Moon azimuth', 'Corrected heading', 'Heading error',
+      'Moon altitude', 'Corrected altitude', 'Altitude error', 'Main error axis:', 'UNAVAILABLE']) {
+      expect(html).toContain(label)
+    }
+    expect(html).toContain('headingError: unavailable')
+    expect(html).toContain('altitudeError: unavailable')
+    expect(html).toContain('mainErrorAxis: UNAVAILABLE')
     expect(html).toContain('Pose stability')
     expect(html).toContain('pose stability status</dt><dd>unavailable')
     expect(html).toContain('pose stability reason</dt><dd>orientation unavailable')

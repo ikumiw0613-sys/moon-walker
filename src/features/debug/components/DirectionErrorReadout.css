@@ -1,0 +1,9 @@
+.direction-error-readout { font-size: 12px; line-height: 1.5; }
+.direction-error-readout h3, .direction-error-readout h4, .direction-error-readout p { margin: 0; }
+.direction-error-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 6px 0; }
+.direction-error-readout .direction-error-columns dl { margin: 0; }
+.direction-error-readout dl > div { display: flex; justify-content: space-between; gap: 4px; padding: 2px 0; }
+.direction-error-readout dt { min-width: 0; overflow-wrap: anywhere; }
+.direction-error-readout dd { margin: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ar-projection-diagnostic > .direction-error-readout { padding: 8px 10px; border: 1px solid #7dd3fc; border-radius: 8px; background: #06111af5; flex-shrink: 0; }
+.ar-projection-diagnostic .direction-error-readout dd { flex: none; }

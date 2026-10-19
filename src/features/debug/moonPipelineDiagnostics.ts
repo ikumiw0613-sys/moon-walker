@@ -5,6 +5,7 @@ import type { getMoonDeviceState } from '../moon-guide/moonDeviceNavigation'
 import { getMoonProjectionDiagnostics } from '../moon-guide/moonProjection'
 import { getCameraForward, cameraVectorToViewAngles } from '../sky/skyParallax'
 import type { PoseStability } from '../device-orientation/poseStability'
+import { getDirectionErrorDiagnostics } from './directionErrorDiagnostics'
 
 export type MoonPipelineContext = {
   observationDate: Date | null
@@ -73,6 +74,7 @@ export function getMoonPipelineDiagnostics({ transform, moonPosition, context }:
   return {
     context, observationTime, location, moonPosition,
     cameraForward, correctedHeading, correctedAltitude, headingReason,
+    directionError: getDirectionErrorDiagnostics(moonPosition, correctedHeading, correctedAltitude),
     // Preserve shared output references: no debug-only inverse transformation.
     moonWorld: transform.moonWorld, moonInDevice: transform.moonInDevice, worldLength, deviceLength,
     correctedRotation: transform.correctedRotation, projection, navigation,
@@ -111,6 +113,8 @@ export function formatMoonPipelineDiagnostics(data: MoonPipelineDiagnostics): st
     ['moon.isAboveHorizon', data.moonPosition?.isAboveHorizon],
     ['correctedHeading', data.correctedHeading], ['correctedHeading.reason', data.headingReason ?? 'available'],
     ['correctedAltitude', data.correctedAltitude], ['cameraForward', vectorText(data.cameraForward)],
+    ['headingError', data.directionError.headingError], ['altitudeError', data.directionError.altitudeError],
+    ['mainErrorAxis', data.directionError.mainErrorAxis],
     ['moonWorld', vectorText(data.moonWorld)], ['moonWorld.length', data.worldLength],
     ['correctedRotation', data.correctedRotation ? data.correctedRotation.map(row => `(${row.map(value => snapshotValue(value)).join(', ')})`).join(' / ') : null],
     ['transform', 'moonInDevice = transpose(correctedRotation) * moonWorld'],

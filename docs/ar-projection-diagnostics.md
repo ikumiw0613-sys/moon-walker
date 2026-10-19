@@ -29,7 +29,7 @@ Vercelでは既知のSPAルートを `vercel.json` から `/index.html` へrewri
 
 クエリはAR画面のマウント時に読む。比較は再読み込みせず、パネルの **viewport projection / full-screen projection** を切り替える。再読み込みすると既存仕様どおり北補正が消えるため、比較の途中では行わない。
 
-診断は最初は閉じており、ヘッダーの下の右上に小さな「投影診断を開く」ボタンだけを表示する。パネルの空白部分はタップを受け取らず、下側の準備・現在地・校正ボタンを操作できる。開いた後も、スクロール領域の外に常にある「診断を閉じる」で最小化できる。Escapeでも閉じられ、配置・FOVなどの選択は維持する。
+詳細診断は最初は閉じており、ヘッダーの下の右上に「Direction error」と「投影診断を開く」ボタンを表示する。Direction errorは詳細パネルの開閉にかかわらず常時表示する。パネルの空白部分はタップを受け取らず、下側の準備・現在地・校正ボタンを操作できる。開いた後も、スクロール領域の外に常にある「診断を閉じる」で最小化できる。Escapeでも閉じられ、配置・FOVなどの選択は維持する。
 パネルはbodyにportalしたfixed overlayで、ARのgridに行を追加しない。
 
 全画面モードでは本物のMoonSpriteをbodyへportalし、`position: fixed` と `left = screenX * innerWidth px`、`top = screenY * innerHeight px` を使う。これはモバイルでのvhとinnerHeightの違いを避け、計測に使ったwindowサイズへ直接対応させるため。アプリ祖先のtransformにも影響されない。body/html自体にtransform等があれば診断で警告する。
@@ -37,6 +37,10 @@ Vercelでは既知のSPAルートを `vercel.json` から `/index.html` へrewri
 月本体は全モードで本番FOV 90/60のまま。リング・画面端マーカーは従来のviewport基準に残す。診断モードでも姿勢不安定・未校正・地平線下などの既存の表示抑制は維持する。
 
 ## 計測値と比較点
+
+DebugのMoon transform pipelineとAR診断のDirection errorには、Moon azimuth / Corrected heading / Heading error、Moon altitude / Corrected altitude / Altitude errorを表示する。誤差は月−カメラで、方位差のみ[-180°, 180°)の最短角差へ正規化する（359°−1°は−2°）。表示は小数1桁、判定は丸め前の値を使う。
+
+Main error axisは絶対誤差が両方3°以下ならALIGNED、方位のみ5°超で高度3°以下ならHEADING、高度のみ5°超で方位3°以下ならALTITUDE、両方5°超ならBOTH。それ以外はCAUTION、必要な角度が欠ける場合はUNAVAILABLEとする。値は地平線下・画面外・姿勢不安定でも取得可能な範囲で表示し、AR診断JSONとDebugのコピーテキストにも含める。保存済み北補正・天体計算・本番投影・表示条件には反映しない。
 
 windowのinnerWidth/innerHeight、viewportと月の実測rect、月の実測中心、computed CSS、実際の祖先、offsetParent、visualViewportを記録する。resize、scroll、回転、ResizeObserverと250ms間隔で更新する。
 

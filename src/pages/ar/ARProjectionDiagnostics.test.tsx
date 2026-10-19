@@ -64,6 +64,7 @@ async function choose(label: string, value: string) {
 }
 
 it('starts minimized, keeps the close button outside the scroll area, and preserves settings when minimized', async () => {
+  vi.mocked(getMoonPosition).mockReturnValueOnce({ azimuth: 15, altitude: 1, isAboveHorizon: true })
   await show('?arDebug=projection')
   const panel = document.querySelector<HTMLElement>('#ar-projection-panel')!
   const toggle = document.querySelector<HTMLButtonElement>('.ar-projection-toggle')!
@@ -71,6 +72,12 @@ it('starts minimized, keeps the close button outside the scroll area, and preser
   expect(toggle.getAttribute('aria-expanded')).toBe('false')
   expect(toggle.textContent).toBe('投影診断を開く')
   expect(panel.contains(toggle)).toBe(false)
+  const direction = document.querySelector<HTMLElement>('[aria-label="Direction error"]')!
+  expect(direction).not.toBeNull()
+  expect(panel.contains(direction)).toBe(false)
+  expect(direction.closest('[hidden]')).toBeNull()
+  expect(direction.textContent).toContain('Main error axis: HEADING')
+  expect(data().directionError).toMatchObject({ moonAzimuth: 15, moonAltitude: 1, mainErrorAxis: 'HEADING' })
   expect(container.querySelector('.mw-ar-recalibrate')).not.toBeNull()
   await choose('月本体の配置基準', 'full-screen')
   expect(panel.hidden).toBe(false)
@@ -78,6 +85,7 @@ it('starts minimized, keeps the close button outside the scroll area, and preser
   await act(async () => toggle.click())
   expect(panel.hidden).toBe(true)
   expect(data().placement).toBe('full-screen')
+  expect(direction.closest('[hidden]')).toBeNull()
   await act(async () => vi.advanceTimersByTime(250))
   expect(panel.hidden).toBe(true)
   await act(async () => toggle.click())
