@@ -7,6 +7,7 @@ import { ARPage } from '../pages/ar/ARPage'
 import { MoonInfoPage } from '../pages/moon-info/MoonInfoPage'
 import { useNavigation } from './navigation/useNavigation'
 import { ObservationTimeProvider } from '../shared/time/ObservationTimeProvider'
+import { PWAUpdateNotice } from '../pwa/PWAUpdateNotice'
 
 function App() {
   const location = useGeolocation()
@@ -24,6 +25,7 @@ function App() {
     <NorthCalibrationProvider>
       <ObservationTimeProvider>
         {isDebugPage ? <DebugPage {...location} /> : page}
+        <PWAUpdateNotice pathname={route} />
       </ObservationTimeProvider>
     </NorthCalibrationProvider>
   )

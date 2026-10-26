@@ -1,0 +1,8 @@
+.pwa-update-notice { position: fixed; z-index: 1100; left: max(16px, env(safe-area-inset-left)); right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); width: auto; max-width: 440px; max-height: 70dvh; margin: 0 auto; padding: 18px; overflow-y: auto; border: 1px solid #8a9aad; border-radius: 14px; background: #0c1424fa; color: #f5f3eb; box-shadow: 0 8px 32px #0008; font: 13px/1.7 system-ui, sans-serif; }
+.pwa-update-notice p { margin: 0 0 10px; }
+.pwa-update-notice .pwa-update-title { font-size: 15px; font-weight: 600; }
+.pwa-update-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.pwa-update-actions button { flex: 1; min-height: 44px; padding: 10px 16px; border: 1px solid #a2aec1; border-radius: 8px; background: #e9e5d7; color: #182032; font: inherit; cursor: pointer; }
+.pwa-update-actions button + button { background: transparent; color: #f5f3eb; }
+.pwa-update-actions button:focus-visible { outline: 2px solid #dcd3ae; outline-offset: 3px; }
+.pwa-update-actions button:disabled { opacity: .6; cursor: default; }

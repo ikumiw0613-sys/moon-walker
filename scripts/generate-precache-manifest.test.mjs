@@ -96,13 +96,16 @@ async function workerFixture() {
   const addAll = vi.fn().mockResolvedValue(undefined)
   const match = vi.fn().mockResolvedValue(undefined)
   const networkFetch = vi.fn().mockRejectedValue(new TypeError('Offline'))
+  const skipWaiting = vi.fn().mockResolvedValue(undefined)
+  const matchClients = vi.fn().mockResolvedValue([{ id: 'requesting-client' }])
   const cacheStorage = {
     open: vi.fn().mockResolvedValue({ addAll, match }),
     delete: vi.fn().mockResolvedValue(true),
     keys: vi.fn().mockResolvedValue([]),
   }
   runInNewContext(await readFile(join(directory, 'sw.js'), 'utf8'), {
-    self: { location: { origin: 'https://moon.test' }, addEventListener: (type, handler) => handlers.set(type, handler) },
+    self: { location: { origin: 'https://moon.test' }, addEventListener: (type, handler) => handlers.set(type, handler),
+      clients: { matchAll: matchClients }, skipWaiting },
     caches: cacheStorage, Request, URL, fetch: networkFetch,
   })
   const dispatch = type => {
@@ -116,7 +119,12 @@ async function workerFixture() {
     handlers.get('fetch')({ request, respondWith: promise => { completion = promise } })
     return { request, completion }
   }
-  return { manifest, handlers, addAll, match, networkFetch, cacheStorage, dispatch, fetchRequest }
+  const message = (data, source = { id: 'requesting-client', postMessage: vi.fn() }) => {
+    let completion
+    handlers.get('message')({ data, source, waitUntil: promise => { completion = promise } })
+    return { completion, source }
+  }
+  return { manifest, handlers, addAll, match, networkFetch, cacheStorage, dispatch, fetchRequest, message, skipWaiting, matchClients }
 }
 
 it('waits for every app asset to be cached, using the build hashes as integrity checks', async () => {
@@ -205,4 +213,27 @@ it.each([
   expect(fetchRequest(path, mode, options).completion).toBeUndefined()
   expect(cacheStorage.open).not.toHaveBeenCalled()
   expect(networkFetch).not.toHaveBeenCalled()
+})
+
+it('activates only after an explicit request from the sole open app client', async () => {
+  const { dispatch, skipWaiting, message } = await workerFixture()
+  await dispatch('install')
+  expect(skipWaiting).not.toHaveBeenCalled()
+  expect(message({ type: 'UNKNOWN' }).completion).toBeUndefined()
+  await message({ type: 'ACTIVATE_UPDATE' }).completion
+  expect(skipWaiting).toHaveBeenCalledOnce()
+})
+
+it('protects other open sessions and reports activation failures to the requesting page', async () => {
+  const { skipWaiting, matchClients, message } = await workerFixture()
+  matchClients.mockResolvedValue([{ id: 'requesting-client' }, { id: 'other-client' }])
+  const blocked = message({ type: 'ACTIVATE_UPDATE' })
+  await blocked.completion
+  expect(blocked.source.postMessage).toHaveBeenCalledExactlyOnceWith({ type: 'UPDATE_BLOCKED' })
+  expect(skipWaiting).not.toHaveBeenCalled()
+  matchClients.mockResolvedValue([{ id: 'requesting-client' }])
+  skipWaiting.mockRejectedValue(new Error('Activation failed'))
+  const failed = message({ type: 'ACTIVATE_UPDATE' })
+  await failed.completion
+  expect(failed.source.postMessage).toHaveBeenCalledExactlyOnceWith({ type: 'UPDATE_FAILED' })
 })

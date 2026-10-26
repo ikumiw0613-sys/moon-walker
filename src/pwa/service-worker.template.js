@@ -60,4 +60,22 @@ self.addEventListener('fetch', event => {
   }
 })
 
-// Normal browser lifecycle: wait for existing clients to close before replacing their worker.
+self.addEventListener('message', event => {
+  if (event.data?.type !== 'ACTIVATE_UPDATE' || !event.source || !('id' in event.source)) return
+  const requester = event.source
+  event.waitUntil((async () => {
+    try {
+      // Activation affects all tabs in this scope. Protect sessions that did not request an update.
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      if (windows.some(client => client.id !== requester.id)) {
+        requester.postMessage({ type: 'UPDATE_BLOCKED' })
+        return
+      }
+      await self.skipWaiting()
+    } catch {
+      requester.postMessage({ type: 'UPDATE_FAILED' })
+    }
+  })())
+})
+
+// Without an explicit activation message, keep the browser's normal waiting lifecycle.

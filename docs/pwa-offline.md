@@ -30,7 +30,7 @@ After generating the inventory, the build also renders `src/pwa/service-worker.t
 
 During `install`, `cache.addAll` downloads the entire inventory with HTTP cache bypassed and integrity checks enabled. The install event waits for this to finish. A failed download or integrity check rejects installation and deletes only that build's incomplete cache. Existing caches remain available. `activate` removes older caches with this app's cache prefix and preserves unrelated caches.
 
-Registration uses `updateViaCache: none`, and Vercel serves `/sw.js` with `Cache-Control: no-cache`. The worker follows the normal waiting lifecycle: it does not force activation, claim open tabs, or reload a running app. The user-facing update flow comes later.
+Registration uses `updateViaCache: none`, and Vercel serves `/sw.js` with `Cache-Control: no-cache`. The worker follows the normal waiting lifecycle unless the user explicitly requests activation through the step 4 update flow. It does not claim open tabs.
 
 Verify the worker using a production build (`npm run build`, then `npm run preview`) or HTTPS deployment; the Vite development server is intentionally excluded.
 
@@ -54,7 +54,29 @@ Suggested real-browser verification:
 
 Automated tests exercise the generated worker's fetch handler with an offline network stub, including cache misses, route/query preservation and requests that must not be intercepted. These tests do not substitute for iPhone installation and lifecycle verification.
 
-## Remaining steps
+## Step 4: offer completed updates and activate on user request
 
-1. Add the update notification and user-triggered activation flow without interrupting an AR session.
-2. Verify installation, offline relaunch, location/sensor access, recalibration and upgrades on an iPhone.
+`serviceWorkerUpdates.ts` observes the registered worker. It offers an update when `registration.waiting` already exists or an installing worker reaches `installed`, provided the page already has a controlling worker. Initial installation and failed/incomplete asset downloads do not produce an update notice. Online and foreground events trigger another update check; failures keep the current saved app usable.
+
+`PWAUpdateNotice` subscribes to that state through `useSyncExternalStore`, so a waiting update found before React mounts is still visible. The notice appears on home and moon-info pages. AR, calibration and debug retain the pending state without presenting the notice. It offers `更新する` and `後で`; deferring hides that worker's notice for the current page session. A newer completed worker or the next app launch can offer an update again. Deferral is not persistent storage.
+
+The update button sends `ACTIVATE_UPDATE` to the waiting worker. Only this explicit message can request `skipWaiting`. The worker checks open same-origin window clients first. If another window/tab exists, it replies `UPDATE_BLOCKED` and keeps waiting, asking the user to close other moon-walker sessions before retrying. This prevents an opted-in update from deleting a cache still needed by another session. Activation failures reply `UPDATE_FAILED`.
+
+The requesting page waits for its controlling worker to change before reloading once. Other controller changes never trigger an automatic reload. Duplicate update clicks are ignored while switching. If the worker already activated naturally, the explicit button can reload directly. A 12-second activation timeout displays a retryable error without reloading. Buttons are disabled during switching.
+
+The notice explains that updating opens the screen again and requires location acquisition and orientation adjustment. An update does not preserve north correction or diagnostic snapshots across reloads. Their existing lifetime is unchanged.
+
+Real-browser update verification requires two builds:
+
+1. Install build A containing the update notice code, complete offline setup, and reload so its worker controls the page.
+2. Serve changed build B on the same HTTPS origin (or local preview origin).
+3. Reopen/foreground the app online and wait for build B's file downloads to finish. The notice must appear on home/moon-info without an automatic reload. On AR/calibration it remains pending until navigating to a suitable page.
+4. Choose `後で` and verify that the current session continues. Relaunch to see the waiting update again.
+5. Choose `更新する`; after the worker switches, verify one reload and build B's content. Then verify an offline relaunch.
+6. Repeat with two open moon-walker windows. Updating must request closing the other session instead of activating. Close it and retry.
+
+Devices still running a version from before the notice code was introduced cannot display this new UI. Close/reopen those old sessions once to acquire build A before testing A-to-B notifications.
+
+## Remaining verification
+
+Verify installation, offline relaunch, location/sensor access, recalibration and upgrades on an iPhone. Automated lifecycle and UI tests do not replace actual Safari/Home Screen app testing.

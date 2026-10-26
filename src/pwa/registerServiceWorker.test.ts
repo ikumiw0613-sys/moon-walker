@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest'
 import { registerServiceWorker } from './registerServiceWorker'
+import { serviceWorkerUpdates } from './serviceWorkerUpdates'
+
+vi.mock('./serviceWorkerUpdates', () => ({ serviceWorkerUpdates: { observe: vi.fn() } }))
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.mocked(serviceWorkerUpdates.observe).mockClear()
   vi.unstubAllGlobals()
 })
 
@@ -23,6 +27,7 @@ it('waits for the initial page load and registers the root-scoped worker without
   window.dispatchEvent(new Event('load'))
   await expect(pending).resolves.toBe(registration)
   expect(register).toHaveBeenCalledExactlyOnceWith('/sw.js', { scope: '/', updateViaCache: 'none' })
+  expect(serviceWorkerUpdates.observe).toHaveBeenCalledExactlyOnceWith(registration)
   window.dispatchEvent(new Event('load'))
   expect(register).toHaveBeenCalledTimes(1)
 })
