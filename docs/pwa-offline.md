@@ -32,10 +32,29 @@ During `install`, `cache.addAll` downloads the entire inventory with HTTP cache 
 
 Registration uses `updateViaCache: none`, and Vercel serves `/sw.js` with `Cache-Control: no-cache`. The worker follows the normal waiting lifecycle: it does not force activation, claim open tabs, or reload a running app. The user-facing update flow comes later.
 
-At step 2 files are downloaded and stored on the device, but fetch handling has not been added yet. The worker does not serve cached responses or provide offline navigation at this stage. Verify this step using a production build (`npm run build`, then `npm run preview`) or HTTPS deployment; the Vite development server is intentionally excluded.
+Verify the worker using a production build (`npm run build`, then `npm run preview`) or HTTPS deployment; the Vite development server is intentionally excluded.
+
+## Step 3: serve saved app files and route navigations
+
+The worker handles same-origin GET requests for this build's cached static files. It reads its own version's cache first, keeping HTML and its hashed JS/CSS consistent. If the saved file is missing or storage cannot be read, it attempts the original network request. It does not write network fallback responses into the build cache.
+
+For browser navigation, the following paths use cached `/index.html`: `/`, `/index.html`, `/ar`, `/calibration`, `/moon-info`, `/debug`, and trailing-slash versions of the named routes. The browser URL is not redirected or rewritten, so the app router and query parameters such as `?arDebug=projection` retain their original values. The `/debug` build-time feature gate still applies; having an offline app shell does not enable that feature.
+
+Static asset cache keys use the origin and pathname, ignoring query strings. This only applies to URLs in the embedded build inventory. Unknown routes, `/api/*`, external origins, non-GET requests, range requests, `/sw.js` and `/precache-manifest.json` are left to the browser's normal network handling. Runtime data is not persisted.
+
+Offline launch requires a prior online install that finished successfully and an active worker controlling the navigation. Initial activation does not take over the already open page; reopening or reloading allows the browser to use the active worker. Device location and orientation are acquired again after launch. Their availability without connectivity must be verified separately on an iPhone.
+
+Suggested real-browser verification:
+
+1. Build and serve the app, open it online, and wait for the worker installation and Cache Storage entries to complete.
+2. Reload the page once and confirm that a Service Worker controls it.
+3. Set the browser offline, then reload `/`, `/ar`, `/calibration` and `/moon-info`. Check the app shell, styles, moon image and calibration guide.
+4. Open `/ar?arDebug=projection` offline and confirm that the query and diagnostic panel are preserved.
+5. On an iPhone, install from Safari, open it online to finish setup, then reopen it from the home screen offline. Check location/sensor acquisition and recalibration separately.
+
+Automated tests exercise the generated worker's fetch handler with an offline network stub, including cache misses, route/query preservation and requests that must not be intercepted. These tests do not substitute for iPhone installation and lifecycle verification.
 
 ## Remaining steps
 
-1. Add cache-backed fetch handling and navigation fallback so offline visits to `/`, `/ar` and `/calibration` can load the cached app shell.
-2. Add the update notification and user-triggered activation flow without interrupting an AR session.
-3. Verify installation, offline relaunch, location/sensor access, recalibration and upgrades on an iPhone.
+1. Add the update notification and user-triggered activation flow without interrupting an AR session.
+2. Verify installation, offline relaunch, location/sensor access, recalibration and upgrades on an iPhone.

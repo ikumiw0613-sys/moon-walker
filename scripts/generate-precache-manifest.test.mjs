@@ -87,25 +87,36 @@ it('embeds the exact build inventory and changes worker bytes when any asset cha
 
 async function workerFixture() {
   const directory = await fixture()
+  await mkdir(join(directory, 'assets'))
+  await writeFile(join(directory, 'assets/app-abc123.js'), 'console.log("moon")')
+  await writeFile(join(directory, 'moon-image.png'), new Uint8Array([1, 2, 3]))
   const manifest = await writePrecacheManifest(directory)
   await writeServiceWorker(directory, manifest)
   const handlers = new Map()
   const addAll = vi.fn().mockResolvedValue(undefined)
+  const match = vi.fn().mockResolvedValue(undefined)
+  const networkFetch = vi.fn().mockRejectedValue(new TypeError('Offline'))
   const cacheStorage = {
-    open: vi.fn().mockResolvedValue({ addAll }),
+    open: vi.fn().mockResolvedValue({ addAll, match }),
     delete: vi.fn().mockResolvedValue(true),
     keys: vi.fn().mockResolvedValue([]),
   }
   runInNewContext(await readFile(join(directory, 'sw.js'), 'utf8'), {
     self: { location: { origin: 'https://moon.test' }, addEventListener: (type, handler) => handlers.set(type, handler) },
-    caches: cacheStorage, Request, URL,
+    caches: cacheStorage, Request, URL, fetch: networkFetch,
   })
   const dispatch = type => {
     let completion
     handlers.get(type)({ waitUntil: promise => { completion = promise } })
     return completion
   }
-  return { manifest, handlers, addAll, cacheStorage, dispatch }
+  const fetchRequest = (path, mode = 'navigate', options = {}) => {
+    const request = { url: new URL(path, 'https://moon.test').href, method: 'GET', mode, headers: new Headers(), ...options }
+    let completion
+    handlers.get('fetch')({ request, respondWith: promise => { completion = promise } })
+    return { request, completion }
+  }
+  return { manifest, handlers, addAll, match, networkFetch, cacheStorage, dispatch, fetchRequest }
 }
 
 it('waits for every app asset to be cached, using the build hashes as integrity checks', async () => {
@@ -118,7 +129,7 @@ it('waits for every app asset to be cached, using the build hashes as integrity 
     'sha256-' + Buffer.from(file.revision, 'hex').toString('base64')))
   expect(requests.every(request => request.cache === 'reload' && request.redirect === 'error')).toBe(true)
   expect(cacheStorage.delete).not.toHaveBeenCalled()
-  expect(handlers.has('fetch')).toBe(false)
+  expect(handlers.has('fetch')).toBe(true)
 })
 
 it('rejects incomplete installation and removes only the failed build cache', async () => {
@@ -136,4 +147,62 @@ it('cleans older app caches only at activation and preserves the current and unr
   cacheStorage.keys.mockResolvedValue([currentCache, oldCache, 'another-app-cache'])
   await dispatch('activate')
   expect(cacheStorage.delete).toHaveBeenCalledExactlyOnceWith(oldCache)
+})
+
+it.each(['/', '/index.html', '/ar', '/ar/', '/calibration', '/calibration/', '/moon-info', '/moon-info/', '/debug', '/debug/',
+  '/ar?arDebug=projection&arProjection=full-screen'])('opens the saved app shell offline at %s without redirecting', async path => {
+  const { match, networkFetch, fetchRequest } = await workerFixture()
+  const saved = new Response('<html>Offline app</html>', { headers: { 'Content-Type': 'text/html' } })
+  match.mockResolvedValue(saved)
+  const { request, completion } = fetchRequest(path)
+  await expect(completion).resolves.toBe(saved)
+  expect(request.url).toBe('https://moon.test' + path)
+  expect(match).toHaveBeenCalledExactlyOnceWith('https://moon.test/index.html')
+  expect(networkFetch).not.toHaveBeenCalled()
+})
+
+it.each(['/assets/app-abc123.js', '/moon-image.png', '/moon-image.png?v=1', '/manifest.webmanifest'])(
+  'serves this build\'s static file %s offline from its own cache', async path => {
+    const { match, networkFetch, fetchRequest } = await workerFixture()
+    const saved = new Response('Saved asset')
+    match.mockResolvedValue(saved)
+    await expect(fetchRequest(path, 'cors').completion).resolves.toBe(saved)
+    expect(match).toHaveBeenCalledExactlyOnceWith('https://moon.test' + path.split('?')[0])
+    expect(networkFetch).not.toHaveBeenCalled()
+  },
+)
+
+it('uses the original network request when an app file has been evicted without caching a replacement', async () => {
+  const { networkFetch, fetchRequest } = await workerFixture()
+  const online = new Response('Online fallback')
+  networkFetch.mockResolvedValue(online)
+  const { request, completion } = fetchRequest('/ar?arDebug=projection')
+  await expect(completion).resolves.toBe(online)
+  expect(networkFetch).toHaveBeenCalledExactlyOnceWith(request)
+})
+
+it('falls back to the network if cache storage cannot be read', async () => {
+  const { cacheStorage, networkFetch, fetchRequest } = await workerFixture()
+  cacheStorage.open.mockRejectedValue(new Error('Storage unavailable'))
+  const online = new Response('Online app')
+  networkFetch.mockResolvedValue(online)
+  await expect(fetchRequest('/').completion).resolves.toBe(online)
+})
+
+it('does not claim offline success if both the saved file and network are unavailable', async () => {
+  const { fetchRequest } = await workerFixture()
+  await expect(fetchRequest('/ar').completion).rejects.toThrow('Offline')
+})
+
+it.each([
+  ['/api/location', 'cors', {}], ['/api/moon', 'navigate', {}], ['/unknown', 'navigate', {}],
+  ['/assets/other-build.js', 'cors', {}], ['/sw.js', 'cors', {}], ['/precache-manifest.json', 'cors', {}],
+  ['/ar', 'cors', {}], ['https://other.test/moon-image.png', 'cors', {}],
+  ['/moon-image.png', 'cors', { method: 'POST' }],
+  ['/moon-image.png', 'cors', { headers: new Headers({ Range: 'bytes=0-10' }) }],
+])('leaves non-target request %s (%s) to the browser', async (path, mode, options) => {
+  const { cacheStorage, fetchRequest, networkFetch } = await workerFixture()
+  expect(fetchRequest(path, mode, options).completion).toBeUndefined()
+  expect(cacheStorage.open).not.toHaveBeenCalled()
+  expect(networkFetch).not.toHaveBeenCalled()
 })
