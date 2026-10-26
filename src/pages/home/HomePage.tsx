@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { AppLink } from '../../app/navigation/AppNavigation'
 import type { Navigate } from '../../app/navigation/AppNavigation'
 import type { GeolocationAccess } from '../../features/geolocation/types'
+import { LocationRefreshControl } from '../../features/geolocation/LocationRefreshControl'
 import { getMoonPosition, getNextMoonrise } from '../../features/moon/astronomy'
 import { formatMoonrise } from '../../features/moon/formatMoonrise'
 import { useObservationTime } from '../../shared/time/useObservationTime'
@@ -35,12 +36,9 @@ export function HomePage({ navigate, state, requestLocation }: { navigate: Navig
             </div>}
           </> : <>
             <h1 id="app-title">{state.status === 'error' ? '月の状態を確認できません' : '現在地の月を確認しています…'}</h1>
-            {state.status === 'error' && <>
-              <p className="mw-home-moon-note">{state.message}</p>
-              <button type="button" className="mw-home-location-button" onClick={() => void requestLocation()}>現在地を再取得</button>
-            </>}
           </>}
         </div>
+        <LocationRefreshControl state={state} requestLocation={requestLocation} />
         <AppLink to="/moon-info" navigate={navigate} className="mw-primary mw-waiting-link">月の情報を見る</AppLink>
       </section>
     </main>

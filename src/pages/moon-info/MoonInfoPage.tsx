@@ -3,6 +3,7 @@ import { Body, Illumination, KM_PER_AU } from 'astronomy-engine'
 import { AppLink, AppNavigation } from '../../app/navigation/AppNavigation'
 import type { Navigate } from '../../app/navigation/AppNavigation'
 import type { GeolocationAccess } from '../../features/geolocation/types'
+import { LocationRefreshControl } from '../../features/geolocation/LocationRefreshControl'
 import { getMoonPosition } from '../../features/moon/astronomy'
 import { getMoonPhase } from '../../features/moon/moonPhase'
 import { MoonDisc } from '../../features/moon/components/MoonDisc'
@@ -35,11 +36,10 @@ export function MoonInfoPage({ navigate, state, requestLocation }: { navigate: N
 
       <div className="mw-info-moon" aria-hidden="true"><MoonDisc phase={phase} /></div>
       <p className="mw-observation-label">{mode === 'fixed' ? 'テスト日時' : '観測日時'}：<time dateTime={now.toISOString()}>{now.toLocaleString('ja-JP', { timeZoneName: 'short' })}</time></p>
-      <div role="status" aria-live="polite">
+      <div>
         <AppLink to="/calibration" navigate={navigate} className="mw-secondary">月を探しにいく <span aria-hidden="true">↗</span></AppLink>
-        {(state.status === 'idle' || state.status === 'loading') && <p>現在地を取得しています…</p>}
-        {state.status === 'error' && <><p>{state.message}</p><button type="button" className="mw-secondary" onClick={() => void requestLocation()}>現在地を再取得</button></>}
       </div>
+      <LocationRefreshControl state={state} requestLocation={requestLocation} />
       <dl className="mw-moon-facts">{facts.map(({ label, value, unit, detail }) => <div key={label}><dt>{label}<span>{detail}</span></dt><dd>{value}<span>{unit}</span></dd></div>)}</dl>
 
     </section>

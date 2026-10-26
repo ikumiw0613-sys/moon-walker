@@ -1,0 +1,7 @@
+.mw-location-refresh { width: 100%; max-width: 440px; margin: 24px auto; text-align: center; }
+.mw-location-refresh button { min-height: 44px; padding: 10px 18px; border: 1px solid #c4ccd34d; border-radius: 8px; background: #ffffff05; color: inherit; font: inherit; font-size: 13px; cursor: pointer; }
+.mw-location-refresh button:focus-visible { outline: 2px solid #dcd3ae; outline-offset: 4px; }
+.mw-location-refresh button:disabled { opacity: .6; cursor: default; }
+.mw-location-refresh p { margin: 10px 0 0; color: var(--mw-muted, #99a4b6); font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+.mw-location-refresh p > span { display: block; }
+.mw-location-refresh time { font-variant-numeric: tabular-nums; }
