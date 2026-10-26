@@ -2,8 +2,9 @@ import { createHash } from 'node:crypto'
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
-import { afterEach, expect, it } from 'vitest'
-import { createPrecacheManifest, PRECACHE_MANIFEST_FILENAME, writePrecacheManifest } from './generate-precache-manifest.mjs'
+import { runInNewContext } from 'node:vm'
+import { afterEach, expect, it, vi } from 'vitest'
+import { createPrecacheManifest, PRECACHE_MANIFEST_FILENAME, writePrecacheManifest, writeServiceWorker } from './generate-precache-manifest.mjs'
 
 const temporaryDirectories = []
 async function fixture() {
@@ -68,4 +69,71 @@ it('fails the build rather than producing an incomplete offline shell', async ()
   const directory = await fixture()
   await rm(join(directory, 'index.html'))
   await expect(createPrecacheManifest(directory)).rejects.toThrow('Required PWA build file missing: /index.html')
+})
+
+it('embeds the exact build inventory and changes worker bytes when any asset changes', async () => {
+  const directory = await fixture()
+  const first = await writePrecacheManifest(directory)
+  await writeServiceWorker(directory, first)
+  const firstWorker = await readFile(join(directory, 'sw.js'), 'utf8')
+  expect(firstWorker).toContain(first.buildId)
+  expect(firstWorker).not.toContain('/* __MOON_WALKER_')
+  await writeServiceWorker(directory, await createPrecacheManifest(directory))
+  expect(await readFile(join(directory, 'sw.js'), 'utf8')).toBe(firstWorker)
+  await writeFile(join(directory, 'index.html'), '<h1>New release</h1>')
+  await writeServiceWorker(directory, await createPrecacheManifest(directory))
+  expect(await readFile(join(directory, 'sw.js'), 'utf8')).not.toBe(firstWorker)
+})
+
+async function workerFixture() {
+  const directory = await fixture()
+  const manifest = await writePrecacheManifest(directory)
+  await writeServiceWorker(directory, manifest)
+  const handlers = new Map()
+  const addAll = vi.fn().mockResolvedValue(undefined)
+  const cacheStorage = {
+    open: vi.fn().mockResolvedValue({ addAll }),
+    delete: vi.fn().mockResolvedValue(true),
+    keys: vi.fn().mockResolvedValue([]),
+  }
+  runInNewContext(await readFile(join(directory, 'sw.js'), 'utf8'), {
+    self: { location: { origin: 'https://moon.test' }, addEventListener: (type, handler) => handlers.set(type, handler) },
+    caches: cacheStorage, Request, URL,
+  })
+  const dispatch = type => {
+    let completion
+    handlers.get(type)({ waitUntil: promise => { completion = promise } })
+    return completion
+  }
+  return { manifest, handlers, addAll, cacheStorage, dispatch }
+}
+
+it('waits for every app asset to be cached, using the build hashes as integrity checks', async () => {
+  const { manifest, addAll, cacheStorage, dispatch, handlers } = await workerFixture()
+  await dispatch('install')
+  expect(cacheStorage.open).toHaveBeenCalledOnce()
+  const requests = [...addAll.mock.calls[0][0]]
+  expect(requests.map(request => request.url)).toEqual(manifest.files.map(file => 'https://moon.test' + file.url))
+  expect(requests.map(request => request.integrity)).toEqual(manifest.files.map(file =>
+    'sha256-' + Buffer.from(file.revision, 'hex').toString('base64')))
+  expect(requests.every(request => request.cache === 'reload' && request.redirect === 'error')).toBe(true)
+  expect(cacheStorage.delete).not.toHaveBeenCalled()
+  expect(handlers.has('fetch')).toBe(false)
+})
+
+it('rejects incomplete installation and removes only the failed build cache', async () => {
+  const { addAll, cacheStorage, dispatch } = await workerFixture()
+  addAll.mockRejectedValue(new Error('Asset download or integrity check failed'))
+  await expect(dispatch('install')).rejects.toThrow('Asset download or integrity check failed')
+  expect(cacheStorage.delete).toHaveBeenCalledExactlyOnceWith(cacheStorage.open.mock.calls[0][0])
+})
+
+it('cleans older app caches only at activation and preserves the current and unrelated caches', async () => {
+  const { cacheStorage, dispatch } = await workerFixture()
+  await dispatch('install')
+  const currentCache = cacheStorage.open.mock.calls[0][0]
+  const oldCache = 'moon-walker-static-v1-old-build'
+  cacheStorage.keys.mockResolvedValue([currentCache, oldCache, 'another-app-cache'])
+  await dispatch('activate')
+  expect(cacheStorage.delete).toHaveBeenCalledExactlyOnceWith(oldCache)
 })

@@ -42,8 +42,22 @@ export async function writePrecacheManifest(outputDirectory) {
   return manifest
 }
 
+export async function writeServiceWorker(outputDirectory, manifest) {
+  const template = await readFile(new URL('../src/pwa/service-worker.template.js', import.meta.url), 'utf8')
+  const cacheName = 'moon-walker-static-v1-' + digest(manifest.buildId + template)
+  const precache = { buildId: manifest.buildId, files: manifest.files.map(file => ({
+    url: file.url, integrity: 'sha256-' + Buffer.from(file.revision, 'hex').toString('base64'),
+  })) }
+  const worker = template
+    .replace('/* __MOON_WALKER_PRECACHE__ */ null', () => JSON.stringify(precache))
+    .replace("/* __MOON_WALKER_CACHE_NAME__ */ ''", () => JSON.stringify(cacheName))
+  await writeFile(resolve(outputDirectory, 'sw.js'), worker)
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const manifest = await writePrecacheManifest(resolve('dist'))
+  await writeServiceWorker(resolve('dist'), manifest)
   const bytes = manifest.files.reduce((sum, file) => sum + file.size, 0)
   console.log(`PWA precache list: ${manifest.files.length} files, ${(bytes / 1024).toFixed(1)} KiB; build ${manifest.buildId.slice(0, 12)}`)
+  console.log('PWA service worker: dist/sw.js')
 }

@@ -22,11 +22,20 @@ Excluded: source maps, arbitrary JSON/data files, the inventory itself and root-
 Get-Content dist/precache-manifest.json
 ```
 
+## Step 2: register and install the Service Worker
+
+The production entry (`src/main.tsx`) calls `registerServiceWorker` once, outside React rendering. It waits for the page's `load` event before registering `/sw.js` at scope `/`. Unsupported browsers and insecure contexts skip registration. Registration errors are logged and contained so they do not reject application startup. The next launch attempts registration again. Vite's development server does not register a worker.
+
+After generating the inventory, the build also renders `src/pwa/service-worker.template.js` into `dist/sw.js`. The inventory's URLs and SHA-256 integrity values are embedded in the worker. This binds the downloaded files to the worker's own build and avoids fetching a separate inventory that might belong to a newer deployment. Asset changes alter the worker bytes, allowing the browser's normal update check to discover new builds. The cache name hashes both the inventory build ID and worker template, so template changes also use a distinct cache.
+
+During `install`, `cache.addAll` downloads the entire inventory with HTTP cache bypassed and integrity checks enabled. The install event waits for this to finish. A failed download or integrity check rejects installation and deletes only that build's incomplete cache. Existing caches remain available. `activate` removes older caches with this app's cache prefix and preserves unrelated caches.
+
+Registration uses `updateViaCache: none`, and Vercel serves `/sw.js` with `Cache-Control: no-cache`. The worker follows the normal waiting lifecycle: it does not force activation, claim open tabs, or reload a running app. The user-facing update flow comes later.
+
+At step 2 files are downloaded and stored on the device, but fetch handling has not been added yet. The worker does not serve cached responses or provide offline navigation at this stage. Verify this step using a production build (`npm run build`, then `npm run preview`) or HTTPS deployment; the Vite development server is intentionally excluded.
+
 ## Remaining steps
 
-1. Add the Service Worker that consumes this inventory and register it from the application.
-2. Add navigation fallback so offline visits to `/ar` and `/calibration` can load the cached app shell.
-3. Add the update notification and user-triggered activation flow without interrupting an AR session.
-4. Verify installation, offline relaunch, location/sensor access, recalibration and upgrades on an iPhone.
-
-At step 1 the inventory is generated but nothing is cached on the user's device. The browser does not read it yet. Offline launch is not enabled until the subsequent Service Worker steps are implemented.
+1. Add cache-backed fetch handling and navigation fallback so offline visits to `/`, `/ar` and `/calibration` can load the cached app shell.
+2. Add the update notification and user-triggered activation flow without interrupting an AR session.
+3. Verify installation, offline relaunch, location/sensor access, recalibration and upgrades on an iPhone.
