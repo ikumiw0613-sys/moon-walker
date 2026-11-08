@@ -9,13 +9,22 @@ import { SkyBackground } from '../../features/sky/SkyBackground'
 import { MoonSprite } from './components/MoonSprite'
 import { MoonDisc } from '../../features/moon/components/MoonDisc'
 import { useARView } from './useARView'
+import { useARRecalibration } from '../../features/north-calibration/useARRecalibration'
+import { RecalibrationNotice } from './components/RecalibrationNotice'
 import '../../shared/styles/frontend.css'
 import './ARPage.css'
 
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
   const { now, moonPhase, moonPosition, timeMode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind, poseStability, isPoseChecking,
-    motion, requestMotionPermission, canCheckMotion } = useARView(location)
+    motion, requestMotionPermission, canCheckMotion, orientationDiagnostics } = useARView(location)
+  const accepted = orientationDiagnostics?.lastAccepted
+  const sourceKey = accepted?.eventType && typeof accepted.absolute === 'boolean'
+    ? `${accepted.eventType}:${accepted.absolute}` : null
+  const recalibration = useARRecalibration({ ready, orientationStatus: orientation.status,
+    sourceKey, poseStatus: poseStability.status })
+  const recalibrationNotice = recalibration.visible
+    ? <RecalibrationNotice reasons={recalibration.reasons} navigate={navigate} onDismiss={recalibration.dismiss} /> : null
   const viewportRef = useRef<HTMLDivElement | null>(null)
   const [projectionDebug] = useState(() => readARProjectionFlags(typeof window === 'undefined' ? '' : window.location.search))
   return (
@@ -102,6 +111,7 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
                 </button>
               )}
             </div>
+            {recalibrationNotice}
           </section>
         )}
 
@@ -110,6 +120,7 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
             <h1 id="below-horizon-title">月は地平線の<br />下にあります</h1>
             <p>今は空に月を見ることができません。</p>
             <AppLink to="/moon-info" navigate={navigate} className="mw-primary">月の情報を見る</AppLink>
+            {recalibrationNotice}
           </section>
         )}
 
@@ -125,13 +136,14 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
                 向きセンサーを許可する
               </button>
             )}
+            {recalibrationNotice}
           </div>
         )}
 
         {(!isBelowHorizon || needsRecalibration) && !ready && (
           <div className="mw-ar-state">
             <h2>{needsRecalibration ? '向きを再確認してください' : 'まずは向きを合わせましょう'}</h2>
-            <p>{needsRecalibration ? 'バックグラウンドから復帰したため、北補正をやり直してください。' : '月を探す準備ができていません'}</p>
+            <p>{needsRecalibration ? recalibration.requiredMessage : '月を探す準備ができていません'}</p>
             <AppLink
               to="/calibration"
               navigate={navigate}
@@ -153,6 +165,7 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
             >
               現在地を取得
             </button>
+            {recalibrationNotice}
           </div>
         )}
 

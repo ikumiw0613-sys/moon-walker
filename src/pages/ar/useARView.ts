@@ -51,5 +51,5 @@ export function useARView(location: LocationState) {
 
   return { now, moonPhase, moonPosition, timeMode: mode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind, poseStability, isPoseChecking,
-    motion, requestMotionPermission, canCheckMotion: gravityConvention !== null }
+    motion, requestMotionPermission, canCheckMotion: gravityConvention !== null, orientationDiagnostics: diagnostics }
 }

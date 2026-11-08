@@ -129,6 +129,11 @@
 .mw-ar-distance { color: #a6b4c6; font-size: 11px; }
 .mw-ar-distance strong { margin-left: 10px; color: #e5e8dd; font-size: 16px; font-weight: 400; font-variant-numeric: tabular-nums; }
 .mw-ar .mw-ar-recalibrate { display: inline-flex; align-items: center; min-height: 44px; color: #c3cbd6; font-size: 11px; text-decoration: underline; text-underline-offset: 4px; }
+.mw-ar-recalibration-notice { display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 2px 8px; margin-top: 14px; padding-top: 10px; border-top: 1px solid #ffffff1a; text-align: left; }
+.mw-ar .mw-ar-recalibration-notice p { margin: 0; color: #a6b4c6; font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; }
+.mw-ar-recalibration-notice a { width: fit-content; min-height: 36px; display: inline-flex; align-items: center; color: #c3cbd6; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
+.mw-ar-recalibration-notice button { grid-column: 2; grid-row: 1 / span 2; align-self: start; width: 36px; min-height: 36px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #a6b4c6; font: inherit; font-size: 20px; line-height: 1; cursor: pointer; }
+.mw-ar-recalibration-notice a:focus-visible, .mw-ar-recalibration-notice button:focus-visible { outline: 2px solid #dcd3ae; outline-offset: 3px; }
 
 .mw-ar-state { text-align: center; }
 .mw-ar-state h2 { margin: 0 0 12px; font-size: 18px; line-height: 1.7; font-weight: 400; letter-spacing: .5px; }
