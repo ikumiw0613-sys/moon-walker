@@ -1,5 +1,7 @@
 # Landmark compass validation
 
+よみうりランドの真北・磁北比較は [Sky-Go-LAND / WMM診断ガイド](./yomiuriland-true-north-validation.md) を参照。以下は既存スカイツリー診断の説明。
+
 Debugの既存SkytreeDebugCardを拡張し、Compass stabilityの直後へ移動した。旧Astronomy / landmarks内のスカイツリーカードは削除し、同じ値の二重表示を避けている。
 
 ## 再利用する座標・計算

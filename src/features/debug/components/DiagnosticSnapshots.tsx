@@ -4,6 +4,7 @@ import { INITIAL_SNAPSHOTS, MAX_DIAGNOSTIC_SNAPSHOTS, snapshotReducer } from '..
 import type { DiagnosticSnapshot } from '../diagnosticSnapshots'
 import { diagnosticDegrees as degrees } from '../formatDiagnostics'
 import { diagnosticSignedDegrees } from '../formatDiagnostics'
+import { LandmarkTrueNorthReadout } from './LandmarkTrueNorthValidation'
 
 type SnapshotValues = Omit<DiagnosticSnapshot, 'timestamp' | 'memo'>
 const time = (timestamp: number) => new Date(timestamp).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false })
@@ -31,6 +32,9 @@ export function DiagnosticSnapshots({ values }: { values: SnapshotValues }) {
         <strong className={`debug-quality is-${item.quality}`}>Compass Quality: {item.quality.toUpperCase()}</strong></div>
       <p>Landmark Accuracy: <strong className={`debug-quality is-${item.landmarkAccuracy.toLowerCase()}`}>{item.landmarkAccuracy}</strong></p>
       {item.memo && <p className="debug-memo">{item.memo}</p>}
+      <details className="debug-details"><summary>Landmark / True North Validation の記録</summary>
+        <LandmarkTrueNorthReadout data={item.yomiurilandValidation} />
+      </details>
       <dl className="debug-data">
         <div><dt>Reference target</dt><dd>{item.referenceTarget}</dd></div>
         <div><dt>Reference bearing</dt><dd>{degrees(item.referenceBearing)}</dd></div>

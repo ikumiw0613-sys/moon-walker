@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { usePoseStability } from '../../features/device-orientation/usePoseStability'
 import type { GravitySensorConvention } from '../../features/device-motion/gravityDiagnostics'
 import { useCompassDiagnostics } from '../../features/debug/useCompassDiagnostics'
 import { CompassStabilityDiagnostics } from '../../features/debug/components/CompassStabilityDiagnostics'
 import { DiagnosticSnapshots } from '../../features/debug/components/DiagnosticSnapshots'
 import { SkytreeDebugCard } from '../../features/debug/components/SkytreeDebugCard'
+import { LandmarkTrueNorthValidation } from '../../features/debug/components/LandmarkTrueNorthValidation'
+import { getDebugMagneticDeclination } from '../../features/debug/magneticDeclination'
+import { getLandmarkTrueNorthDiagnostics } from '../../features/debug/landmarkTrueNorthDiagnostics'
 import { getLandmarkCompassDiagnostics } from '../../features/debug/landmarkCompassDiagnostics'
 import { HORIZONTAL_CALIBRATION_THRESHOLD } from '../../features/north-calibration/horizontalCalibration'
 import { getAuxiliaryGravity } from '../../features/device-orientation/auxiliaryGravity'
@@ -68,6 +71,18 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
     webkitCompassAccuracy: compass.current ? rawEvent?.webkitCompassAccuracy : null,
     correctedHeading: compass.current ? transform.correctedHeading : null,
     rawHeading: compass.current ? transform.rawView?.azimuth ?? null : null,
+  })
+  // Debug-only clock, independent of the Moon's fixed/current observation mode.
+  // Minute resolution is sufficient for WMM secular variation and avoids 60Hz model evaluation.
+  const magneticModelTimestamp = Math.floor(compass.now / 60_000) * 60_000
+  const magnetic = useMemo(() => getDebugMagneticDeclination(
+    state.status === 'success' ? state.location : null, new Date(magneticModelTimestamp),
+  ), [state, magneticModelTimestamp])
+  const yomiurilandValidation = getLandmarkTrueNorthDiagnostics({ state,
+    heading: compass.current?.heading ?? null,
+    accuracy: compass.current ? rawEvent?.webkitCompassAccuracy : null,
+    correctedHeading: compass.current ? transform.correctedHeading : null,
+    magnetic, timestamp: compass.now,
   })
   const gravity = !manualOrientationEnabled && sensorOrientation.status === 'active'
     ? getAuxiliaryGravity(motion, transform.correctedRotation, compass.now, gravityConvention)
@@ -166,7 +181,9 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
         <CompassStabilityDiagnostics diagnostic={compass} northCorrection={northCorrection}
           rawAccuracy={rawEvent ? rawEvent.webkitCompassAccuracy : null} />
         <SkytreeDebugCard data={landmark} />
+        <LandmarkTrueNorthValidation data={yomiurilandValidation} />
         <DiagnosticSnapshots values={{
+          yomiurilandValidation,
           latitude: state.status === 'success' ? state.location.latitude : null,
           longitude: state.status === 'success' ? state.location.longitude : null,
           locationTimestamp: state.status === 'success' ? state.location.timestamp : null,

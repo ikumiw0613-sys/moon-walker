@@ -2,11 +2,22 @@
 import { StrictMode, act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { MAX_DIAGNOSTIC_SNAPSHOTS } from '../diagnosticSnapshots'
+import { INITIAL_SNAPSHOTS, MAX_DIAGNOSTIC_SNAPSHOTS, snapshotReducer } from '../diagnosticSnapshots'
 import type { DiagnosticSnapshot } from '../diagnosticSnapshots'
 import { DiagnosticSnapshots } from './DiagnosticSnapshots'
+import { getLandmarkTrueNorthDiagnostics } from '../landmarkTrueNorthDiagnostics'
+import { getDebugMagneticDeclination } from '../magneticDeclination'
+import { YOMIURILAND_REFERENCE } from '../landmarks'
+
+const targetLocation = { latitude: YOMIURILAND_REFERENCE.latitude - 0.01,
+  longitude: YOMIURILAND_REFERENCE.longitude, accuracy: 10, timestamp: 1000 }
+const yomiurilandValidation = getLandmarkTrueNorthDiagnostics({
+  state: { status: 'success', location: targetLocation }, heading: 7.5, accuracy: -1, correctedHeading: 1,
+  magnetic: { ...getDebugMagneticDeclination(targetLocation, new Date('2026-10-18T10:00:00Z')), magneticDeclination: -7.5 }, timestamp: 1000,
+})
 
 const values: Omit<DiagnosticSnapshot, 'memo' | 'timestamp'> = {
+  yomiurilandValidation,
   latitude: 35.68, longitude: 139.76, locationTimestamp: 1000,
   compassHeading: 228.4, compassAccuracy: 6, northCorrection: 134.9,
   referenceTarget: '東京スカイツリー', referenceBearing: 217.7, compassError: 10.7,
@@ -53,7 +64,11 @@ it('records the click time, optional memo and all comparison values, frozen acro
     '134.9°', '136.1° / 24', '3.0°', '100.0° / 20.0°', '120.0° / 30.0°', 'sensor / current', '北補正候補は安定']) expect(recorded).toContain(text)
   expect(memo.value).toBe('')
   for (const text of ['Landmark Accuracy: BAD', '東京スカイツリー', '217.7°', '+10.7°', '-117.7°', '10.0°', '12.40 km']) expect(recorded).toContain(text)
+  for (const text of [YOMIURILAND_REFERENCE.name, 'MAGNETIC-NORTH-LIKE', '+7.5°', '-7.5°', '-1.0°',
+    'WMM-2025', '2025', '35.6257422', '139.5167327', '1.11 km', '2026-10-18T10:00:00.000Z']) expect(recorded).toContain(text)
   await show({ ...values, compassAccuracy: 25, quality: 'poor', latitude: 40,
+    yomiurilandValidation: { ...yomiurilandValidation, webkitCompassHeading: 80,
+      magneticDeclination: -8, headingReferenceHypothesis: 'INCONCLUSIVE' },
     referenceBearing: 300, compassError: 1, correctedHeadingError: 1, landmarkAccuracy: 'GOOD' })
   expect(card.textContent).toBe(recorded)
   await click('現在の診断を記録')
@@ -78,4 +93,14 @@ it('allows recording UNAVAILABLE with missing values for diagnosing unsupported 
   expect(container.querySelector('article')!.textContent).toContain('UNAVAILABLE')
   expect(container.querySelector('article')!.textContent).toContain('未対応')
   expect(container.querySelector('article')!.textContent).not.toContain('NaN')
+})
+
+it('copies Yomiuriland values at capture time and uses the same click timestamp for both records', () => {
+  const snapshot = { ...values, yomiurilandValidation: { ...yomiurilandValidation }, memo: '', timestamp: 123456789 }
+  const saved = snapshotReducer(INITIAL_SNAPSHOTS, { type: 'add', snapshot }).items[0].yomiurilandValidation
+  expect(saved).toEqual({ ...yomiurilandValidation, timestamp: snapshot.timestamp })
+  snapshot.yomiurilandValidation.webkitCompassHeading = 180
+  snapshot.yomiurilandValidation.magneticDeclination = 20
+  expect(saved.webkitCompassHeading).toBe(7.5)
+  expect(saved.magneticDeclination).toBe(-7.5)
 })

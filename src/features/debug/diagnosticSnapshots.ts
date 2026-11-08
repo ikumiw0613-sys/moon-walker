@@ -1,9 +1,11 @@
 import type { CompassQuality } from './compassDiagnostics'
 import type { LandmarkAccuracy } from './landmarkCompassDiagnostics'
+import type { LandmarkTrueNorthDiagnostics } from './landmarkTrueNorthDiagnostics'
 
 export const MAX_DIAGNOSTIC_SNAPSHOTS = 10
 export type DiagnosticSnapshot = {
   timestamp: number
+  yomiurilandValidation: LandmarkTrueNorthDiagnostics
   latitude: number | null; longitude: number | null; locationTimestamp: number | null
   compassHeading: number | null; compassAccuracy: number | null
   referenceTarget: string; referenceBearing: number | null; distanceToTarget: number | null
@@ -26,5 +28,6 @@ export function snapshotReducer(state: SnapshotState, action: SnapshotAction): S
   if (action.type === 'clear') return { ...state, items: [] }
   if (action.type === 'delete') return { ...state, items: state.items.filter(item => item.id !== action.id) }
   return { nextId: state.nextId + 1, items: [{ ...action.snapshot, qualityReasons: [...action.snapshot.qualityReasons],
+    yomiurilandValidation: { ...action.snapshot.yomiurilandValidation, timestamp: action.snapshot.timestamp },
     id: state.nextId }, ...state.items].slice(0, MAX_DIAGNOSTIC_SNAPSHOTS) }
 }
