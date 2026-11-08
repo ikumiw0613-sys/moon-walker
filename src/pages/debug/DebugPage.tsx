@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { usePoseStability } from '../../features/device-orientation/usePoseStability'
 import type { GravitySensorConvention } from '../../features/device-motion/gravityDiagnostics'
 import { useCompassDiagnostics } from '../../features/debug/useCompassDiagnostics'
@@ -30,7 +30,9 @@ import type { ScreenPosition } from '../../shared/math/coordinates'
 import { getMoonNavigation } from '../../features/moon-guide/moonNavigation'
 import { getMoonDeviceState, getMoonDeviceDiagnosticAttributes } from '../../features/moon-guide/moonDeviceNavigation'
 import { captureNorthCalibration, getHorizontalCalibration } from '../../features/north-calibration/horizontalCalibration'
+import type { NorthCalibration } from '../../features/north-calibration/horizontalCalibration'
 import { useNorthCalibration } from '../../features/north-calibration/useNorthCalibration'
+import { useNorthCalibrationSampling } from '../../features/north-calibration/useNorthCalibrationSampling'
 import { SunDebugCard } from '../../features/debug/solar/SunDebugCard'
 import { MoonPhasePreview } from '../../features/debug/moon/MoonPhasePreview'
 import '../../features/debug/debug-base.css'
@@ -88,6 +90,13 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
     ? getAuxiliaryGravity(motion, transform.correctedRotation, compass.now, gravityConvention)
     : { angle: null, reason: '実機姿勢の取得待ち' }
   const horizontalCalibration = getHorizontalCalibration(manualOrientationEnabled ? null : rawEvent)
+  const [calibrationRequested, setCalibrationRequested] = useState(false)
+  const saveSampledCalibration = useCallback((calibration: NorthCalibration) => {
+    saveNorthCalibration(calibration)
+    setCalibrationRequested(false)
+  }, [saveNorthCalibration])
+  const calibrationSampling = useNorthCalibrationSampling(rawEvent,
+    calibrationRequested && !manualOrientationEnabled && sensorOrientation.status === 'active', saveSampledCalibration)
   const { alpha, beta, gamma } = sensorOrientation
   const sensorRotation = alpha !== null && beta !== null && gamma !== null
     && [alpha, beta, gamma].every(Number.isFinite) ? deviceOrientationToMatrix(alpha, beta, gamma) : null
@@ -100,10 +109,8 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
   }
 
   function handleNorthCalibration(): void {
-    // Timestamp is captured only on button click, never during render.
-    // oxlint-disable-next-line react/purity
-    const captured = captureNorthCalibration(horizontalCalibration, Date.now())
-    if (captured) saveNorthCalibration(captured)
+    calibrationSampling.restart()
+    setCalibrationRequested(true)
   }
 
   return (
@@ -169,13 +176,14 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
               : !horizontalCalibration.isHorizontal ? 'もう少し水平にしてください'
                 : horizontalCalibration.compassHeading === null ? 'コンパス方位を取得できません' : 'キャリブレーション可能'}</p>
             <button className="find-moon-button" type="button" disabled={!horizontalCalibration.canCalibrate} onClick={handleNorthCalibration}>北基準を合わせる</button>
+            {(calibrationRequested || calibrated) && <p className="search-status" role="status">{calibrationRequested ? calibrationSampling.measurement.message : '北基準を保存しました。'}</p>}
             <dl className="debug-data">
               <div><dt>水平判定の閾値</dt><dd>{HORIZONTAL_CALIBRATION_THRESHOLD}</dd></div>
               <div><dt>calibrated</dt><dd>{String(calibrated)}</dd></div>
               <div><dt>calibration時刻</dt><dd>{calibratedAt === null ? 'null' : new Date(calibratedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}</dd></div>
               <div><dt>北補正の入力元</dt><dd>{transform.correctedRotation ? '保存済み northCorrection' : 'なし'}</dd></div>
             </dl>
-            <p className="debug-diagnostic-note">保存値はボタンを押した時点の補正角です。太陽・月の表示とARに共通で適用します。</p>
+            <p className="debug-diagnostic-note">実機校正は、安定した複数の測定値から補正角を決めます。保存値は太陽・月の表示とARに共通で適用します。</p>
           </details>
         </NorthCorrectionDiagnostics>
         <CompassStabilityDiagnostics diagnostic={compass} northCorrection={northCorrection}
@@ -212,6 +220,7 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
               type="checkbox"
               checked={manualOrientationEnabled}
               onChange={(event) => {
+                setCalibrationRequested(false)
                 setManualOrientationEnabled(event.target.checked)
                 setSensorMode(event.target.checked)
               }}

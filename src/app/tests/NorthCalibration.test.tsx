@@ -13,7 +13,7 @@ vi.mock('../../features/geolocation/useGeolocation', () => ({
 vi.mock('../../features/device-orientation/useDeviceOrientation', () => ({
   useDeviceOrientation: () => {
     const event = { alpha: sensor.alpha, beta: 90, gamma: 0, absolute: false,
-      webkitCompassHeading: sensor.heading, receivedAt: 1000, eventType: 'deviceorientation' }
+      webkitCompassHeading: sensor.heading, receivedAt: Date.now(), eventType: 'deviceorientation' }
     return {
       state: { ...event, status: 'active', compassHeading: sensor.heading, message: '' },
       requestPermission: vi.fn(), diagnostics: { lastAccepted: event, lastReceived: event },
@@ -28,6 +28,7 @@ vi.mock('../../pages/home/HomePage', () => ({
 }))
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
   vi.unstubAllEnvs()
@@ -41,7 +42,8 @@ describe('app-wide north calibration lifetime', () => {
       vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
       vi.stubEnv('DEV', true)
       const storageWrite = vi.spyOn(Storage.prototype, 'setItem')
-      vi.spyOn(Date, 'now').mockReturnValue(123456789)
+      vi.useFakeTimers()
+      vi.setSystemTime(123456789)
       window.history.replaceState(null, '', '/debug')
       const container = document.createElement('div')
       document.body.append(container)
@@ -58,11 +60,16 @@ describe('app-wide north calibration lifetime', () => {
         const button = [...container.querySelectorAll('button')].find((node) => node.textContent === '北基準を合わせる')!
         expect(button.disabled).toBe(false)
         await act(async () => button.click())
+        expect(container.textContent).toContain('calibratedfalse')
+        for (let i = 0; i < 30; i++) {
+          await act(async () => vi.advanceTimersByTime(100))
+          await act(async () => root.render(<App />))
+        }
         expect(container.textContent).toContain('calibratedtrue')
 
         await navigate('/')
         expect(JSON.parse(container.querySelector('output')!.textContent!)).toEqual({
-          northCorrection: expected, calibrated: true, calibratedAt: 123456789,
+          northCorrection: expected, calibrated: true, calibratedAt: 123459789,
         })
         await navigate('/debug')
         expect(container.textContent).toContain(`saved northCorrection${expected.toFixed(1)}°`)

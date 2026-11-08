@@ -60,6 +60,12 @@ async function click(text: string) {
   expect(button).toBeDefined()
   expect(button.disabled).toBe(false)
   await act(async () => button.click())
+  if (text === '北基準を合わせる') {
+    for (let i = 0; i < 30; i++) {
+      await act(async () => vi.advanceTimersByTime(100))
+      await show('debug')
+    }
+  }
 }
 async function useCurrentTime() {
   const select = container.querySelector('select')!
@@ -129,7 +135,7 @@ describe('Debug / AR shared north reference', () => {
     expect(container.querySelector('#sun-debug-title')).not.toBeNull()
     expect(container.querySelector('[aria-labelledby="device-pose-title"]')!.textContent).toContain('correctedHeading (°)90.00')
     expect(container.textContent).toContain('視点の方位 / 高度90.0° / -0.0°')
-    const moon = getMoonPosition(35.68, 139.76, now)
+    const moon = getMoonPosition(35.68, 139.76, new Date(Date.now()))
     const expected = getMoonDeviceState(mocks.orientation, -45, moon)
     expect(JSON.parse(debug['data-corrected-rotation']!)).toEqual(expected.correctedRotation)
     expect(JSON.parse(debug['data-moon-in-device']!)).toEqual(expected.moonInDevice)

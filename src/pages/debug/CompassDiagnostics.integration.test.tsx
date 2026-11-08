@@ -10,6 +10,7 @@ import { calculateBearing } from '../../shared/geo/geographicBearing'
 vi.mock('../../features/moon/astronomy', () => ({ getMoonPosition: () => ({ azimuth: 90, altitude: 20, isAboveHorizon: true }) }))
 let root: ReturnType<typeof createRoot>
 let container: HTMLDivElement
+let lastSensor: { accuracy: number; heading: number; absolute: boolean }
 beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-10-18T10:00:00Z'))
@@ -19,6 +20,7 @@ beforeEach(async () => {
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
   container = document.createElement('div')
   root = createRoot(container)
+  lastSensor = { accuracy: 6, heading: 90, absolute: true }
   await act(async () => root.render(<NorthCalibrationProvider><DebugPage state={{ status: 'success',
     location: { latitude: 35.68, longitude: 139.76, accuracy: 10, timestamp: Date.now() } }} requestLocation={vi.fn()} /></NorthCalibrationProvider>))
   await click('センサーを有効にする')
@@ -33,8 +35,13 @@ async function click(text: string) {
   const button = [...container.querySelectorAll('button')].find(button => button.textContent?.trim() === text)!
   expect(button.disabled).toBe(false)
   await act(async () => button.click())
+  if (text === '北基準を合わせる') {
+    const count = lastSensor.accuracy > 20 ? 6 : 30
+    for (let i = 0; i < count; i++) await sensor(lastSensor.accuracy, lastSensor.heading, lastSensor.absolute)
+  }
 }
 async function sensor(accuracy: number, heading = 90, absolute = true) {
+  lastSensor = { accuracy, heading, absolute }
   await act(async () => {
     vi.advanceTimersByTime(100)
     window.dispatchEvent(Object.assign(new Event('deviceorientation'), {
@@ -53,7 +60,7 @@ function output() {
 }
 
 it('quality changes and snapshots observe accepted events without gating calibration or changing AR outputs', async () => {
-  for (let i = 0; i < 24; i++) await sensor(6)
+  for (let i = 0; i < 12; i++) await sensor(6)
   expect(compassPanel().textContent).toContain('GOOD')
   await click('北基準を合わせる')
   const before = output()
@@ -67,8 +74,9 @@ it('quality changes and snapshots observe accepted events without gating calibra
   expect(container.querySelectorAll('article')).toHaveLength(2)
   expect(container.querySelector('article')!.textContent).toContain('POOR')
   expect(container.querySelectorAll('article')[1].textContent).toBe(first)
-  // Quality is never a new refusal condition: calibration remains available under POOR.
+  // The request button remains available under POOR, but accuracy=25 holds the new collection.
   await click('北基準を合わせる')
+  expect(container.textContent).toContain('コンパスの精度が低下しています')
   expect(output()).toEqual(before)
   // Once absolute events are accepted, ignored relative events must not contaminate the history/current accuracy.
   await sensor(100, 180, false)

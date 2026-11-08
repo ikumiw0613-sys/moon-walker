@@ -16,6 +16,7 @@
 .mw-calibration-status-dot { flex: 0 0 6px; height: 6px; margin-top: 8px; border-radius: 50%; background: #c1b48a; box-shadow: 0 0 12px #c1b48a40; }
 .mw-calibration.is-complete .mw-calibration-visual { border-color: #b9ccb880; box-shadow: 0 0 40px #b9ccb815; }
 .mw-calibration.is-complete .mw-calibration-status-dot { background: #b9ccb8; }
+.mw-calibration-progress { display: block; width: min(100%, 240px); height: 6px; margin: 18px auto 0; accent-color: #b9ccb8; }
 @media (max-height: 650px) {
 .mw-calibration-visual { width: min(100%, 240px); margin-bottom: 24px; }
 .mw-calibration-content { padding: 20px 0; }
