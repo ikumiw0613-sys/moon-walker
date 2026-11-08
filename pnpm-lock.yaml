@@ -11,6 +11,9 @@ importers:
       astronomy-engine:
         specifier: ^2.1.19
         version: 2.1.19
+      geomagnetism:
+        specifier: 0.2.0
+        version: 0.2.0
       react:
         specifier: ^19.2.8
         version: 19.3.0
@@ -448,6 +451,9 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  geomagnetism@0.2.0:
+    resolution: {integrity: sha512-dO8HJrXqah244nMe+pU5m52L90SMoi4lDA0AV3xunRxogloYV+s3aYWCW72VMMfiYis+YSAlhoKktw8aLMiJbw==}
 
   html-encoding-sniffer@7.0.0:
     resolution: {integrity: sha512-UikN5yr7xsCDAq87Or5or0PAlD3HJJOKVzM05az588WnpDJ4Ux7a2A53Qi6gofGg2/EtvF/H4hCi/TXfCW4Y6w==}
@@ -1015,6 +1021,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  geomagnetism@0.2.0: {}
 
   html-encoding-sniffer@7.0.0:
     dependencies:
