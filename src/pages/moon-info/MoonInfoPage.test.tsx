@@ -37,5 +37,8 @@ describe('MoonInfoPage', () => {
     expect(before.querySelector('.moon-shadow')!.getAttribute('d')).not.toBe(after.querySelector('.moon-shadow')!.getAttribute('d'))
     expect(before.querySelector('dl')!.textContent).not.toBe(after.querySelector('dl')!.textContent)
     expect(before.textContent).toContain('テスト日時')
+    expect(before.textContent).toContain('次の特別な月')
+    expect(before.textContent).toContain('SPECIAL MOON')
+    expect(before.querySelector('.mw-special-moon-date')?.textContent).toContain('10月')
   })
 })

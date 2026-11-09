@@ -12,7 +12,7 @@ import './HomePage.css'
 
 export function HomePage({ navigate, state, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
   const { now, mode } = useObservationTime()
-  const [weatherVisible, setWeatherVisible] = useState(true)
+  const [weatherVisible, setWeatherVisible] = useState(false)
   useEffect(() => {
     if (state.status === 'idle') void requestLocation()
   }, [state.status, requestLocation])
@@ -40,8 +40,9 @@ export function HomePage({ navigate, state, requestLocation }: { navigate: Navig
             <h1 id="app-title">{state.status === 'error' ? '月の状態を確認できません' : '現在地の月を確認しています…'}</h1>
           </>}
         </div>
-        <LocationRefreshControl state={state} requestLocation={requestLocation} showSuccessMessage={false} showAccuracy={false} />
-        {!moon?.isAboveHorizon && <>
+        <LocationRefreshControl state={state} requestLocation={requestLocation} showSuccessMessage={false} showAccuracy={false} showTimestamp={false} />
+        <AppLink to="/moon-info" navigate={navigate} className="mw-primary mw-waiting-link">月の情報を見る</AppLink>
+        {!moon?.isAboveHorizon && state.status === 'success' && <>
           <button
             type="button"
             className="mw-weather-toggle"
@@ -49,11 +50,12 @@ export function HomePage({ navigate, state, requestLocation }: { navigate: Navig
             aria-controls="home-weather"
             onClick={() => setWeatherVisible(visible => !visible)}
           >
-            天気 {weatherVisible ? '−' : '+'}
+            天気を{weatherVisible ? '閉じる' : '表示'}
           </button>
-          {weatherVisible && <div id="home-weather"><WeatherCard locationState={state} fixedObservationTime={mode === 'fixed'} /></div>}
+          <div id="home-weather" hidden={!weatherVisible}>
+            {weatherVisible && <WeatherCard locationState={state} fixedObservationTime={mode === 'fixed'} />}
+          </div>
         </>}
-        <AppLink to="/moon-info" navigate={navigate} className="mw-primary mw-waiting-link">月の情報を見る</AppLink>
       </section>
     </main>
   )

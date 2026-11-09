@@ -6,6 +6,8 @@ import { LocationRefreshControl } from '../../features/geolocation/LocationRefre
 import { getMoonPosition } from '../../features/moon/astronomy'
 import { getMoonPhase } from '../../features/moon/moonPhase'
 import { MoonDisc } from '../../features/moon/components/MoonDisc'
+import { SpecialMoonEventCard } from './SpecialMoonEventCard'
+import { useNextSpecialMoonEvent } from './useNextSpecialMoonEvent'
 import { useObservationTime } from '../../shared/time/useObservationTime'
 import '../../shared/styles/frontend.css'
 import './MoonInfoPage.css'
@@ -16,6 +18,7 @@ export function MoonInfoPage({ navigate, state, requestLocation }: { navigate: N
     if (state.status === 'idle') void requestLocation()
   }, [state.status, requestLocation])
   const phase = useMemo(() => getMoonPhase(now), [now])
+  const specialMoonEvent = useNextSpecialMoonEvent(now, mode === 'fixed')
   const position = useMemo(() => state.status === 'success'
     ? getMoonPosition(state.location.latitude, state.location.longitude, now)
     : null, [state, now])
@@ -42,6 +45,7 @@ export function MoonInfoPage({ navigate, state, requestLocation }: { navigate: N
       </div>
       <LocationRefreshControl state={state} requestLocation={requestLocation} showSuccessMessage={false} showAccuracy={false} />
       <dl className="mw-moon-facts">{facts.map(({ label, value, unit, detail }) => <div key={label}><dt>{label}<span>{detail}</span></dt><dd>{value}<span>{unit}</span></dd></div>)}</dl>
+      <SpecialMoonEventCard event={specialMoonEvent} now={now} />
 
     </section>
     <AppNavigation navigate={navigate} active="/moon-info" />

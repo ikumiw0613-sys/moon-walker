@@ -1,4 +1,4 @@
-.mw-weather { margin-top: 28px; padding: 20px; border: 1px solid var(--mw-line); border-radius: 12px; background: #ffffff04; text-align: left; }
+.mw-weather { margin-top: 8px; padding: 16px 0 0; border-top: 1px solid var(--mw-line); text-align: left; }
 .mw-weather-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
 .mw-weather-heading h2 { margin: 0; font-size: 16px; font-weight: 500; }
 .mw-weather-heading button { min-height: 44px; padding: 8px 12px; border: 1px solid #c4ccd34d; border-radius: 8px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }

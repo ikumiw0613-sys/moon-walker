@@ -18,10 +18,12 @@ describe('HomePage moon status', () => {
   })
   it('月が出ていない場合は次の月の出を表示する', () => {
     mocks.above = false
-    expect(render()).toContain('今は月が見えません')
-    expect(render()).toContain('次に見えるのは')
-    expect(render()).toContain('18:30ごろ')
-    expect(render()).toContain('現在地の天気')
+    const html = render()
+    expect(html).toContain('今は月が見えません')
+    expect(html).toContain('次に見えるのは')
+    expect(html).toContain('18:30ごろ')
+    expect(html).toContain('天気を表示')
+    expect(html).not.toContain('現在地の天気')
   })
   it('日付をまたぐ月の出を明日と表示する', () => {
     expect(formatMoonrise(new Date(2026, 9, 10, 0, 30), new Date(2026, 9, 9, 23))).toBe('明日 0:30ごろ')

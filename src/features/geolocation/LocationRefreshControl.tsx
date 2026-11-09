@@ -4,12 +4,13 @@ import './LocationRefreshControl.css'
 type LocationRefreshControlProps = GeolocationAccess & {
   showSuccessMessage?: boolean
   showAccuracy?: boolean
+  showTimestamp?: boolean
 }
 
-export function LocationRefreshControl({ state, requestLocation, showSuccessMessage = true, showAccuracy = true }: LocationRefreshControlProps) {
+export function LocationRefreshControl({ state, requestLocation, showSuccessMessage = true, showAccuracy = true, showTimestamp = true }: LocationRefreshControlProps) {
   const loading = state.status === 'loading'
   const location = state.status === 'success' ? state.location : null
-  const timestamp = location && Number.isFinite(location.timestamp) ? new Date(location.timestamp) : null
+  const timestamp = showTimestamp && location && Number.isFinite(location.timestamp) ? new Date(location.timestamp) : null
 
   return <section className="mw-location-refresh" aria-label="現在地の取得">
     <button type="button" disabled={loading} onClick={() => void requestLocation()}>
