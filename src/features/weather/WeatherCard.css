@@ -1,0 +1,10 @@
+.mw-weather { margin-top: 28px; padding: 20px; border: 1px solid var(--mw-line); border-radius: 12px; background: #ffffff04; text-align: left; }
+.mw-weather-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
+.mw-weather-heading h2 { margin: 0; font-size: 16px; font-weight: 500; }
+.mw-weather-heading button { min-height: 44px; padding: 8px 12px; border: 1px solid #c4ccd34d; border-radius: 8px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+.mw-weather-heading button:focus-visible { outline: 2px solid #dcd3ae; outline-offset: 4px; }
+.mw-weather-heading button:disabled { opacity: .6; cursor: default; }
+.mw-weather-condition { margin: 18px 0 16px; font-size: 22px; }
+.mw-weather-cloud-cover { margin: -8px 0 18px; font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.mw-weather-note, .mw-weather-source { margin: 12px 0 0; color: var(--mw-muted); font-size: 12px; line-height: 1.8; }
+.mw-weather-source a { text-decoration: underline; text-underline-offset: 3px; }

@@ -10,7 +10,7 @@ const requestLocation = vi.fn()
 const mocks = vi.hoisted(() => ({ state: { status: 'idle' } as LocationState, above: false }))
 vi.mock('../../features/geolocation/useGeolocation', () => ({ useGeolocation: () => ({ state: mocks.state, requestLocation }) }))
 vi.mock('../../features/moon/astronomy', () => ({
-  getMoonPosition: () => ({ isAboveHorizon: mocks.above }),
+  getMoonPosition: () => ({ azimuth: 180, altitude: mocks.above ? 30 : -30, isAboveHorizon: mocks.above }),
   getNextMoonrise: () => new Date(2026, 9, 11, 18, 30),
 }))
 vi.mock('../../pages/debug/DebugPage', () => ({ DebugPage: () => <main>DEBUG_PAGE</main> }))
@@ -21,6 +21,9 @@ let root: Root
 beforeEach(async () => {
   window.history.replaceState(null, '', '/')
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    current: { time: 1794207600, temperature_2m: 15, cloud_cover: 20, weather_code: 1 },
+  }) }))
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
   requestLocation.mockClear()
   mocks.state = { status: 'idle' }
@@ -72,7 +75,7 @@ describe('frontend prototype navigation', () => {
   it('月の観測データをナビゲーションから開ける', async () => {
     await clickLink('/moon-info')
     expect(container.textContent).toContain('観測日時')
-    for (const label of ['方位角', '高度', '月齢', '月までの距離']) expect(container.textContent).toContain(label)
+    for (const label of ['方位角', '高度', '月齢', '照明率']) expect(container.textContent).toContain(label)
     expect(container.querySelector('[aria-current="page"]')?.textContent).toBe('月の情報')
     // モックの状態はidleのままなので、月の情報画面でも取得を要求する。
     expect(requestLocation).toHaveBeenCalledTimes(2)
@@ -93,6 +96,22 @@ describe('frontend prototype navigation', () => {
       window.dispatchEvent(new PopStateEvent('popstate'))
     })
     expect(container.textContent).toContain('現在地の月を確認しています')
+  })
+
+  it('月の情報では地平線の下にある間は探しに行けず、月が出ると準備画面に進める', async () => {
+    await updateMoon(false)
+    await clickLink('/moon-info')
+    expect(container.querySelector('a[href="/calibration"]')).toBeNull()
+    const button = container.querySelector<HTMLButtonElement>('button[aria-describedby="moon-search-unavailable"]')!
+    expect(button.disabled).toBe(true)
+    expect(container.textContent).toContain('月が地平線の下にあるため、今は探せません。')
+    await act(async () => button.click())
+    expect(window.location.pathname).toBe('/moon-info')
+
+    await updateMoon(true)
+    expect(container.querySelector('#moon-search-unavailable')).toBeNull()
+    await clickLink('/calibration')
+    expect(window.location.pathname).toBe('/calibration')
   })
 
   it('月が出ていない間はホームで待機し、10秒ごとの更新で月が出たら自動遷移する', async () => {

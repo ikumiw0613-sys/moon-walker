@@ -21,6 +21,7 @@ describe('HomePage moon status', () => {
     expect(render()).toContain('今は月が見えません')
     expect(render()).toContain('次に見えるのは')
     expect(render()).toContain('18:30ごろ')
+    expect(render()).toContain('現在地の天気')
   })
   it('日付をまたぐ月の出を明日と表示する', () => {
     expect(formatMoonrise(new Date(2026, 9, 10, 0, 30), new Date(2026, 9, 9, 23))).toBe('明日 0:30ごろ')

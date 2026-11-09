@@ -1,7 +1,12 @@
 import type { GeolocationAccess } from './types'
 import './LocationRefreshControl.css'
 
-export function LocationRefreshControl({ state, requestLocation }: GeolocationAccess) {
+type LocationRefreshControlProps = GeolocationAccess & {
+  showSuccessMessage?: boolean
+  showAccuracy?: boolean
+}
+
+export function LocationRefreshControl({ state, requestLocation, showSuccessMessage = true, showAccuracy = true }: LocationRefreshControlProps) {
   const loading = state.status === 'loading'
   const location = state.status === 'success' ? state.location : null
   const timestamp = location && Number.isFinite(location.timestamp) ? new Date(location.timestamp) : null
@@ -13,11 +18,11 @@ export function LocationRefreshControl({ state, requestLocation }: GeolocationAc
     <p role="status" aria-live="polite">
       {state.status === 'error' ? state.message
         : loading ? '現在地を取得しています…'
-          : location ? <>現在地を取得しました。
+          : location ? <>{showSuccessMessage && '現在地を取得しました。'}
             {timestamp && <span>取得時刻：<time dateTime={timestamp.toISOString()}>{timestamp.toLocaleTimeString('ja-JP', {
               timeZone: 'Asia/Tokyo', hour12: false,
             })}</time>（日本時間）</span>}
-            {Number.isFinite(location.accuracy) && location.accuracy >= 0 && <span>推定精度：約{Math.round(location.accuracy)} m</span>}
+            {showAccuracy && Number.isFinite(location.accuracy) && location.accuracy >= 0 && <span>推定精度：約{Math.round(location.accuracy)} m</span>}
           </> : '現在地を取得すると、この場所から見た月の情報を確認できます。'}
     </p>
   </section>

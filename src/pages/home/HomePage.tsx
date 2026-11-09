@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AppLink } from '../../app/navigation/AppNavigation'
 import type { Navigate } from '../../app/navigation/AppNavigation'
 import type { GeolocationAccess } from '../../features/geolocation/types'
@@ -6,11 +6,13 @@ import { LocationRefreshControl } from '../../features/geolocation/LocationRefre
 import { getMoonPosition, getNextMoonrise } from '../../features/moon/astronomy'
 import { formatMoonrise } from '../../features/moon/formatMoonrise'
 import { useObservationTime } from '../../shared/time/useObservationTime'
+import { WeatherCard } from '../../features/weather/WeatherCard'
 import '../../shared/styles/frontend.css'
 import './HomePage.css'
 
 export function HomePage({ navigate, state, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
   const { now, mode } = useObservationTime()
+  const [weatherVisible, setWeatherVisible] = useState(true)
   useEffect(() => {
     if (state.status === 'idle') void requestLocation()
   }, [state.status, requestLocation])
@@ -38,7 +40,19 @@ export function HomePage({ navigate, state, requestLocation }: { navigate: Navig
             <h1 id="app-title">{state.status === 'error' ? '月の状態を確認できません' : '現在地の月を確認しています…'}</h1>
           </>}
         </div>
-        <LocationRefreshControl state={state} requestLocation={requestLocation} />
+        <LocationRefreshControl state={state} requestLocation={requestLocation} showSuccessMessage={false} showAccuracy={false} />
+        {!moon?.isAboveHorizon && <>
+          <button
+            type="button"
+            className="mw-weather-toggle"
+            aria-expanded={weatherVisible}
+            aria-controls="home-weather"
+            onClick={() => setWeatherVisible(visible => !visible)}
+          >
+            天気 {weatherVisible ? '−' : '+'}
+          </button>
+          {weatherVisible && <div id="home-weather"><WeatherCard locationState={state} fixedObservationTime={mode === 'fixed'} /></div>}
+        </>}
         <AppLink to="/moon-info" navigate={navigate} className="mw-primary mw-waiting-link">月の情報を見る</AppLink>
       </section>
     </main>

@@ -16,14 +16,15 @@ function render(date: string, state: LocationState) {
 }
 
 describe('MoonInfoPage', () => {
-  it('現在地がなくても月齢と距離を表示し、方位と高度は未取得として扱う', () => {
+  it('現在地がなくても月齢を表示し、方位と高度は未取得として扱う', () => {
     const container = render('2026-10-12T08:00:00Z', { status: 'error', message: '位置情報を許可してください' })
     const values = [...container.querySelectorAll('dd')].map(node => node.textContent)
     expect(values.slice(0, 2)).toEqual(['—°', '—°'])
     expect(Number.parseFloat(values[2]!)).toBeGreaterThan(1)
-    expect(Number(values[4]!.replace(/[^0-9]/g, ''))).toBeGreaterThan(350000)
     expect(container.textContent).toContain('位置情報を許可してください')
     expect(container.textContent).not.toContain('サンプルデータ')
+    expect(container.querySelector('a[href="/calibration"]')).toBeNull()
+    expect(container.querySelector<HTMLButtonElement>('button[aria-describedby="moon-search-unavailable"]')?.disabled).toBe(true)
   })
 
   it('日時と現在地に応じて観測値と月の影を更新する', () => {
