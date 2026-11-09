@@ -35,6 +35,7 @@ export function MoonInfoPage({ navigate, state, requestLocation }: { navigate: N
 
       <div className="mw-info-moon" aria-hidden="true"><MoonDisc phase={phase} /></div>
       <p className="mw-observation-label">{mode === 'fixed' ? 'テスト日時' : '観測日時'}：<time dateTime={now.toISOString()}>{now.toLocaleString('ja-JP', { timeZoneName: 'short' })}</time></p>
+      <SpecialMoonEventCard event={specialMoonEvent} now={now} />
       <div>
         {position?.isAboveHorizon
           ? <AppLink to="/calibration" navigate={navigate} className="mw-secondary">月を探しにいく <span aria-hidden="true">↗</span></AppLink>
@@ -45,7 +46,6 @@ export function MoonInfoPage({ navigate, state, requestLocation }: { navigate: N
       </div>
       <LocationRefreshControl state={state} requestLocation={requestLocation} showSuccessMessage={false} showAccuracy={false} />
       <dl className="mw-moon-facts">{facts.map(({ label, value, unit, detail }) => <div key={label}><dt>{label}<span>{detail}</span></dt><dd>{value}<span>{unit}</span></dd></div>)}</dl>
-      <SpecialMoonEventCard event={specialMoonEvent} now={now} />
 
     </section>
     <AppNavigation navigate={navigate} active="/moon-info" />
