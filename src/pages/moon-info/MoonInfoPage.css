@@ -1,19 +1,35 @@
 .mw-info-moon { display: grid; place-items: center; height: 180px; }
 .mw-info-moon .moon-disc { width: 92px; height: 92px; }
-.mw-observation-label { color: #bac5d4; font-size: 14px; text-align: center; margin: -4px 0 28px; }
-.mw-special-moon { margin: 28px 0; padding: 20px; border: 1px solid var(--mw-line); border-radius: 12px; background: #ffffff04; }
-.mw-special-moon h2 { margin: 0; color: #d9d2bd; font-size: 16px; font-weight: 500; }
-.mw-special-moon-date { margin: 18px 0 0; color: #bac5d4; font-size: 14px; font-variant-numeric: tabular-nums; }
-.mw-special-moon-name { margin: 6px 0 0; color: #f5f3eb; font-size: 24px; }
-.mw-special-moon-description { margin: 10px 0 0; color: #b1bdce; font-size: 14px; line-height: 1.8; }
-.mw-special-moon-countdown { margin: 14px 0 0; color: #e5d5a7; font-size: 14px; font-variant-numeric: tabular-nums; }
-.mw-moon-search-disabled { background: transparent; color: var(--mw-muted); font-family: inherit; opacity: .6; cursor: not-allowed; }
+.mw-detail .mw-back { color: #c9d4e2 !important; font-size: 14px; }
+.mw-detail .mw-kicker { color: #91a2b8; font-size: 12px; letter-spacing: 1.4px; }
+.mw-observation-label { color: #bac5d4; font-size: 14px; line-height: 1.7; text-align: center; margin: -4px 0 24px; }
+.mw-special-moon { margin: 24px 0; padding: 18px 20px; border: 1px solid var(--mw-line); border-radius: 12px; background: #ffffff04; }
+.mw-special-moon h2 { margin: 0; color: #e5deca; font-size: 18px; font-weight: 500; }
+.mw-special-moon-date { margin: 14px 0 0; color: #bac5d4; font-size: 14px; font-variant-numeric: tabular-nums; }
+.mw-special-moon-name { margin: 4px 0 0; color: #f5f3eb; font-size: clamp(24px, 6vw, 26px); line-height: 1.4; }
+.mw-special-moon-description { margin: 8px 0 0; color: #c9d4e2; font-size: 16px; line-height: 1.7; }
+.mw-special-moon-countdown { margin: 10px 0 0; color: #e7d28c; font-size: 14px; font-variant-numeric: tabular-nums; }
+.mw-detail .mw-secondary { min-height: 56px; margin-top: 24px; border-color: #aeb9c84d; background: #ffffff08; color: #f4f1e8; font-size: 16px; transition: background-color .18s ease, border-color .18s ease, transform .12s ease; }
+.mw-detail a.mw-secondary:hover { border-color: #d9d2bd99; background: #ffffff10; }
+.mw-detail a.mw-secondary:active { transform: translateY(1px); background: #ffffff14; }
+.mw-detail a.mw-secondary:focus-visible { outline: 2px solid #e7d28c; outline-offset: 4px; }
+.mw-moon-search-disabled { border-color: #ffffff24 !important; background: #ffffff03 !important; color: #91a2b8 !important; opacity: 1; cursor: not-allowed; }
+.mw-moon-search-disabled > span { color: #91a2b8; }
+.mw-detail .mw-caption { margin-top: 12px; color: #aab8ca; font-size: 14px; line-height: 1.7; letter-spacing: 0; }
+.mw-detail .mw-location-refresh button { border-color: #aeb9c84d; background: #ffffff08; color: #dce4ee; font-size: 15px; }
+.mw-detail .mw-location-refresh button:hover:not(:disabled) { border-color: #d9d2bd99; background: #ffffff10; }
+.mw-detail .mw-location-refresh p { color: #aab8ca; font-size: 14px; }
+.mw-detail .mw-navigation a { color: #aab8ca; font-size: 13px; }
+.mw-detail .mw-navigation a[aria-current=page] { color: #f0ecdf; }
 .mw-moon-facts { margin: 0; }
-.mw-moon-facts > div { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px 0; border-bottom: 1px solid var(--mw-line); }
-.mw-moon-facts dt { font-size: 18px; }
-.mw-moon-facts dt > span { display: block; color: #748197; font-size: 14px; margin-top: 7px; }
-.mw-moon-facts dd { margin: 0; font-size: 24px; font-weight: 300; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.mw-moon-facts dd > span { color: #92a0b2; font-size: 15px; margin-left: 6px; }
+.mw-moon-facts > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 0; border-bottom: 1px solid var(--mw-line); }
+.mw-moon-facts dt { color: #f4f1e8; font-size: 18px; }
+.mw-moon-facts dt > span { display: block; max-width: 30ch; color: #aab8ca; font-size: 14px; line-height: 1.6; margin-top: 6px; }
+.mw-moon-facts dd { flex-shrink: 0; margin: 0; color: #f5f3eb; font-size: clamp(22px, 5.8vw, 24px); font-weight: 400; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mw-moon-facts dd > span { color: #b8c4d4; font-size: 15px; margin-left: 4px; }
 @media (max-width: 360px) {
-.mw-moon-facts dd { font-size: 21px; }
+.mw-special-moon { padding: 16px; }
+.mw-moon-facts > div { gap: 8px; padding: 18px 0; }
+.mw-moon-facts dt { font-size: 17px; }
+.mw-moon-facts dt > span { max-width: 23ch; }
 }
