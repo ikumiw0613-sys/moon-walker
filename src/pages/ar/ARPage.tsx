@@ -72,6 +72,7 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
             <div className="mw-ar-moon-marker" style={{ left: `${moonEdge.x * 100}%`, top: `${moonEdge.y * 100}%` }}>
               <span className="mw-ar-moon-thumbnail"><MoonDisc phase={moonPhase} /></span>
               <span>{moonBehind ? '反対側に月' : '画面外に月'}</span>
+              <span className="mw-ar-moon-marker-arrow" aria-hidden="true">{guidance.arrow}</span>
             </div>
           )}
           {isNear && (
