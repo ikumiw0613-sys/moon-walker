@@ -17,7 +17,7 @@ import './ARPage.css'
 export function ARPage({ navigate, state: location, requestLocation }: { navigate: Navigate } & GeolocationAccess) {
   const { now, moonPhase, moonPosition, timeMode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind, poseStability, isPoseChecking,
-    motion, requestMotionPermission, canCheckMotion, orientationDiagnostics } = useARView(location)
+    orientationDiagnostics } = useARView(location)
   const accepted = orientationDiagnostics?.lastAccepted
   const sourceKey = accepted?.eventType && typeof accepted.absolute === 'boolean'
     ? `${accepted.eventType}:${accepted.absolute}` : null
@@ -105,11 +105,6 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
                 </strong>
               </span>
               <AppLink to="/calibration" navigate={navigate} className="mw-ar-recalibrate">向きを調整</AppLink>
-              {canCheckMotion && ['idle', 'denied', 'error'].includes(motion.status) && (
-                <button type="button" className="mw-ar-motion-enable" onClick={() => void requestMotionPermission()}>
-                  動きの補助確認を有効にする
-                </button>
-              )}
             </div>
             {recalibrationNotice}
           </section>

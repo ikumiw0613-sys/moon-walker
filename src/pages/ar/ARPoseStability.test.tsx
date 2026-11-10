@@ -119,11 +119,7 @@ describe('AR pose confidence gate', () => {
     expect(main().dataset.poseStability).toBe('stable')
     expect(Number(main().dataset.correctedHeading)).toBeCloseTo(270)
   })
-  it('補助Motionはユーザー操作から許可要求する', async () => {
-    const button = [...container.querySelectorAll('button')].find(button => button.textContent === '動きの補助確認を有効にする')!
-    await act(async () => button.click())
-    expect(mocks.requestMotion).toHaveBeenCalledTimes(1)
-  })
+
   it('バックグラウンド復帰時は古い姿勢で再開せず、新しい連続更新を確認する', async () => {
     let visibility: DocumentVisibilityState = 'hidden'
     vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibility)
