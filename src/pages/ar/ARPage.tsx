@@ -72,7 +72,6 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
             <div className="mw-ar-moon-marker" style={{ left: `${moonEdge.x * 100}%`, top: `${moonEdge.y * 100}%` }}>
               <span className="mw-ar-moon-thumbnail"><MoonDisc phase={moonPhase} /></span>
               <span>{moonBehind ? '反対側に月' : '画面外に月'}</span>
-              <span className="mw-ar-moon-marker-arrow">{guidance.arrow}</span>
             </div>
           )}
           {isNear && (
@@ -87,19 +86,16 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
 
         {guidance && (
           <section className={`mw-ar-guide${isCentered ? ' is-centered' : ''}`} aria-label="月への案内">
-            <p className="mw-ar-guide-label">{isCentered ? 'リングの周辺の空を探してください' : 'スマホをゆっくり動かして'}</p>
-            {moonEdge && <p className="mw-ar-visibility-note">{moonBehind ? '月はスマホの反対側にあります' : '月は画面の外にあります'}。矢印の方向へ向けてください。</p>}
+            {!isCentered && <p className="mw-ar-guide-label">スマホをゆっくり動かして</p>}
             <div className="mw-ar-guidance-row">
-              <span className="mw-ar-arrow" aria-hidden="true">
-                {guidance.arrow}
-              </span>
+              {!isCentered && <span className="mw-ar-arrow" aria-hidden="true">{guidance.arrow}</span>}
               <p className="mw-ar-message" role="status" aria-live="polite" aria-atomic="true">
                 {isCentered ? 'このあたりに月があります' : guidance.message}
               </p>
             </div>
             <div className="mw-ar-guide-footer">
               <span className="mw-ar-distance">
-                月まで
+                方向のずれ
                 <strong>
                   {guidance.angleToMoon.toFixed(1)}°
                 </strong>
