@@ -67,6 +67,9 @@
 .debug-astronomy { margin-top: 20px; }
 .debug-astronomy .debug-panel { padding: 12px; border: 0; background: transparent; }
 .debug-panel section[aria-labelledby="pose-stability-title"] { margin-top: 24px; }
+.geo-debug { margin-top: 16px; }
+.geo-debug-events { margin: 0; padding-left: 24px; color: #c4cddd; font: .75rem/1.7 ui-monospace, monospace; overflow-wrap: anywhere; }
+.geo-debug-events time { color: #7dd3fc; }
 .debug-preview-details { margin-bottom: 20px; }
 @media (max-width: 640px) {
   .debug-statistics { grid-template-columns: minmax(0, 1fr); }

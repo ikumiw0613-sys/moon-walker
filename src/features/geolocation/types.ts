@@ -15,5 +15,17 @@ export type LocationState =
 
 export type GeolocationAccess = {
   state: LocationState
-  requestLocation: () => Promise<void>
+  requestLocation: (source?: 'button') => Promise<void>
+  diagnostics?: GeolocationDiagnostics
+}
+
+export interface GeolocationDiagnostics {
+  status: 'idle' | 'requesting' | 'success' | 'error'
+  permission: string
+  lastError: { code: number | null; message: string } | null
+  lastSuccess: UserLocation | null
+  requestStarted: number | null
+  requestFinished: number | null
+  events: Array<{ message: string; timestamp: number }>
+  options: { enableHighAccuracy: boolean; timeout: number; maximumAge: number } | null
 }

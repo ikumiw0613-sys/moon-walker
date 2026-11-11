@@ -1,5 +1,17 @@
 import type { UserLocation } from './types'
 
+export const GEOLOCATION_OPTIONS = { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 } as const
+
+export class GeolocationRequestError extends Error {
+  readonly code: number | null
+
+  constructor(message: string, code: number | null = null) {
+    super(message)
+    this.name = 'GeolocationRequestError'
+    this.code = code
+  }
+}
+
 
 function getErrorMessage(code: number): string {
   switch (code) {
@@ -14,7 +26,7 @@ function getErrorMessage(code: number): string {
   }
 }
 
-export function getCurrentLocation(): Promise<UserLocation> {
+export function getCurrentLocation(onEvent?: (event: 'request started' | 'success callback' | 'error callback', detail?: { code: number; message: string }) => void): Promise<UserLocation> {
   return new Promise((resolve, reject) => {
     if (!window.isSecureContext) {
       reject(new Error('現在地の取得にはHTTPSでのアクセスが必要です。'))
@@ -26,8 +38,10 @@ export function getCurrentLocation(): Promise<UserLocation> {
       return
     }
 
+    onEvent?.('request started')
     navigator.geolocation.getCurrentPosition(
       ({ coords, timestamp }) => {
+        onEvent?.('success callback')
         resolve({
           latitude: coords.latitude,
           longitude: coords.longitude,
@@ -36,8 +50,11 @@ export function getCurrentLocation(): Promise<UserLocation> {
           timestamp,
         })
       },
-      ({ code }) => reject(new Error(getErrorMessage(code))),
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 },
+      (error) => {
+        onEvent?.('error callback', { code: error.code, message: error.message })
+        reject(new GeolocationRequestError(getErrorMessage(error.code), error.code))
+      },
+      GEOLOCATION_OPTIONS,
     )
   })
 }

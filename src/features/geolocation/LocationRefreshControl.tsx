@@ -13,7 +13,7 @@ export function LocationRefreshControl({ state, requestLocation, showSuccessMess
   const timestamp = showTimestamp && location && Number.isFinite(location.timestamp) ? new Date(location.timestamp) : null
 
   return <section className="mw-location-refresh" aria-label="現在地の取得">
-    <button type="button" disabled={loading} onClick={() => void requestLocation()}>
+    <button type="button" disabled={loading} onClick={() => void requestLocation('button')}>
       {loading ? '現在地を取得中…' : state.status === 'idle' ? '現在地を取得' : '現在地を再取得'}
     </button>
     <p role="status" aria-live="polite">

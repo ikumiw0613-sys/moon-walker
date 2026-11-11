@@ -2,7 +2,7 @@ import type { LocationState } from './types'
 
 interface GeolocationControlsProps {
   state: LocationState
-  onRequestLocation: () => Promise<void>
+  onRequestLocation: (source?: 'button') => Promise<void>
 }
 
 export function GeolocationControls({ state, onRequestLocation }: GeolocationControlsProps) {
@@ -21,7 +21,7 @@ export function GeolocationControls({ state, onRequestLocation }: GeolocationCon
         className="find-moon-button"
         type="button"
         disabled={isLoading}
-        onClick={() => void onRequestLocation()}
+        onClick={() => void onRequestLocation('button')}
         aria-describedby="search-status"
       >
         {isLoading ? '現在地を取得中…' : state.status === 'idle' ? '現在地を取得' : '現在地を再取得'}

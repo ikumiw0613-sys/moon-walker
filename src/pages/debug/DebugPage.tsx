@@ -23,6 +23,7 @@ import { useManualOrientation } from '../../features/debug/useManualOrientation'
 import { useDebugObservation } from '../../features/debug/useDebugObservation'
 import { useDebugView } from '../../features/debug/useDebugView'
 import { GeolocationControls } from '../../features/geolocation/GeolocationControls'
+import { GeolocationDebugCard } from '../../features/geolocation/GeolocationDebugCard'
 import type { GeolocationAccess } from '../../features/geolocation/types'
 import { useDeviceOrientation } from '../../features/device-orientation/useDeviceOrientation'
 import { projectDirectionToScreen } from '../../shared/math/coordinates'
@@ -38,7 +39,7 @@ import { MoonPhasePreview } from '../../features/debug/moon/MoonPhasePreview'
 import '../../features/debug/debug-base.css'
 import './DebugPage.css'
 
-export function DebugPage({ state, requestLocation }: GeolocationAccess) {
+export function DebugPage({ state, requestLocation, diagnostics: geolocationDiagnostics }: GeolocationAccess) {
   const { state: sensorOrientation, requestPermission: requestOrientationPermission, diagnostics } = useDeviceOrientation()
   const { state: motion, requestPermission: requestMotionPermission } = useDebugDeviceMotion()
   const [gravityConvention, setGravityConvention] = useState<GravitySensorConvention>('raw-is-down')
@@ -139,6 +140,7 @@ export function DebugPage({ state, requestLocation }: GeolocationAccess) {
             <div><dt>Compass Quality</dt><dd><strong className={`debug-quality is-${compass.quality.status}`}>{compass.quality.status.toUpperCase()}</strong></dd></div>
           </dl>
         <GeolocationControls state={state} onRequestLocation={requestLocation} />
+          <GeolocationDebugCard diagnostics={geolocationDiagnostics} />
           <button
             className="find-moon-button"
             type="button"
