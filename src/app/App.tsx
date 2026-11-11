@@ -8,8 +8,11 @@ import { MoonInfoPage } from '../pages/moon-info/MoonInfoPage'
 import { useNavigation } from './navigation/useNavigation'
 import { ObservationTimeProvider } from '../shared/time/ObservationTimeProvider'
 import { PWAUpdateNotice } from '../pwa/PWAUpdateNotice'
+import { useDesktopViewport } from './useDesktopViewport'
+import { DesktopGuide } from '../pages/desktop/DesktopGuide'
 
 function App() {
+  const isDesktop = useDesktopViewport()
   const location = useGeolocation()
   const { pathname, navigate } = useNavigation()
   const debugEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEBUG === 'true'
@@ -20,6 +23,8 @@ function App() {
     : route === '/ar' ? <ARPage navigate={navigate} {...location} />
       : route === '/moon-info' ? <MoonInfoPage navigate={navigate} {...location} />
         : <HomePage navigate={navigate} {...location} />
+
+  if (isDesktop) return <DesktopGuide />
 
   return (
     <NorthCalibrationProvider>
