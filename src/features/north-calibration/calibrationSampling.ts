@@ -3,9 +3,9 @@ import type { RawOrientationEvent } from '../device-orientation/useDeviceOrienta
 import { getHorizontalCalibration } from './horizontalCalibration'
 
 export const CALIBRATION_SAMPLING_LIMITS = {
-  durationMs: 2500,
-  maximumDurationMs: 3000,
-  minimumSamples: 20,
+  durationMs: 1500,
+  maximumDurationMs: 1500,
+  minimumSamples: 12,
   sampleIntervalMs: 100,
   maximumGapMs: 500,
   settlingMs: 500,
@@ -127,5 +127,5 @@ export function collectCalibrationEvent(
     return clearSamples(state, 'waiting', '測定値が足りません。向きを保って、もう一度測定します。')
   }
   return { ...state, samples, phase: 'collecting', progress: Math.min(0.99, elapsed / limits.durationMs),
-    message: '測定しています。約3秒、向きを保ってください。' }
+    message: '測定しています。向きを保ってください。' }
 }

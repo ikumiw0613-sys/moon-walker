@@ -30,7 +30,7 @@ describe('stable north calibration sampling', () => {
   })
 
   it('saves a median, not the last sample, after a full stable interval', () => {
-    const result = collect([...Array.from({ length: 25 }, () => -45), -43])
+    const result = collect([...Array.from({ length: 15 }, () => -45), -43])
     expect(result.phase).toBe('complete')
     expect(result.northCorrection).toBeCloseTo(-45)
     expect(result.samples.at(-1)!.candidate).toBeCloseTo(-43)
@@ -42,7 +42,7 @@ describe('stable north calibration sampling', () => {
     const result = collect(values)
     expect(result.phase).toBe('complete')
     expect(result.northCorrection).toBeCloseTo(-45)
-    expect(result.samples).toHaveLength(25)
+    expect(result.samples).toHaveLength(15)
     expect(result.samples.every(value => Math.abs(value.candidate + 45) < 1e-8)).toBe(true)
   })
 
@@ -90,8 +90,8 @@ describe('stable north calibration sampling', () => {
     expect(collect(undefined, { webkitCompassAccuracy: 20 }).phase).toBe('complete')
   })
 
-  it('does not decide before 2.5 seconds, with too few samples, or from duplicate events', () => {
-    expect(collect(Array.from({ length: 25 }, () => -45)).phase).not.toBe('complete')
+  it('does not decide before 1.5 seconds, with too few samples, or from duplicate events', () => {
+    expect(collect(Array.from({ length: 15 }, () => -45)).phase).not.toBe('complete')
     let state = createCalibrationCollection(start)
     for (let i = 0; i < 9; i++) {
       const at = first + i * 400

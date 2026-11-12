@@ -89,9 +89,9 @@ describe('automatic multi-sample calibration', () => {
     expect(mocks.request).toHaveBeenCalledTimes(2)
   })
 
-  it('collects for 2.5 seconds after settling and saves the median, not the last sample', async () => {
+  it('collects for 1.5 seconds after settling and saves the median, not the last sample', async () => {
     expect(container.textContent).toContain('向きを保ってください')
-    await samples(29)
+    await samples(14)
     expect(mocks.save).not.toHaveBeenCalled()
     expect(container.textContent).toContain('測定しています')
     await sample(100, { alpha: 313 })
@@ -120,21 +120,21 @@ describe('automatic multi-sample calibration', () => {
   })
 
   it('resets on screen orientation changes and ignores immediate post-change samples', async () => {
-    await samples(20)
+    await samples(10)
     await act(async () => {
       screenOrientation.angle = 90
       screenOrientation.dispatchEvent(new Event('change'))
     })
     expect(container.textContent).toContain('画面の向きが変わりました')
-    await samples(25)
+    await samples(10)
     expect(mocks.save).not.toHaveBeenCalled()
     await finish()
   })
 
   it('also resets via legacy orientationchange without the Screen Orientation API', async () => {
-    await samples(20)
+    await samples(10)
     await act(async () => window.dispatchEvent(new Event('orientationchange')))
-    await samples(25)
+    await samples(10)
     expect(mocks.save).not.toHaveBeenCalled()
     await finish()
   })
@@ -142,22 +142,22 @@ describe('automatic multi-sample calibration', () => {
   it('discards hidden data and waits for a new complete interval after background return', async () => {
     let visibility: DocumentVisibilityState = 'visible'
     vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibility)
-    await samples(20)
+    await samples(10)
     await act(async () => { visibility = 'hidden'; document.dispatchEvent(new Event('visibilitychange')) })
     await samples(30)
     expect(mocks.save).not.toHaveBeenCalled()
     await act(async () => { visibility = 'visible'; document.dispatchEvent(new Event('visibilitychange')) })
     expect(container.textContent).toContain('画面に戻りました')
-    await samples(25)
+    await samples(10)
     expect(mocks.save).not.toHaveBeenCalled()
     await finish()
   })
 
   it('resets on event type / absolute source changes', async () => {
-    await samples(20)
+    await samples(10)
     await sample(100, { eventType: 'deviceorientationabsolute', absolute: true })
     expect(container.textContent).toContain('取得条件が変わりました')
-    await samples(25)
+    await samples(10)
     expect(mocks.save).not.toHaveBeenCalled()
     await finish()
   })
@@ -189,19 +189,19 @@ describe('automatic multi-sample calibration', () => {
   })
 
   it.each([{ beta: 60 }, { webkitCompassHeading: undefined }])('discards partial windows when required input becomes invalid (%o)', async invalid => {
-    await samples(20)
+    await samples(10)
     await sample(100, invalid)
     expect(mocks.save).not.toHaveBeenCalled()
     await sample(100, { beta: 90, webkitCompassHeading: 90 })
-    await samples(20)
+    await samples(10)
     expect(mocks.save).not.toHaveBeenCalled()
     await finish()
   })
 
   it('restarts after missing sensor updates instead of borrowing the old collection time', async () => {
-    await samples(20)
+    await samples(10)
     await sample(700)
-    await samples(25)
+    await samples(10)
     expect(mocks.save).not.toHaveBeenCalled()
     await finish()
   })
