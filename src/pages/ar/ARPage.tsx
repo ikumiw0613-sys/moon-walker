@@ -8,6 +8,7 @@ import { getMoonDeviceDiagnosticAttributes } from '../../features/moon-guide/moo
 import { SkyBackground } from '../../features/sky/SkyBackground'
 import { MoonSprite } from './components/MoonSprite'
 import { MoonDisc } from '../../features/moon/components/MoonDisc'
+import { useCurrentWeather } from '../../features/weather/useCurrentWeather'
 import { useARView } from './useARView'
 import { useARRecalibration } from '../../features/north-calibration/useARRecalibration'
 import { RecalibrationNotice } from './components/RecalibrationNotice'
@@ -18,6 +19,7 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
   const { now, moonPhase, moonPosition, timeMode, ready, needsRecalibration, isBelowHorizon, orientation, requestPermission, retryConnection, deviceState,
     guidance, isNear, isCentered, parallax, moonScreen, moonEdge, moonBehind, poseStability, isPoseChecking,
     orientationDiagnostics } = useARView(location)
+  const { state: weatherState } = useCurrentWeather(location)
   const accepted = orientationDiagnostics?.lastAccepted
   const sourceKey = accepted?.eventType && typeof accepted.absolute === 'boolean'
     ? `${accepted.eventType}:${accepted.absolute}` : null
@@ -31,6 +33,8 @@ export function ARPage({ navigate, state: location, requestLocation }: { navigat
     <SkyBackground
       offsetX={parallax.offsetX}
       offsetY={parallax.offsetY}
+      cloudCover={weatherState.status === 'success' ? weatherState.weather.cloudCover : null}
+      weatherCode={weatherState.status === 'success' ? weatherState.weather.weatherCode : null}
     >
       <main className="mw-screen mw-ar" aria-label="月を探す" {...getMoonDeviceDiagnosticAttributes(deviceState, now)}
         data-pose-stability={poseStability.status} data-pose-stability-reason={poseStability.reason}>
