@@ -22,6 +22,13 @@ export function SkyBackground({
   const isRaining = weatherCode !== null
     && ((weatherCode >= 51 && weatherCode <= 67) || (weatherCode >= 80 && weatherCode <= 82)
       || (weatherCode >= 95 && weatherCode <= 99))
+  const rainIntensity = weatherCode !== null && ((weatherCode >= 65 && weatherCode <= 67)
+    || weatherCode === 82 || (weatherCode >= 95 && weatherCode <= 99))
+    ? 'heavy'
+    : weatherCode !== null && ((weatherCode >= 51 && weatherCode <= 57)
+      || weatherCode === 61 || weatherCode === 80)
+      ? 'light'
+      : 'steady'
   const cloudOpacity = cloudCover === null ? 1 : 0.4 + (cloudCover / 100) * 0.6
   return (
     <div className={`sky-background${isRaining ? ' sky-background--rain' : ''}`}>
@@ -38,7 +45,11 @@ export function SkyBackground({
           }}
         />
       ))}
-      {isRaining && <div className="sky-background__rain" aria-hidden="true" />}
+      {isRaining && <div className={`sky-background__rain sky-background__rain--${rainIntensity}`} aria-hidden="true">
+        <span className="sky-background__rain-layer sky-background__rain-layer--far" />
+        <span className="sky-background__rain-layer sky-background__rain-layer--mid" />
+        <span className="sky-background__rain-layer sky-background__rain-layer--near" />
+      </div>}
       <div className="sky-background__haze" />
       <div className="sky-background__content">
         {children}
