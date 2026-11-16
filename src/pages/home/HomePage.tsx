@@ -40,6 +40,7 @@ export function HomePage({ navigate, state, requestLocation }: { navigate: Navig
             <h1 id="app-title">{state.status === 'error' ? '月の状態を確認できません' : '現在地の月を確認しています…'}</h1>
           </>}
         </div>
+        <p className="mw-description">moon-walkerは、現在地と時刻、スマートフォンの向きから月の方角を案内するWebアプリです。スマートフォンで、今いる場所から月を探せます。</p>
         <LocationRefreshControl state={state} requestLocation={requestLocation} showSuccessMessage={false} showAccuracy={false} showTimestamp={false} />
         <AppLink to="/moon-info" navigate={navigate} className="mw-primary mw-waiting-link">月の情報を見る</AppLink>
         {!moon?.isAboveHorizon && state.status === 'success' && <>
