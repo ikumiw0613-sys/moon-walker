@@ -30,7 +30,21 @@ describe('HomePage moon status', () => {
   })
   it('位置情報のエラーと再取得ボタンを表示する', () => {
     const html = renderToStaticMarkup(<HomePage navigate={vi.fn()} requestLocation={vi.fn()} state={{ status: 'error', message: '位置情報を許可してください。' }} />)
+    expect(html).toContain('<h1 id="app-title">スマホで月の方向を探すWebアプリ</h1>')
+    expect(html.match(/<h1\b/g)).toHaveLength(1)
+    expect(html).toContain('moon-walkerは、現在地・時刻・スマートフォンの向きから')
+    expect(html).toContain('role="alert"')
+    expect(html).toContain('ブラウザの設定で位置情報を許可して、もう一度お試しください。')
     expect(html).toContain('位置情報を許可してください。')
     expect(html).toContain('現在地を再取得')
+  })
+
+  it('月情報が表示される場合もサービス紹介と単一のh1を維持する', () => {
+    mocks.above = false
+    const html = render()
+    expect(html.match(/<h1\b/g)).toHaveLength(1)
+    expect(html).toContain('moon-walkerは、現在地・時刻・スマートフォンの向きから')
+    expect(html).toContain('次に見えるのは')
+    expect(html).toContain('月の情報を見る')
   })
 })

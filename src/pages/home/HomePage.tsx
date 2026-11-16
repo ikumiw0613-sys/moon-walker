@@ -29,18 +29,18 @@ export function HomePage({ navigate, state, requestLocation }: { navigate: Navig
     <main className="mw-screen mw-home">
       <section className="mw-home-content mw-waiting-content" aria-labelledby="app-title">
         {mode === 'fixed' && <p>テスト日時で表示中（2026年10月11日 10:00 日本時間）</p>}
-        <div role="status" aria-live="polite">
+        <h1 id="app-title">スマホで月を探すWebアプリ</h1>
+        <p className="mw-description">現在地・時刻・スマートフォンの向きから、今いる場所で月がどの方向にあるかを案内するWebアプリです。スマートフォンから、今いる場所で月を探せます。</p>
+        <div className="mw-home-moon-result" role="status" aria-live="polite">
           {moon ? <>
-            <h1 id="app-title">{moon.isAboveHorizon ? '月を探す準備に進みます' : '今は月が見えません'}</h1>
+            <p className="mw-home-moon-message">{moon.isAboveHorizon ? '月を探す準備に進みます' : '今は月が見えません'}</p>
             {!moon.isAboveHorizon && <div className="mw-waiting-next">
               <p className="mw-waiting-label">次に見えるのは</p>
               <p className="mw-waiting-time">{moon.nextRise ? formatMoonrise(moon.nextRise, now) : '今後30日以内の月の出はありません'}</p>
             </div>}
-          </> : <>
-            <h1 id="app-title">{state.status === 'error' ? '月の状態を確認できません' : '現在地の月を確認しています…'}</h1>
-          </>}
+          </> : state.status !== 'error' && <p className="mw-home-moon-message">現在地の月を確認しています…</p>}
         </div>
-        <p className="mw-description">moon-walkerは、現在地と時刻、スマートフォンの向きから月の方角を案内するWebアプリです。スマートフォンで、今いる場所から月を探せます。</p>
+        {state.status === 'error' && <p className="mw-location-error-help" role="alert">位置情報を取得できませんでした。ブラウザの設定で位置情報を許可して、もう一度お試しください。</p>}
         <LocationRefreshControl state={state} requestLocation={requestLocation} showSuccessMessage={false} showAccuracy={false} showTimestamp={false} />
         <AppLink to="/moon-info" navigate={navigate} className="mw-primary mw-waiting-link">月の情報を見る</AppLink>
         {!moon?.isAboveHorizon && state.status === 'success' && <>
